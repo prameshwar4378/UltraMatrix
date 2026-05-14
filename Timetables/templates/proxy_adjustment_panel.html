@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Proxy Adjustment Panel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<style>
+:root{
+    --ink:#0f172a;
+    --muted:#64748b;
+    --line:#e2e8f0;
+    --soft:#f8fafc;
+    --blue:#2563eb;
+    --green:#059669;
+    --amber:#d97706;
+    --red:#dc2626;
+}
+*{box-sizing:border-box}
+body{
+    margin:0;
+    min-height:100vh;
+    background:#f1f5f9;
+    color:var(--ink);
+    font-family:"Segoe UI",system-ui,sans-serif;
+}
+.topbar{
+    background:white;
+    border-bottom:1px solid var(--line);
+    padding:16px 22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+.topbar h1{
+    margin:0;
+    font-size:1.35rem;
+    font-weight:900;
+}
+.topbar p{
+    margin:3px 0 0;
+    color:var(--muted);
+    font-size:.9rem;
+}
+.layout{
+    display:grid;
+    grid-template-columns:280px 1fr 280px;
+    height:calc(100vh - 73px);
+}
+.side,.main{
+    overflow:auto;
+    padding:18px;
+}
+.side{
+    background:white;
+    border-right:1px solid var(--line);
+}
+.side.right{
+    border-right:0;
+    border-left:1px solid var(--line);
+}
+.panel-title{
+    font-size:.9rem;
+    font-weight:900;
+    text-transform:uppercase;
+    color:#334155;
+    margin-bottom:12px;
+}
+.field-label{
+    display:block;
+    font-size:.78rem;
+    font-weight:800;
+    color:#334155;
+    margin-bottom:6px;
+}
+.toolbar{
+    display:grid;
+    grid-template-columns:1.2fr 1fr 1fr auto auto;
+    gap:12px;
+    background:white;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px;
+    margin-bottom:14px;
+}
+.status-card,.lecture-card,.empty-card{
+    background:white;
+    border:1px solid var(--line);
+    border-radius:8px;
+}
+.status-card{
+    padding:10px;
+    margin-bottom:9px;
+}
+.status-card strong,.lecture-card strong{
+    display:block;
+    font-size:.9rem;
+}
+.status-card small,.lecture-card small{
+    color:var(--muted);
+}
+.status-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:.72rem;
+    font-weight:800;
+}
+.leave{background:#fee2e2;color:#991b1b}
+.busy{background:#fef3c7;color:#92400e}
+.assigned{background:#dcfce7;color:#166534}
+.pending{background:#dbeafe;color:#1d4ed8}
+.cancelled{background:#fee2e2;color:#991b1b}
+.lecture-card{
+    padding:10px;
+    margin-bottom:8px;
+}
+.free-board{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+    gap:8px;
+    margin-bottom:14px;
+}
+.free-teacher-card{
+    background:white;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px;
+}
+.free-teacher-card strong{
+    display:block;
+    font-size:.84rem;
+    line-height:1.15;
+}
+.free-teacher-card small{
+    color:var(--muted);
+    font-size:.72rem;
+}
+.lecture-chip{
+    border:1px solid #bfdbfe;
+    background:#eff6ff;
+    border-radius:6px;
+    padding:5px 6px;
+    margin-top:6px;
+    width:100%;
+    text-align:left;
+    color:#1e3a8a;
+    font-size:.76rem;
+    line-height:1.15;
+}
+.lecture-chip:hover{
+    background:#dbeafe;
+    border-color:#60a5fa;
+}
+.lecture-head{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:flex-start;
+}
+.lecture-meta{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:8px;
+}
+.meta-pill{
+    border:1px solid var(--line);
+    background:var(--soft);
+    border-radius:999px;
+    padding:4px 8px;
+    font-size:.75rem;
+    color:#334155;
+}
+.suggestion-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+    gap:8px;
+    margin-top:12px;
+}
+.suggestion{
+    border:1px solid #bfdbfe;
+    background:#eff6ff;
+    border-radius:8px;
+    padding:9px;
+}
+.suggestion button{
+    width:100%;
+    margin-top:8px;
+}
+.action-row{
+    display:grid;
+    grid-template-columns:1fr auto auto auto;
+    gap:8px;
+    margin-top:12px;
+}
+.empty-card{
+    padding:24px;
+    text-align:center;
+    color:var(--muted);
+}
+.period-box{
+    max-height:160px;
+    overflow:auto;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px;
+    background:var(--soft);
+}
+.period-option{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    padding:5px 2px;
+    font-size:.85rem;
+}
+.toast-line{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    max-width:360px;
+    z-index:1000;
+    display:none;
+}
+@media(max-width:1100px){
+    .layout{grid-template-columns:1fr;height:auto}
+    .side,.side.right{border:0;border-bottom:1px solid var(--line)}
+    .toolbar{grid-template-columns:1fr}
+    .action-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+    <div>
+        <h1>Proxy Adjustment Panel</h1>
+        <p>Store daily leave, in-school unavailability, proxy teachers, cancelled lectures, and future history.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-light border" href="{% url 'timetable_builder' %}">
+            <i class="bi bi-calendar-week"></i> Timetable Builder
+        </a>
+        <button class="btn btn-primary" id="refreshBtn">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<div class="layout">
+    <aside class="side">
+        <div class="panel-title">Mark Teacher Status</div>
+
+        <div class="mb-3">
+            <label class="field-label">Teacher</label>
+            <select class="form-select" id="statusTeacherSelect"></select>
+        </div>
+
+        <div class="mb-3">
+            <label class="field-label">Status</label>
+            <select class="form-select" id="statusTypeSelect">
+                <option value="LEAVE">On Leave</option>
+                <option value="IN_SCHOOL_UNAVAILABLE">In school but unavailable</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="field-label">Availability Scope</label>
+            <select class="form-select" id="scopeSelect">
+                <option value="full">Full day</option>
+                <option value="periods">Selected periods only</option>
+            </select>
+        </div>
+
+        <div class="mb-3" id="periodPickerWrap" style="display:none">
+            <label class="field-label">Unavailable Periods</label>
+            <div class="period-box" id="periodPicker"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="field-label">Reason</label>
+            <input type="text" class="form-control" id="reasonInput" placeholder="Leave, emergency meeting, exam duty...">
+        </div>
+
+        <div class="mb-3">
+            <label class="field-label">Note</label>
+            <textarea class="form-control" id="notesInput" rows="3" placeholder="Optional admin note"></textarea>
+        </div>
+
+        <button class="btn btn-success w-100" id="saveStatusBtn">
+            <i class="bi bi-person-dash"></i> Save Status
+        </button>
+
+        <hr>
+
+        <div class="panel-title">Manual Teacher Adjustment</div>
+        <label class="field-label">Show lectures for present teacher</label>
+        <select class="form-select" id="manualTeacherSelect"></select>
+        <button class="btn btn-light border w-100 mt-2" id="clearManualBtn">Clear Manual Filter</button>
+    </aside>
+
+    <main class="main">
+        <div class="toolbar">
+            <div>
+                <label class="field-label">Timetable</label>
+                <select class="form-select" id="timetableSelect">
+                    {% for timetable in timetables %}
+                    <option value="{{ timetable.id }}" {% if selected_timetable_id|stringformat:"s" == timetable.id|stringformat:"s" %}selected{% endif %}>
+                        {{ timetable.name }} - {{ timetable.academic_year.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="field-label">Adjustment Date</label>
+                <input type="date" class="form-control" id="dateInput" value="{{ selected_date }}">
+            </div>
+            <div>
+                <label class="field-label">Search</label>
+                <input type="search" class="form-control" id="searchInput" placeholder="Class, subject, teacher...">
+            </div>
+            <div class="d-flex align-items-end">
+                <button class="btn btn-dark" id="printBtn"><i class="bi bi-printer"></i> Print</button>
+            </div>
+            <div class="d-flex align-items-end">
+                <button class="btn btn-success" id="downloadBtn"><i class="bi bi-file-earmark-excel"></i> Download</button>
+            </div>
+        </div>
+
+        <div id="summaryLine" class="mb-3 text-muted small"></div>
+        <div id="freeTeacherBoard"></div>
+        <div id="lectureList"></div>
+    </main>
+
+    <aside class="side right">
+        <div class="panel-title">Saved Statuses</div>
+        <div id="statusList"></div>
+
+        <hr>
+
+        <div class="panel-title">Daily Totals</div>
+        <div class="status-card">
+            <small>Lectures Needing Attention</small>
+            <strong id="totalLectures">0</strong>
+        </div>
+        <div class="status-card">
+            <small>Assigned Proxy</small>
+            <strong id="assignedLectures">0</strong>
+        </div>
+        <div class="status-card">
+            <small>Cancelled</small>
+            <strong id="cancelledLectures">0</strong>
+        </div>
+    </aside>
+</div>
+
+<div class="alert toast-line" id="toastLine"></div>
+
+{{ teachers_json|json_script:"teachersData" }}
+{{ periods_json|json_script:"periodsData" }}
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+let teachers = JSON.parse(document.getElementById("teachersData").textContent);
+let periods = JSON.parse(document.getElementById("periodsData").textContent);
+let currentLectures = [];
+let currentStatuses = [];
+const searchableDropdowns = new WeakMap();
+
+document.addEventListener("DOMContentLoaded", function(){
+    renderTeacherOptions();
+    renderPeriodPicker();
+    bindControls();
+    loadProxyData();
+});
+
+function uniqueTeachingPeriods(){
+    const seen = new Set();
+    return periods.filter(period => {
+        if(!period.is_teaching_period) return false;
+        const key = `${period.period_id}_${period.period_name}`;
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
+function renderTeacherOptions(){
+    const statusSelect = document.getElementById("statusTeacherSelect");
+    const manualSelect = document.getElementById("manualTeacherSelect");
+    const selectedStatusTeacher = statusSelect.value;
+    const selectedManualTeacher = manualSelect.value;
+
+    destroySearchableDropdown(statusSelect);
+    destroySearchableDropdown(manualSelect);
+
+    const html = [`<option value="">Select teacher</option>`]
+        .concat(teachers.map(teacher => `<option value="${teacher.id}">${teacherOptionText(teacher)}</option>`))
+        .join("");
+    statusSelect.innerHTML = html;
+    manualSelect.innerHTML =
+        `<option value="">Show all affected lectures</option>${teachers.map(teacher => `<option value="${teacher.id}">${teacherOptionText(teacher)}</option>`).join("")}`;
+
+    statusSelect.value = selectedStatusTeacher;
+    manualSelect.value = selectedManualTeacher;
+    initSearchableDropdowns(document);
+}
+
+function teacherOptionText(teacher){
+    const load = teacher.day_load ?? 0;
+    const free = teacher.free_periods ?? "-";
+    return `${escapeHtml(teacher.name)} | Load ${load} | Free ${free}`;
+}
+
+function renderPeriodPicker(){
+    const picker = document.getElementById("periodPicker");
+    const items = uniqueTeachingPeriods();
+
+    picker.innerHTML = items.length ? items.map(period => `
+        <label class="period-option">
+            <input type="checkbox" value="${period.period_id}">
+            <span>${escapeHtml(period.period_name)} <small>${escapeHtml(period.start_time)} - ${escapeHtml(period.end_time)}</small></span>
+        </label>
+    `).join("") : `<div class="text-muted small">No teaching periods found.</div>`;
+}
+
+function bindControls(){
+    document.getElementById("refreshBtn").addEventListener("click", loadProxyData);
+    document.getElementById("timetableSelect").addEventListener("change", loadProxyData);
+    document.getElementById("dateInput").addEventListener("change", loadProxyData);
+    document.getElementById("manualTeacherSelect").addEventListener("change", loadProxyData);
+    document.getElementById("searchInput").addEventListener("input", renderLectures);
+    document.getElementById("saveStatusBtn").addEventListener("click", saveTeacherStatus);
+    document.getElementById("clearManualBtn").addEventListener("click", function(){
+        document.getElementById("manualTeacherSelect").value = "";
+        loadProxyData();
+    });
+    document.getElementById("scopeSelect").addEventListener("change", function(){
+        document.getElementById("periodPickerWrap").style.display = this.value === "periods" ? "block" : "none";
+    });
+    document.getElementById("printBtn").addEventListener("click", function(){
+        window.print();
+    });
+    document.getElementById("downloadBtn").addEventListener("click", downloadAdjustedLectures);
+}
+
+function requestUrl(){
+    const params = new URLSearchParams({
+        timetable_id: document.getElementById("timetableSelect").value,
+        date: document.getElementById("dateInput").value,
+    });
+    const manualTeacher = document.getElementById("manualTeacherSelect").value;
+    if(manualTeacher) params.set("teacher_id", manualTeacher);
+    return `/api/proxy-adjustments/?${params.toString()}`;
+}
+
+function loadProxyData(){
+    fetch(requestUrl())
+        .then(response => response.json())
+        .then(data => {
+            if(!data.success){
+                showToast(data.message || "Unable to load proxy data.", "danger");
+                return;
+            }
+
+            currentLectures = data.lectures || [];
+            currentStatuses = data.teacher_statuses || [];
+            periods = data.periods || periods;
+            teachers = data.teachers || teachers;
+
+            renderTeacherOptions();
+            renderPeriodPicker();
+            renderStatuses();
+            renderLectures();
+            renderTotals();
+            document.getElementById("summaryLine").innerText =
+                `${data.day_name}, ${data.date}: ${currentLectures.length} lecture adjustment item(s) loaded.`;
+        })
+        .catch(() => showToast("Proxy adjustment data failed to load.", "danger"));
+}
+
+function saveTeacherStatus(){
+    const teacherId = document.getElementById("statusTeacherSelect").value;
+    if(!teacherId){
+        showToast("Please select a teacher.", "warning");
+        return;
+    }
+
+    const fullDay = document.getElementById("scopeSelect").value === "full";
+    const periodIds = Array.from(document.querySelectorAll("#periodPicker input:checked")).map(item => item.value);
+
+    if(!fullDay && !periodIds.length){
+        showToast("Please select at least one period.", "warning");
+        return;
+    }
+
+    fetch("/api/proxy-adjustments/teacher-status/save/", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            teacher_id: teacherId,
+            date: document.getElementById("dateInput").value,
+            status_type: document.getElementById("statusTypeSelect").value,
+            full_day: fullDay,
+            period_ids: periodIds,
+            reason: document.getElementById("reasonInput").value,
+            notes: document.getElementById("notesInput").value,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showToast(data.message, data.success ? "success" : "danger");
+        if(data.success) loadProxyData();
+    });
+}
+
+function renderStatuses(){
+    const wrap = document.getElementById("statusList");
+
+    if(!currentStatuses.length){
+        wrap.innerHTML = `<div class="empty-card">No teacher marked unavailable for this date.</div>`;
+        return;
+    }
+
+    wrap.innerHTML = currentStatuses.map(status => {
+        const badgeClass = status.status_type === "LEAVE" ? "leave" : "busy";
+        const scope = status.full_day ? "Full day" : `${status.period_ids.length} period(s)`;
+        return `
+            <div class="status-card">
+                <span class="status-badge ${badgeClass}">${escapeHtml(status.status_label)}</span>
+                <strong class="mt-2">${escapeHtml(status.teacher_name)}</strong>
+                <small>${scope}${status.reason ? " - " + escapeHtml(status.reason) : ""}</small>
+                <button class="btn btn-sm btn-outline-danger mt-2 w-100" onclick="deleteTeacherStatus(${status.id})">
+                    <i class="bi bi-trash"></i> Remove Status
+                </button>
+            </div>
+        `;
+    }).join("");
+}
+
+function renderLectures(){
+    const wrap = document.getElementById("lectureList");
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const lectures = currentLectures.filter(lecture => {
+        const haystack = [
+            lecture.class_section,
+            lecture.subject,
+            lecture.original_teacher,
+            lecture.period_name,
+            lecture.adjustment?.proxy_teacher_name || "",
+        ].join(" ").toLowerCase();
+        return haystack.includes(search);
+    });
+
+    renderFreeTeacherBoard(lectures);
+
+    if(!lectures.length){
+        wrap.innerHTML = `<div class="empty-card">No lecture found for the selected date and filter.</div>`;
+        renderTotals();
+        return;
+    }
+
+    wrap.innerHTML = lectures.map(lectureHtml).join("");
+    initSearchableDropdowns(wrap);
+    renderTotals();
+}
+
+function renderFreeTeacherBoard(lectures){
+    const board = document.getElementById("freeTeacherBoard");
+    const teacherMap = new Map();
+
+    lectures
+        .filter(lecture => lecture.adjustment?.status !== "ASSIGNED" && lecture.adjustment?.status !== "CANCELLED")
+        .forEach(lecture => {
+            (lecture.suggestions || []).forEach(suggestion => {
+                if(!teacherMap.has(String(suggestion.id))){
+                    teacherMap.set(String(suggestion.id), {
+                        teacher: suggestion,
+                        lectures: [],
+                    });
+                }
+
+                teacherMap.get(String(suggestion.id)).lectures.push(lecture);
+            });
+        });
+
+    const cards = Array.from(teacherMap.values()).sort((a, b) => {
+        const freeDiff = (b.teacher.free_periods || 0) - (a.teacher.free_periods || 0);
+        if(freeDiff) return freeDiff;
+        return a.teacher.name.localeCompare(b.teacher.name);
+    });
+
+    if(!cards.length){
+        board.innerHTML = `<div class="empty-card mb-3">No free teacher match found for pending lectures.</div>`;
+        return;
+    }
+
+    board.innerHTML = `
+        <div class="panel-title">Free Teacher Quick Assign</div>
+        <div class="free-board">
+            ${cards.map(card => `
+                <div class="free-teacher-card">
+                    <strong>${escapeHtml(card.teacher.name)}</strong>
+                    <small>Load ${card.teacher.day_load} | Free ${card.teacher.free_periods}</small>
+                    ${card.lectures.map(lecture => `
+                        <button class="lecture-chip" onclick="assignSuggested(${lecture.entry_id}, ${card.teacher.id})">
+                            ${escapeHtml(lecture.original_teacher)}<br>
+                            <small>${escapeHtml(lecture.period_name)} | ${escapeHtml(lecture.class_section)}</small>
+                        </button>
+                    `).join("")}
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+function lectureHtml(lecture){
+    const adjustment = lecture.adjustment;
+    const status = adjustment?.status || "PENDING";
+    const statusClass = status === "ASSIGNED" ? "assigned" : status === "CANCELLED" ? "cancelled" : "pending";
+    const assignedText = adjustment?.proxy_teacher_name ? `Proxy: ${escapeHtml(adjustment.proxy_teacher_name)}` : "Proxy not assigned";
+
+    return `
+        <div class="lecture-card">
+            <div class="lecture-head">
+                <div>
+                    <strong>${escapeHtml(lecture.class_section)} - ${escapeHtml(lecture.subject)}</strong>
+                    <small>${escapeHtml(lecture.period_name)} | Original: ${escapeHtml(lecture.original_teacher)}</small>
+                </div>
+                <span class="status-badge ${statusClass}">${status}</span>
+            </div>
+            <div class="lecture-meta">
+                <span class="meta-pill">${escapeHtml(lecture.status_label)}</span>
+                ${lecture.reason ? `<span class="meta-pill">${escapeHtml(lecture.reason)}</span>` : ""}
+                ${lecture.room ? `<span class="meta-pill">Room: ${escapeHtml(lecture.room)}</span>` : ""}
+                <span class="meta-pill">${assignedText}</span>
+            </div>
+            <div class="action-row">
+                <select class="form-select proxy-select" id="proxy_${lecture.entry_id}">
+                    <option value="">Select proxy teacher</option>
+                    ${teachers.filter(teacher => String(teacher.id) !== String(lecture.original_teacher_id)).map(teacher => `<option value="${teacher.id}">${teacherOptionText(teacher)}</option>`).join("")}
+                </select>
+                <button class="btn btn-success" onclick="assignManual(${lecture.entry_id})">
+                    <i class="bi bi-person-check"></i> Assign
+                </button>
+                <button class="btn btn-warning text-white" onclick="cancelLecture(${lecture.entry_id})">
+                    <i class="bi bi-slash-circle"></i> Cancel
+                </button>
+                ${adjustment ? `<button class="btn btn-outline-danger" onclick="deleteAdjustment(${adjustment.id})"><i class="bi bi-trash"></i> Delete</button>` : ""}
+            </div>
+        </div>
+    `;
+}
+
+function assignSuggested(entryId, teacherId){
+    saveAdjustment(entryId, "ASSIGNED", teacherId);
+}
+
+function assignManual(entryId){
+    const teacherId = document.getElementById(`proxy_${entryId}`).value;
+    if(!teacherId){
+        showToast("Please select a proxy teacher.", "warning");
+        return;
+    }
+    saveAdjustment(entryId, "ASSIGNED", teacherId);
+}
+
+function cancelLecture(entryId){
+    saveAdjustment(entryId, "CANCELLED", null);
+}
+
+function saveAdjustment(entryId, status, proxyTeacherId){
+    fetch("/api/proxy-adjustments/lecture/save/", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            entry_id: entryId,
+            date: document.getElementById("dateInput").value,
+            status: status,
+            proxy_teacher_id: proxyTeacherId,
+            reason: document.getElementById("reasonInput").value,
+            admin_note: document.getElementById("notesInput").value,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showToast(data.message, data.success ? "success" : "danger");
+        if(data.success) loadProxyData();
+    });
+}
+
+function downloadAdjustedLectures(){
+    const params = new URLSearchParams({
+        timetable_id: document.getElementById("timetableSelect").value,
+        date: document.getElementById("dateInput").value,
+    });
+    window.location.href = `/api/proxy-adjustments/export/?${params.toString()}`;
+}
+
+function deleteAdjustment(adjustmentId){
+    if(!confirm("Delete this saved lecture adjustment?")) return;
+
+    fetch(`/api/proxy-adjustments/lecture/${adjustmentId}/delete/`, {method:"POST"})
+        .then(response => response.json())
+        .then(data => {
+            showToast(data.message, data.success ? "success" : "danger");
+            if(data.success) loadProxyData();
+        });
+}
+
+function deleteTeacherStatus(statusId){
+    if(!confirm("Remove this teacher status? Saved lecture adjustments will remain unless you delete them separately.")) return;
+
+    fetch(`/api/proxy-adjustments/teacher-status/${statusId}/delete/`, {method:"POST"})
+        .then(response => response.json())
+        .then(data => {
+            showToast(data.message, data.success ? "success" : "danger");
+            if(data.success) loadProxyData();
+        });
+}
+
+function renderTotals(){
+    const visible = currentLectures;
+    document.getElementById("totalLectures").innerText = visible.length;
+    document.getElementById("assignedLectures").innerText = visible.filter(item => item.adjustment?.status === "ASSIGNED").length;
+    document.getElementById("cancelledLectures").innerText = visible.filter(item => item.adjustment?.status === "CANCELLED").length;
+}
+
+function showToast(message, type){
+    const toast = document.getElementById("toastLine");
+    toast.className = `alert toast-line alert-${type || "info"}`;
+    toast.textContent = message || "";
+    toast.style.display = "block";
+    setTimeout(() => toast.style.display = "none", 2600);
+}
+
+function escapeHtml(value){
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function initSearchableDropdowns(root){
+    if(typeof Choices === "undefined") return;
+
+    (root || document).querySelectorAll("select").forEach(select => {
+        if(searchableDropdowns.has(select)) return;
+
+        searchableDropdowns.set(select, new Choices(select, {
+            searchEnabled: true,
+            shouldSort: false,
+            itemSelectText: "",
+            allowHTML: false,
+            placeholder: true,
+            searchPlaceholderValue: "Search..."
+        }));
+    });
+}
+
+function destroySearchableDropdown(select){
+    const instance = searchableDropdowns.get(select);
+    if(!instance) return;
+
+    instance.destroy();
+    searchableDropdowns.delete(select);
+}
+</script>
+</body>
+</html>

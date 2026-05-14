@@ -1,0 +1,2146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Master Timetable Board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+
+<style>
+:root{
+    --primary:#4f46e5;
+    --primary-dark:#3730a3;
+    --success:#10b981;
+    --danger:#ef4444;
+    --warning:#f59e0b;
+    --surface:#fff;
+    --soft-bg:#f8fafc;
+    --border:#e5e7eb;
+    --text:#111827;
+    --muted:#6b7280;
+}
+
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:"Segoe UI",sans-serif;
+    background:#eef2ff;
+    overflow:hidden;
+    color:var(--text);
+}
+
+.topbar{
+    height:74px;
+    background:white;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 22px;
+}
+
+.topbar h2{
+    margin:0;
+    font-size:1.45rem;
+    font-weight:900;
+}
+
+.topbar p{
+    margin:4px 0 0;
+    color:var(--muted);
+    font-size:.9rem;
+}
+
+.main-layout{
+    height:calc(100vh - 74px);
+    display:grid;
+    grid-template-columns:280px 1fr 280px;
+    transition:grid-template-columns .2s ease;
+}
+
+.main-layout.hide-left{
+    grid-template-columns:0 1fr 280px;
+}
+
+.main-layout.hide-right{
+    grid-template-columns:280px 1fr 0;
+}
+
+.main-layout.hide-left.hide-right{
+    grid-template-columns:0 1fr 0;
+}
+
+.left-panel,
+.right-panel{
+    background:white;
+    padding:18px;
+    overflow:auto;
+    border-right:1px solid var(--border);
+    transition:padding .2s ease, opacity .15s ease;
+    min-width:0;
+}
+
+.right-panel{
+    border-right:0;
+    border-left:1px solid var(--border);
+}
+
+.main-layout.hide-left .left-panel,
+.main-layout.hide-right .right-panel{
+    padding:0;
+    opacity:0;
+    overflow:hidden;
+    border:0;
+}
+
+.center-panel{
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+}
+
+.filter-bar {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+}
+
+.filter-bar label{
+    font-weight:800;
+    font-size:.78rem;
+    margin-bottom:5px;
+}
+
+.board-wrapper {
+    flex: 1;
+    overflow: auto;
+    background: #f8fafc;
+    padding: 18px;
+    position: relative;
+}
+
+.timetable-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1400px;
+    background: white;
+    border: 1px solid var(--border);
+}
+
+.timetable-table th,
+.timetable-table td{
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+}
+
+.timetable-table th {
+    background: #f9fafb;
+    padding: 12px;
+    text-align: center;
+    font-weight: 900;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.corner-cell {
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 90 !important;
+    min-width: 210px;
+    background: #eef2ff !important;
+}
+
+.time-cell {
+    position: sticky;
+    left: 0;
+    z-index: 45;
+    background: #ffffff;
+    min-width: 210px;
+    width: 210px;
+    padding: 12px;
+    box-shadow: 4px 0 10px rgba(15, 23, 42, 0.06);
+}
+
+.time-cell strong{
+    display:block;
+    font-size:.9rem;
+}
+
+.time-cell small{
+    color:var(--muted);
+}
+
+.class-header {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    min-width: 220px;
+    width: 220px;
+    background: #f9fafb !important;
+}
+
+.class-header strong{
+    display:block;
+}
+
+.class-header small{
+    color:var(--muted);
+    font-weight:600;
+}
+
+.tt-cell{
+    min-width:220px;
+    width:220px;
+    height:92px;
+    padding:8px;
+    background:white;
+    cursor:pointer;
+    transition:.18s;
+}
+
+.tt-cell:hover{
+    background:#f8fafc;
+}
+
+.tt-cell.valid-cell{
+    background:rgba(16,185,129,.13);
+}
+
+.tt-cell.conflict-cell{
+    background:#dc2626;
+    color:white;
+}
+
+.tt-cell.preview-valid{
+    background:rgba(16,185,129,.22)!important;
+}
+
+.tt-cell.preview-conflict{
+    background:#b91c1c!important;
+    color:white;
+}
+
+.lecture-card{
+    height:100%;
+    min-height:70px;
+    border-radius:12px;
+    padding:9px 34px 9px 9px;
+    background:linear-gradient(135deg,#eef2ff,#fff);
+    border:1px solid #c7d2fe;
+    cursor:grab;
+    position:relative;
+}
+
+.lecture-card.locked{
+    background:linear-gradient(135deg,#fef3c7,#fff);
+    border-color:#f59e0b;
+    cursor:not-allowed;
+}
+
+.lecture-card strong{
+    display:block;
+    font-size:.88rem;
+}
+
+.lecture-card span{
+    display:block;
+    color:var(--primary);
+    font-size:.78rem;
+    margin-top:2px;
+}
+
+.lecture-card small{
+    color:var(--muted);
+    font-size:.72rem;
+}
+
+.lock-lecture{
+    position:absolute;
+    top:6px;
+    right:6px;
+    width:24px;
+    height:24px;
+    border:0;
+    border-radius:8px;
+    background:#eef2ff;
+    color:#3730a3;
+}
+
+.lecture-card.locked .lock-lecture{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.panel-title{
+    font-weight:900;
+    margin-bottom:12px;
+}
+
+.teacher-item{
+    border:1px solid var(--border);
+    background:#f8fafc;
+    border-radius:12px;
+    padding:11px;
+    margin-bottom:8px;
+    cursor:grab;
+}
+
+.teacher-item:hover{
+    background:#eef2ff;
+    border-color:var(--primary);
+}
+
+.status-box{
+    color:white;
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:12px;
+}
+
+.status-box h3{
+    margin:0;
+    font-weight:900;
+}
+
+.status-box p{
+    margin:0;
+}
+
+.danger-box{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.warning-box{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.success-box{background:linear-gradient(135deg,#10b981,#059669)}
+
+.conflict-panel{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.conflict-card{
+    border:1px solid #fecaca;
+    background:#fff1f2;
+    color:var(--text);
+    border-radius:8px;
+    padding:10px;
+}
+
+.conflict-card.room{
+    border-color:#fed7aa;
+    background:#fff7ed;
+}
+
+.conflict-card strong{
+    display:block;
+    font-size:.84rem;
+    margin-bottom:4px;
+    color:var(--text);
+}
+
+.conflict-card .meta{
+    color:#374151;
+    font-size:.76rem;
+    line-height:1.4;
+}
+
+.conflict-card .badge{
+    font-size:.68rem;
+    margin-bottom:6px;
+}
+
+.conflict-empty{
+    border:1px dashed var(--border);
+    border-radius:8px;
+    padding:12px;
+    background:#f8fafc;
+    color:var(--muted);
+}
+
+.progress-panel{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-height:260px;
+    overflow:auto;
+}
+
+.allocation-card{
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:#f8fafc;
+    padding:9px;
+}
+
+.allocation-card.done{
+    border-color:#a7f3d0;
+    background:#ecfdf5;
+}
+
+.allocation-card.over{
+    border-color:#fecaca;
+    background:#fff1f2;
+}
+
+.allocation-card strong{
+    display:block;
+    font-size:.8rem;
+}
+
+.allocation-card small{
+    color:var(--muted);
+    font-size:.72rem;
+}
+
+.allocation-meter{
+    height:6px;
+    background:#e5e7eb;
+    border-radius:999px;
+    margin-top:7px;
+    overflow:hidden;
+}
+
+.allocation-meter span{
+    display:block;
+    height:100%;
+    background:#4f46e5;
+}
+
+.allocation-card.done .allocation-meter span{
+    background:#10b981;
+}
+
+.allocation-card.over .allocation-meter span{
+    background:#ef4444;
+}
+
+.select-option-card{
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:10px;
+    margin-bottom:8px;
+    cursor:pointer;
+}
+
+.select-option-card:hover,
+.select-option-card.active{
+    background:#eef2ff;
+    border-color:var(--primary);
+}
+
+.modal-select-list{
+    max-height:250px;
+    overflow:auto;
+}
+
+.zoom-bar{
+    display:flex;
+    gap:6px;
+    align-items:center;
+}
+
+.panel-toggle{
+    position:absolute;
+    top:88px;
+    z-index:120;
+    border:1px solid var(--border);
+    background:white;
+    color:#1f2937;
+    box-shadow:0 8px 18px rgba(15,23,42,.12);
+    width:38px;
+    height:38px;
+    border-radius:999px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.panel-toggle.left{
+    left:10px;
+}
+
+.panel-toggle.right{
+    right:10px;
+}
+
+.panel-toggle:hover{
+    background:#eef2ff;
+    color:var(--primary-dark);
+}
+
+.help-fab{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:150;
+    width:48px;
+    height:48px;
+    border-radius:999px;
+    border:0;
+    background:#111827;
+    color:white;
+    box-shadow:0 14px 32px rgba(15,23,42,.28);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.25rem;
+}
+
+.shortcut-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:10px;
+}
+
+.shortcut-item{
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px;
+    background:#f8fafc;
+}
+
+.shortcut-item kbd{
+    background:#111827;
+    color:white;
+    border-radius:6px;
+    padding:3px 7px;
+    font-size:.75rem;
+}
+
+@media(max-width:1200px){
+    .main-layout{
+        grid-template-columns:240px 1fr 240px;
+    }
+    .main-layout.hide-left{
+        grid-template-columns:0 1fr 240px;
+    }
+    .main-layout.hide-right{
+        grid-template-columns:240px 1fr 0;
+    }
+    .main-layout.hide-left.hide-right{
+        grid-template-columns:0 1fr 0;
+    }
+    .filter-bar{
+        grid-template-columns:repeat(2,1fr);
+    }
+}
+
+
+
+
+
+.teacher-highlight {
+    background:#1e3a8a !important;
+    outline:3px solid #0f172a;
+    color:white;
+}
+
+.teacher-highlight .lecture-card {
+    background:linear-gradient(135deg,#1e40af,#1d4ed8);
+    border-color:#93c5fd;
+    color:white;
+}
+
+.teacher-highlight .lecture-card span,
+.teacher-highlight .lecture-card small,
+.teacher-highlight .lecture-card strong {
+    color:white;
+}
+
+.break-row .time-cell,
+.break-cell{
+    background:#fff7ed;
+}
+
+.break-cell{
+    color:#9a3412;
+    font-weight:900;
+    text-align:center;
+    letter-spacing:0;
+    padding:14px;
+}
+
+.break-cell small{
+    color:#c2410c;
+    font-weight:700;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <div>
+        <h2>Master Timetable Board</h2>
+        <p>All classes and divisions in proper table row-column format.</p>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap"> 
+        <button class="btn btn-light border" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+        <button class="btn btn-warning text-white" id="autoFillBtn"><i class="bi bi-stars"></i> Auto Fill</button>
+        <button class="btn btn-info text-white" id="smartAllocateBtn"><i class="bi bi-magic"></i> Smart Allocate</button>
+        <button class="btn btn-light border" id="zoomOutBtn"><i class="bi bi-zoom-out"></i></button>
+        <button class="btn btn-light border" id="zoomResetBtn">100%</button>
+        <button class="btn btn-light border" id="zoomInBtn"><i class="bi bi-zoom-in"></i></button>
+        <button class="btn btn-primary" id="addTimetableBtn"><i class="bi bi-plus-circle"></i> Add Timetable</button>
+        <div class="btn-group">
+            <button class="btn btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-layout-three-columns"></i> Classic Matrix
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><button class="dropdown-item" type="button" onclick="switchBuilderTemplate(event, '{% url 'timetable_builder' %}')">Classic Matrix</button></li>
+                <li><button class="dropdown-item" type="button" onclick="switchBuilderTemplate(event, '{% url 'timetable_builder_template_2' %}')">Day Planner Cards</button></li>
+                <li><button class="dropdown-item" type="button" onclick="switchBuilderTemplate(event, '{% url 'timetable_builder_template_3' %}')">Class Wise Template</button></li>
+            </ul>
+        </div>
+        <a class="btn btn-light border" href="{% url 'proxy_adjustment_panel' %}"><i class="bi bi-person-lines-fill"></i> Proxy Adjustment</a>
+        <button class="btn btn-danger" id="deleteTimetableBtn"><i class="bi bi-trash"></i> Clear</button>
+        <div class="btn-group">
+            <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-download"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><button class="dropdown-item export-option" type="button" data-scope="class" data-format="xlsx"><i class="bi bi-file-earmark-excel"></i> Class wise Excel</button></li>
+                <li><button class="dropdown-item export-option" type="button" data-scope="class" data-format="pdf"><i class="bi bi-file-earmark-pdf"></i> Class wise PDF</button></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><button class="dropdown-item export-option" type="button" data-scope="teacher" data-format="xlsx"><i class="bi bi-file-earmark-excel"></i> Teacher wise Excel</button></li>
+                <li><button class="dropdown-item export-option" type="button" data-scope="teacher" data-format="pdf"><i class="bi bi-file-earmark-pdf"></i> Teacher wise PDF</button></li>
+            </ul>
+        </div>
+        <button class="btn btn-success" id="saveBtn"><i class="bi bi-save"></i> Save</button>
+    </div>
+</div>
+
+<button class="panel-toggle left" id="toggleTeacherPanel" type="button" title="Hide Teacher Pool">
+    <i class="bi bi-layout-sidebar-inset"></i>
+</button>
+<button class="panel-toggle right" id="toggleStatusPanel" type="button" title="Hide Live Status">
+    <i class="bi bi-layout-sidebar-inset-reverse"></i>
+</button>
+
+<div class="main-layout" id="mainLayout">
+
+    <aside class="left-panel">
+        <h5 class="panel-title">Teacher Pool</h5>
+        <input type="text" id="teacherSearch" class="form-control mb-3" placeholder="Search teacher...">
+        <div id="teacherPool"></div>
+    </aside>
+
+    <main class="center-panel">
+
+        <div class="filter-bar">
+            <div>
+                <label>Academic Year</label>
+                <select class="form-select" id="academicYearSelect">
+                    <option value="">Select Academic Year</option>
+                    {% for year in academic_years %}
+                    <option value="{{ year.id }}" {% if selected_academic_year_id|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>
+                        {{ year.name }} - {{ year.school.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Timetable</label>
+                <select class="form-select" id="timetableSelect">
+                    <option value="">Select Timetable</option>
+                    {% for timetable in timetables %}
+                    <option value="{{ timetable.id }}" {% if selected_timetable_id|stringformat:"s" == timetable.id|stringformat:"s" %}selected{% endif %}>
+                        {{ timetable.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Board View</label>
+                <select class="form-select" id="boardFilter">
+                    <option value="ALL">All Classes</option>
+                    <option value="PRIMARY">Primary</option>
+                    <option value="SECONDARY">Secondary</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Search Class</label>
+                <input type="text" id="classSearch" class="form-control" placeholder="Search class/division...">
+            </div>
+            <div>
+            <label>Search Teacher in Timetable</label>
+                <input type="text" id="timetableTeacherSearch" class="form-control" placeholder="Search teacher allocation...">
+            </div>
+        </div>
+
+        <div class="board-wrapper" id="boardWrapper">
+            <div id="zoomArea">
+                <table class="timetable-table" id="timetableTable"></table>
+            </div>
+        </div>
+
+    </main>
+
+    <aside class="right-panel">
+        <h5 class="panel-title">Live Status</h5>
+
+        <div class="status-box danger-box">
+            <h3 id="teacherConflictCount">0</h3>
+            <p>Teacher Conflicts</p>
+        </div>
+
+        <div class="status-box warning-box">
+            <h3 id="roomConflictCount">0</h3>
+            <p>Room Conflicts</p>
+        </div>
+
+        <div class="status-box success-box">
+            <h3 id="assignedCount">0</h3>
+            <p>Assigned Lectures</p>
+        </div>
+
+        <hr>
+
+        <h6 class="fw-bold">Conflict Hints</h6>
+        <div id="conflictHints" class="small text-muted">No conflicts yet.</div>
+
+        <hr>
+
+        <h6 class="fw-bold">Allocation Progress</h6>
+        <div id="allocationProgress" class="progress-panel small text-muted">No allocations yet.</div>
+    </aside>
+
+</div>
+
+<button class="help-fab" id="helpBtn" type="button" title="Shortcut keys">
+    <i class="bi bi-question-lg"></i>
+</button>
+
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Assign Lecture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Teacher</label>
+                        <input type="text" class="form-control mb-2" id="modalTeacherSearch" placeholder="Search teacher...">
+                        <div class="modal-select-list" id="teacherSelectList"></div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Subject</label>
+                        <input type="text" class="form-control mb-2" id="modalSubjectSearch" placeholder="Search subject...">
+                        <div class="modal-select-list" id="subjectSelectList"></div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Room</label>
+                        <input type="text" class="form-control mb-2" id="modalRoomSearch" placeholder="Search room...">
+                        <div class="modal-select-list" id="roomSelectList"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" id="assignLectureBtn">
+                    <i class="bi bi-check-circle"></i> Assign Lecture
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="shortcutModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Shortcut Keys</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcut-grid">
+                    <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>S</kbd><br><small>Save timetable</small></div>
+                    <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>Z</kbd><br><small>Undo last action</small></div>
+                    <div class="shortcut-item"><kbd>A</kbd><br><small>Auto fill class teacher first periods</small></div>
+                    <div class="shortcut-item"><kbd>M</kbd><br><small>Smart allocate timetable</small></div>
+                    <div class="shortcut-item"><kbd>+</kbd> / <kbd>-</kbd><br><small>Zoom in or out</small></div>
+                    <div class="shortcut-item"><kbd>0</kbd><br><small>Reset zoom</small></div>
+                    <div class="shortcut-item"><kbd>T</kbd><br><small>Show or hide Teacher Pool</small></div>
+                    <div class="shortcut-item"><kbd>L</kbd><br><small>Show or hide Live Status</small></div>
+                    <div class="shortcut-item"><kbd>?</kbd><br><small>Open this help panel</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ class_sections_json|json_script:"classSectionsData" }}
+{{ teachers_json|json_script:"teachersData" }}
+{{ subjects_json|json_script:"subjectsData" }}
+{{ rooms_json|json_script:"roomsData" }}
+{{ periods_json|json_script:"periodsData" }}
+{{ lesson_allocations_json|json_script:"lessonAllocationsData" }}
+{{ teacher_availability_json|json_script:"teacherAvailabilityData" }}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+function initSearchableDropdowns(root){
+    if(typeof Choices === "undefined") return;
+
+    (root || document).querySelectorAll("select").forEach(select => {
+        if(select.dataset.searchReady === "true") return;
+
+        new Choices(select, {
+            searchEnabled: true,
+            shouldSort: false,
+            itemSelectText: "",
+            allowHTML: false,
+            placeholder: true,
+            searchPlaceholderValue: "Search..."
+        });
+
+        select.dataset.searchReady = "true";
+    });
+}
+
+const classSections = JSON.parse(document.getElementById("classSectionsData").textContent);
+const teachers = JSON.parse(document.getElementById("teachersData").textContent);
+const subjects = JSON.parse(document.getElementById("subjectsData").textContent);
+const rooms = JSON.parse(document.getElementById("roomsData").textContent);
+const periods = JSON.parse(document.getElementById("periodsData").textContent);
+const lessonAllocations = JSON.parse(document.getElementById("lessonAllocationsData").textContent);
+const teacherAvailability = JSON.parse(document.getElementById("teacherAvailabilityData").textContent);
+
+let timetableState = {};
+let undoStack = [];
+let activeCellKey = null;
+let selectedTeacher = null;
+let selectedSubject = null;
+let selectedRoom = null;
+let assignModal = null;
+let shortcutModal = null;
+let boardZoom = 1;
+let teacherPanelHidden = false;
+let statusPanelHidden = false;
+
+document.addEventListener("DOMContentLoaded", function(){
+    assignModal = new bootstrap.Modal(document.getElementById("assignModal"));
+    shortcutModal = new bootstrap.Modal(document.getElementById("shortcutModal"));
+
+    autoSelectFirstTimetable();
+    initSearchableDropdowns(document);
+    renderTeacherPool();
+    renderTable();
+    renderSelectLists();
+    bindControls();
+
+    if (document.getElementById("timetableSelect").value) {
+        loadDatabaseTimetable();
+    } else {
+        loadLocalTimetable();
+        renderTable();
+        refreshAll();
+    }
+});
+
+function autoSelectFirstTimetable() {
+    const select = document.getElementById("timetableSelect");
+
+    if (!select.value && select.options.length > 1) {
+        select.selectedIndex = 1;
+    }
+}
+
+function cellKey(classId, dayId, periodId){
+    return `${classId}_${dayId}_${periodId}`;
+}
+
+function periodRowKey(period){
+    return `${period.day_name}_${period.period_id}`;
+}
+
+function saveUndo(){
+    undoStack.push(JSON.stringify(timetableState));
+    if(undoStack.length > 50) undoStack.shift();
+}
+
+function currentBuilderUrl(params = {}){
+    const url = new URL(window.location.href);
+
+    Object.keys(params).forEach(key => {
+        const value = params[key];
+
+        if(value){
+            url.searchParams.set(key, value);
+        }else{
+            url.searchParams.delete(key);
+        }
+    });
+
+    return url.toString();
+}
+
+function switchBuilderTemplate(event, targetPath){
+    event.preventDefault();
+
+    const url = new URL(targetPath, window.location.origin);
+    const academicYearId = document.getElementById("academicYearSelect")?.value || "";
+    const timetableId = document.getElementById("timetableSelect")?.value || "";
+
+    if(academicYearId) url.searchParams.set("academic_year_id", academicYearId);
+    if(timetableId) url.searchParams.set("timetable_id", timetableId);
+
+    window.location.href = url.toString();
+}
+
+function getVisibleClasses(){
+    const search = document.getElementById("classSearch").value.toLowerCase();
+    const filter = document.getElementById("boardFilter").value;
+
+    return classSections.filter(section => {
+        const searchMatch = section.name.toLowerCase().includes(search);
+        const typeMatch = filter === "ALL" || section.section_type === filter;
+        return searchMatch && typeMatch;
+    });
+}
+
+function getUniquePeriods(){
+    const map = new Map();
+
+    periods.forEach(p => {
+        const key = `${p.day_name}_${p.period_name}_${p.period_id}`;
+        if(!map.has(key)){
+            map.set(key, p);
+        }
+    });
+
+    return Array.from(map.values());
+}
+
+function getTeachingPeriods(){
+    return periods.filter(period => period.is_teaching_period);
+}
+
+function getFirstTeachingPeriod(dayName){
+    return getTeachingPeriods().find(period => period.day_name === dayName) || getTeachingPeriods()[0] || null;
+}
+
+function getFirstTeachingPeriodsByDay(){
+    const firstPeriods = new Map();
+
+    getTeachingPeriods().forEach(period => {
+        if(!firstPeriods.has(String(period.day_id))){
+            firstPeriods.set(String(period.day_id), period);
+        }
+    });
+
+    return Array.from(firstPeriods.values());
+}
+
+function isRenderableEntryKey(key){
+    const [classId, dayId, periodId] = key.split("_");
+    const sectionExists = classSections.some(section => String(section.id) === String(classId));
+    const periodExists = getTeachingPeriods().some(period =>
+        String(period.day_id) === String(dayId) &&
+        String(period.period_id) === String(periodId)
+    );
+
+    return sectionExists && periodExists;
+}
+
+function normalizeTimetableState(entries){
+    const normalized = {};
+
+    Object.keys(entries || {}).forEach(key => {
+        if (isRenderableEntryKey(key)) {
+            normalized[key] = entries[key];
+        }
+    });
+
+    return normalized;
+}
+
+function renderTable(){
+    const table = document.getElementById("timetableTable");
+    const visibleClasses = getVisibleClasses();
+    const visiblePeriods = getUniquePeriods();
+
+    let html = `
+        <thead>
+            <tr>
+                <th class="corner-cell">Day / Period</th>
+    `;
+
+    visibleClasses.forEach(section => {
+        html += `
+            <th class="class-header">
+                <strong>${section.name}</strong>
+                <small>${section.class_teacher_name || "No Class Teacher"}</small>
+            </th>
+        `;
+    });
+
+    html += `</tr></thead><tbody>`;
+
+    visiblePeriods.forEach(period => {
+        if(!period.is_teaching_period){
+            html += `
+                <tr class="break-row">
+                    <td class="time-cell">
+                        <strong>${period.day_name}</strong>
+                        <small>${period.period_name}</small>
+                    </td>
+                    <td class="break-cell" colspan="${visibleClasses.length}">
+                        ${period.period_name}
+                        <small>${period.start_time || ""}${period.end_time ? " - " + period.end_time : ""}</small>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        html += `
+            <tr>
+                <td class="time-cell">
+                    <strong>${period.day_name}</strong>
+                    <small>${period.period_name}</small>
+                </td>
+        `;
+
+        visibleClasses.forEach(section => {
+            const key = cellKey(section.id, period.day_id, period.period_id);
+            const lecture = timetableState[key];
+
+            html += `
+                <td class="tt-cell"
+                    data-key="${key}"
+                    data-class-id="${section.id}"
+                    data-class-name="${section.name}"
+                    data-day-id="${period.day_id}"
+                    data-day-name="${period.day_name}"
+                    data-period-id="${period.period_id}"
+                    data-period-name="${period.period_name}"
+                    title="Click to assign lecture">
+                    ${lecture ? lectureCardHtml(lecture) : ""}
+                </td>
+            `;
+        });
+
+        html += `</tr>`;
+    });
+
+    html += `</tbody>`;
+    table.innerHTML = html;
+
+    bindTableCells();
+    applyZoom();
+    validateAllCells();
+}
+
+function lectureCardHtml(lecture){
+    const locked = lecture.is_locked ? "locked" : "";
+    const lockIcon = lecture.is_locked ? "bi-lock-fill" : "bi-unlock";
+
+    return `
+        <div class="lecture-card ${locked}"
+             draggable="${lecture.is_locked ? "false" : "true"}"
+             data-teacher-id="${lecture.teacher_id || ""}"
+             data-subject-id="${lecture.subject_id || ""}"
+             data-room-id="${lecture.room_id || ""}">
+            <button class="lock-lecture" title="${lecture.is_locked ? "Unlock lecture" : "Lock lecture"}" type="button">
+                <i class="bi ${lockIcon}"></i>
+            </button>
+            <strong>${lecture.subject_name || "Subject"}</strong>
+            <span>${lecture.teacher_name || "Teacher"}</span>
+            <small>${lecture.room_name || "No room"}</small>
+        </div>
+    `;
+}
+
+function bindTableCells(){
+    document.querySelectorAll(".tt-cell").forEach(cell => {
+
+        cell.addEventListener("click", function(e){
+            if(e.target.closest(".lecture-card")) return;
+            openAssignModal(cell.dataset.key);
+        });
+
+        cell.addEventListener("dragover", function(e){
+            e.preventDefault();
+
+            let lecture = null;
+
+            const fromKey = e.dataTransfer.getData("from_key");
+            const teacherId = e.dataTransfer.getData("teacher_id");
+
+            if(fromKey && timetableState[fromKey]){
+                lecture = timetableState[fromKey];
+            }
+
+            if(teacherId){
+                const teacher = teachers.find(t => String(t.id) === String(teacherId));
+                const subject = subjects[0];
+
+                if(teacher && subject){
+                    lecture = {
+                        teacher_id: teacher.id,
+                        teacher_name: teacher.name,
+                        subject_id: subject.id,
+                        subject_name: subject.name,
+                        room_id: null,
+                        room_name: "",
+                    };
+                }
+            }
+
+            previewCell(cell, lecture);
+        });
+
+        cell.addEventListener("dragleave", function(){
+            validateAllCells();
+        });
+
+        cell.addEventListener("drop", function(e){
+            e.preventDefault();
+
+            saveUndo();
+
+            const toKey = cell.dataset.key;
+            const fromKey = e.dataTransfer.getData("from_key");
+            const teacherId = e.dataTransfer.getData("teacher_id");
+
+            if(fromKey && timetableState[fromKey]){
+                if(timetableState[fromKey].is_locked || timetableState[toKey]?.is_locked){
+                    alert("Locked lectures cannot be moved or replaced.");
+                    return;
+                }
+
+                timetableState[toKey] = timetableState[fromKey];
+                delete timetableState[fromKey];
+            }
+
+            if(teacherId){
+                const teacher = teachers.find(t => String(t.id) === String(teacherId));
+                const subject = subjects[0];
+
+                if(teacher && subject){
+                    if(timetableState[toKey]?.is_locked){
+                        alert("This lecture is locked. Unlock it before replacing.");
+                        return;
+                    }
+
+                    timetableState[toKey] = {
+                        teacher_id: teacher.id,
+                        teacher_name: teacher.name,
+                        subject_id: subject.id,
+                        subject_name: subject.name,
+                        room_id: null,
+                        room_name: "",
+                    };
+                }
+            }
+
+            renderTable();
+            refreshAll();
+        });
+    });
+
+    document.querySelectorAll(".lecture-card").forEach(card => {
+        card.addEventListener("dragstart", function(e){
+            const cell = card.closest(".tt-cell");
+
+            if(timetableState[cell.dataset.key]?.is_locked){
+                e.preventDefault();
+                return;
+            }
+
+            e.dataTransfer.setData("from_key", cell.dataset.key);
+        });
+
+        card.querySelector(".lock-lecture").addEventListener("click", function(e){
+            e.stopPropagation();
+            saveUndo();
+
+            const cell = card.closest(".tt-cell");
+            const lecture = timetableState[cell.dataset.key];
+
+            if(!lecture) return;
+
+            lecture.is_locked = !lecture.is_locked;
+            renderTable();
+            refreshAll();
+        });
+
+        card.addEventListener("dblclick", function(e){
+            e.stopPropagation();
+            const cell = card.closest(".tt-cell");
+
+            if(timetableState[cell.dataset.key]?.is_locked){
+                alert("This lecture is locked. Unlock it before removing.");
+                return;
+            }
+
+            if(confirm("Remove this lecture?")){
+                saveUndo();
+                delete timetableState[cell.dataset.key];
+                renderTable();
+                refreshAll();
+            }
+        });
+    });
+}
+
+function renderTeacherPool(){
+    const wrapper = document.getElementById("teacherPool");
+    const search = document.getElementById("teacherSearch").value.toLowerCase();
+
+    wrapper.innerHTML = "";
+
+    teachers.filter(t => t.name.toLowerCase().includes(search)).forEach(teacher => {
+        const item = document.createElement("div");
+        item.className = "teacher-item";
+        item.draggable = true;
+        item.dataset.teacherId = teacher.id;
+
+        item.innerHTML = `
+            <strong>${teacher.name}</strong><br>
+            <small>${teacher.department || "No department"}</small>
+        `;
+
+        item.addEventListener("dragstart", function(e){
+            e.dataTransfer.setData("teacher_id", teacher.id);
+        });
+
+        item.addEventListener("click", function(){
+            openTeacherTimetableWindow(teacher.id);
+        });
+
+        wrapper.appendChild(item);
+    });
+}
+
+function openTeacherTimetableWindow(teacherId){
+    const timetableId = document.getElementById("timetableSelect").value;
+
+    if(!timetableId){
+        alert("Please select or create a timetable first.");
+        return;
+    }
+
+    window.open(
+        `/teacher-timetable/${teacherId}/?timetable_id=${timetableId}`,
+        `teacher_timetable_${teacherId}_${timetableId}`,
+        "width=1400,height=850,scrollbars=yes,resizable=yes"
+    );
+}
+
+function openAssignModal(key){
+    activeCellKey = key;
+    selectedTeacher = null;
+    selectedSubject = null;
+    selectedRoom = null;
+
+    document.querySelectorAll(".select-option-card").forEach(x => x.classList.remove("active"));
+    assignModal.show();
+}
+
+function renderSelectLists(){
+    renderTeacherSelectList();
+    renderSubjectSelectList();
+    renderRoomSelectList();
+}
+
+function renderTeacherSelectList(){
+    const wrapper = document.getElementById("teacherSelectList");
+    const search = document.getElementById("modalTeacherSearch").value.toLowerCase();
+    wrapper.innerHTML = "";
+
+    teachers.filter(t => t.name.toLowerCase().includes(search)).forEach(t => {
+        const div = document.createElement("div");
+        div.className = "select-option-card";
+        div.innerHTML = `<strong>${t.name}</strong><br><small>${t.department || ""}</small>`;
+        div.onclick = () => { selectedTeacher = t; markActive(div); };
+        wrapper.appendChild(div);
+    });
+}
+
+function renderSubjectSelectList(){
+    const wrapper = document.getElementById("subjectSelectList");
+    const search = document.getElementById("modalSubjectSearch").value.toLowerCase();
+    wrapper.innerHTML = "";
+
+    subjects.filter(s => s.name.toLowerCase().includes(search)).forEach(s => {
+        const div = document.createElement("div");
+        div.className = "select-option-card";
+        div.innerHTML = `<strong>${s.name}</strong><br><small>${s.subject_type}</small>`;
+        div.onclick = () => { selectedSubject = s; markActive(div); };
+        wrapper.appendChild(div);
+    });
+}
+
+function renderRoomSelectList(){
+    const wrapper = document.getElementById("roomSelectList");
+    const search = document.getElementById("modalRoomSearch").value.toLowerCase();
+    wrapper.innerHTML = "";
+
+    rooms.filter(r => r.name.toLowerCase().includes(search)).forEach(r => {
+        const div = document.createElement("div");
+        div.className = "select-option-card";
+        div.innerHTML = `<strong>${r.name}</strong><br><small>${r.room_type}</small>`;
+        div.onclick = () => { selectedRoom = r; markActive(div); };
+        wrapper.appendChild(div);
+    });
+}
+
+function markActive(el){
+    el.parentElement.querySelectorAll(".select-option-card").forEach(x => x.classList.remove("active"));
+    el.classList.add("active");
+}
+
+function assignLectureToActiveCell(){
+    if(!activeCellKey) return;
+
+    if(!selectedTeacher || !selectedSubject){
+        alert("Please select teacher and subject.");
+        return;
+    }
+
+    saveUndo();
+
+    timetableState[activeCellKey] = {
+        teacher_id: selectedTeacher.id,
+        teacher_name: selectedTeacher.name,
+        subject_id: selectedSubject.id,
+        subject_name: selectedSubject.name,
+        room_id: selectedRoom ? selectedRoom.id : null,
+        room_name: selectedRoom ? selectedRoom.name : "",
+        is_locked: timetableState[activeCellKey]?.is_locked || false,
+    };
+
+    assignModal.hide();
+    renderTable();
+    refreshAll();
+}
+
+function previewCell(cell, lecture){
+    if(!lecture) return;
+
+    document.querySelectorAll(".tt-cell").forEach(c => {
+        c.classList.remove("preview-valid", "preview-conflict");
+    });
+
+    const conflict = checkConflict(cell.dataset.key, lecture);
+
+    if(conflict.hasConflict){
+        cell.classList.add("preview-conflict");
+        cell.title = conflict.message;
+    }else{
+        cell.classList.add("preview-valid");
+        cell.title = "No conflict. Drop here.";
+    }
+}
+
+function checkConflict(targetKey, lecture){
+    const [classId, dayId, periodId] = targetKey.split("_");
+    const targetClass = classSections.find(section => String(section.id) === String(classId));
+    const targetPeriod = periods.find(period =>
+        String(period.day_id) === String(dayId) &&
+        String(period.period_id) === String(periodId)
+    );
+    let conflicts = [];
+
+    Object.keys(timetableState).forEach(key => {
+        if(key === targetKey) return;
+
+        const [otherClassId, otherDayId, otherPeriodId] = key.split("_");
+        const other = timetableState[key];
+        const otherClass = classSections.find(section => String(section.id) === String(otherClassId));
+
+        if(String(dayId) === String(otherDayId) && String(periodId) === String(otherPeriodId)){
+            if(String(other.teacher_id) === String(lecture.teacher_id)){
+                conflicts.push({
+                    type: "teacher",
+                    title: `${lecture.teacher_name || "Teacher"} is double-booked`,
+                    issue: "Same teacher is assigned to two classes at the same time.",
+                    targetClass: targetClass?.name || `Class ${classId}`,
+                    otherClass: otherClass?.name || `Class ${otherClassId}`,
+                    dayName: targetPeriod?.day_name || "",
+                    periodName: targetPeriod?.period_name || "",
+                    subjectName: lecture.subject_name || "Subject",
+                    otherSubjectName: other.subject_name || "Subject",
+                });
+            }
+
+            if(lecture.room_id && other.room_id && String(other.room_id) === String(lecture.room_id)){
+                conflicts.push({
+                    type: "room",
+                    title: `${lecture.room_name || "Room"} is already booked`,
+                    issue: "Same room is assigned to two classes at the same time.",
+                    targetClass: targetClass?.name || `Class ${classId}`,
+                    otherClass: otherClass?.name || `Class ${otherClassId}`,
+                    dayName: targetPeriod?.day_name || "",
+                    periodName: targetPeriod?.period_name || "",
+                    subjectName: lecture.subject_name || "Subject",
+                    otherSubjectName: other.subject_name || "Subject",
+                });
+            }
+        }
+    });
+
+    const message = conflicts.map(conflict => conflict.title).join(" | ");
+
+    return {
+        hasConflict: conflicts.length > 0,
+        message,
+        conflicts,
+    };
+}
+
+function conflictHintHtml(conflict){
+    const badgeClass = conflict.type === "teacher" ? "bg-danger" : "bg-warning text-dark";
+    const cardClass = conflict.type === "teacher" ? "conflict-card" : "conflict-card room";
+    const label = conflict.type === "teacher" ? "Teacher Conflict" : "Room Conflict";
+
+    return `
+        <div class="${cardClass}">
+            <span class="badge ${badgeClass}">${label}</span>
+            <strong>${conflict.title}</strong>
+            <div class="meta">
+                <div><b>When:</b> ${conflict.dayName} - ${conflict.periodName}</div>
+                <div><b>Issue:</b> ${conflict.issue}</div>
+                <div><b>Current:</b> ${conflict.targetClass} - ${conflict.subjectName}</div>
+                <div><b>Also assigned:</b> ${conflict.otherClass} - ${conflict.otherSubjectName}</div>
+            </div>
+        </div>
+    `;
+}
+
+function validateAllCells(){
+    let teacherConflicts = 0;
+    let roomConflicts = 0;
+    let hints = [];
+    let hintKeys = new Set();
+
+    document.querySelectorAll(".tt-cell").forEach(cell => {
+        cell.classList.remove("valid-cell", "conflict-cell", "preview-valid", "preview-conflict");
+        cell.title = "Click to assign lecture";
+    });
+
+    Object.keys(timetableState).forEach(key => {
+        const cell = document.querySelector(`[data-key="${key}"]`);
+        if(!cell) return;
+
+        const lecture = timetableState[key];
+        const conflict = checkConflict(key, lecture);
+
+        if(conflict.hasConflict){
+            cell.classList.add("conflict-cell");
+            cell.title = conflict.message;
+
+            conflict.conflicts.forEach(item => {
+                const classes = [item.targetClass, item.otherClass].sort().join("|");
+                const hintKey = `${item.type}|${item.dayName}|${item.periodName}|${classes}|${item.title}`;
+
+                if(hintKeys.has(hintKey)) return;
+
+                hintKeys.add(hintKey);
+                hints.push(item);
+
+                if(item.type === "teacher") teacherConflicts++;
+                if(item.type === "room") roomConflicts++;
+            });
+        }else{
+            cell.classList.add("valid-cell");
+            cell.title = "No conflict detected";
+        }
+    });
+
+    document.getElementById("teacherConflictCount").innerText = teacherConflicts;
+    document.getElementById("roomConflictCount").innerText = roomConflicts;
+    document.getElementById("conflictHints").innerHTML =
+        hints.length
+            ? `<div class="conflict-panel">${hints.map(conflictHintHtml).join("")}</div>`
+            : `<div class="conflict-empty">No conflicts yet.</div>`;
+}
+
+function refreshAll(){
+    validateAllCells();
+    highlightTeacherInTimetable();
+    renderAllocationProgress();
+    document.getElementById("assignedCount").innerText = Object.keys(timetableState).filter(isRenderableEntryKey).length;
+}
+
+function renderAllocationProgress(){
+    const wrapper = document.getElementById("allocationProgress");
+
+    if(!lessonAllocations.length){
+        wrapper.innerHTML = `<div class="conflict-empty">No lesson allocations found.</div>`;
+        return;
+    }
+
+    const html = lessonAllocations.map(allocation => {
+        const placed = Object.keys(timetableState).filter(key => {
+            const [classId] = key.split("_");
+            const lecture = timetableState[key];
+
+            return String(classId) === String(allocation.class_section_id) &&
+                String(lecture.teacher_id) === String(allocation.teacher_id) &&
+                String(lecture.subject_id) === String(allocation.subject_id);
+        }).length;
+        const required = allocation.weekly_periods || 0;
+        const percent = required ? Math.min(100, Math.round((placed / required) * 100)) : 0;
+        const statusClass = placed === required ? "done" : placed > required ? "over" : "";
+
+        return `
+            <div class="allocation-card ${statusClass}">
+                <strong>${allocation.subject_name} - ${allocation.teacher_name}</strong>
+                <small>${findClassNameById(allocation.class_section_id)}</small>
+                <small>${placed}/${required} placed</small>
+                <div class="allocation-meter"><span style="width:${percent}%"></span></div>
+            </div>
+        `;
+    }).join("");
+
+    wrapper.innerHTML = html;
+}
+
+function findClassNameById(classId){
+    const section = classSections.find(item => String(item.id) === String(classId));
+    return section ? section.name : "Class";
+}
+
+function classTeacherAllocation(section){
+    return lessonAllocations.find(allocation =>
+        String(allocation.class_section_id) === String(section.id) &&
+        String(allocation.teacher_id) === String(section.class_teacher_id)
+    );
+}
+
+function classTeacherLecture(section){
+    const allocation = classTeacherAllocation(section);
+    const fallbackSubject = subjects[0];
+
+    return {
+        teacher_id: section.class_teacher_id,
+        teacher_name: section.class_teacher_name,
+        subject_id: allocation?.subject_id || fallbackSubject?.id || null,
+        subject_name: allocation?.subject_name || fallbackSubject?.name || "Class Teacher Period",
+        room_id: allocation?.room_id || section.default_room_id || null,
+        room_name: allocation?.room_name || section.default_room_name || "",
+        is_locked: false,
+        is_class_teacher_priority: true,
+    };
+}
+
+function assignClassTeacherFirstLectures(overwriteExisting = true){
+    const firstPeriods = getFirstTeachingPeriodsByDay();
+    let placed = 0;
+    let skippedLocked = 0;
+
+    classSections.forEach(section => {
+        if(!section.class_teacher_id) return;
+
+        firstPeriods.forEach(period => {
+            const key = cellKey(section.id, period.day_id, period.period_id);
+            const existing = timetableState[key];
+
+            if(existing?.is_locked){
+                skippedLocked++;
+                return;
+            }
+
+            if(existing && !overwriteExisting) return;
+
+            timetableState[key] = {
+                ...classTeacherLecture(section),
+                is_locked: existing?.is_locked || false,
+            };
+
+            placed++;
+        });
+    });
+
+    return { placed, skippedLocked };
+}
+
+function countPlacedForAllocation(allocation){
+    return Object.keys(timetableState).filter(key => {
+        const [classId] = key.split("_");
+        const lecture = timetableState[key];
+
+        return String(classId) === String(allocation.class_section_id) &&
+            String(lecture.teacher_id) === String(allocation.teacher_id) &&
+            String(lecture.subject_id) === String(allocation.subject_id);
+    }).length;
+}
+
+function countTeacherWeek(teacherId){
+    return Object.values(timetableState).filter(lecture =>
+        String(lecture.teacher_id) === String(teacherId)
+    ).length;
+}
+
+function countTeacherDay(teacherId, dayId){
+    return Object.keys(timetableState).filter(key => {
+        const [, entryDayId] = key.split("_");
+        const lecture = timetableState[key];
+
+        return String(entryDayId) === String(dayId) &&
+            String(lecture.teacher_id) === String(teacherId);
+    }).length;
+}
+
+function countClassDaySubject(classId, dayId, subjectId){
+    return Object.keys(timetableState).filter(key => {
+        const [entryClassId, entryDayId] = key.split("_");
+        const lecture = timetableState[key];
+
+        return String(entryClassId) === String(classId) &&
+            String(entryDayId) === String(dayId) &&
+            String(lecture.subject_id) === String(subjectId);
+    }).length;
+}
+
+function isTeacherAvailable(teacherId, dayId, periodId){
+    const availability = teacherAvailability.find(item =>
+        String(item.teacher_id) === String(teacherId) &&
+        String(item.day_id) === String(dayId) &&
+        String(item.period_id) === String(periodId)
+    );
+
+    return !availability || availability.is_available;
+}
+
+function candidateScore(key, allocation){
+    const [, dayId, periodId] = key.split("_");
+    const period = periods.find(item =>
+        String(item.day_id) === String(dayId) &&
+        String(item.period_id) === String(periodId)
+    );
+
+    let score = 0;
+    score += countTeacherDay(allocation.teacher_id, dayId) * 10;
+    score += countClassDaySubject(allocation.class_section_id, dayId, allocation.subject_id) * 6;
+    score += Number(period?.period_number || 0);
+
+    return score;
+}
+
+function canPlaceSmartLecture(key, allocation, teacher){
+    if(timetableState[key]) return false;
+
+    const [, dayId, periodId] = key.split("_");
+    const teacherMaxWeek = Number(teacher?.max_week || 0);
+    const teacherMaxDay = Number(teacher?.max_day || 0);
+
+    if(teacherMaxWeek && countTeacherWeek(allocation.teacher_id) >= teacherMaxWeek) return false;
+    if(teacherMaxDay && countTeacherDay(allocation.teacher_id, dayId) >= teacherMaxDay) return false;
+    if(!isTeacherAvailable(allocation.teacher_id, dayId, periodId)) return false;
+
+    const conflict = checkConflict(key, {
+        teacher_id: allocation.teacher_id,
+        teacher_name: allocation.teacher_name,
+        subject_id: allocation.subject_id,
+        subject_name: allocation.subject_name,
+        room_id: allocation.room_id || null,
+        room_name: allocation.room_name || "",
+    });
+
+    return !conflict.hasConflict;
+}
+
+function smartAllocate(){
+    if(!lessonAllocations.length){
+        alert("No lesson allocations found. Please create lesson allocations first.");
+        return;
+    }
+
+    saveUndo();
+
+    const priorityResult = assignClassTeacherFirstLectures(true);
+    const openTeachingSlots = getTeachingPeriods();
+    let placed = 0;
+    let skipped = 0;
+    const maxPasses = Math.max(1, lessonAllocations.reduce((total, allocation) => {
+        return total + Math.max(0, Number(allocation.weekly_periods || 0) - countPlacedForAllocation(allocation));
+    }, 0));
+
+    for(let pass = 0; pass < maxPasses; pass++){
+        let placedThisPass = false;
+
+        const pendingAllocations = lessonAllocations
+            .map(allocation => ({
+                allocation,
+                required: Number(allocation.weekly_periods || 0),
+                placed: countPlacedForAllocation(allocation),
+            }))
+            .filter(item => item.placed < item.required)
+            .sort((a, b) => {
+                const remainingDiff = (b.required - b.placed) - (a.required - a.placed);
+                if(remainingDiff) return remainingDiff;
+                return a.placed - b.placed;
+            });
+
+        if(!pendingAllocations.length) break;
+
+        pendingAllocations.forEach(item => {
+            const allocation = item.allocation;
+            const teacher = teachers.find(t => String(t.id) === String(allocation.teacher_id));
+            const candidateKeys = openTeachingSlots
+                .map(period => cellKey(allocation.class_section_id, period.day_id, period.period_id))
+                .filter(key => canPlaceSmartLecture(key, allocation, teacher))
+                .sort((a, b) => candidateScore(a, allocation) - candidateScore(b, allocation));
+
+            if(!candidateKeys.length){
+                skipped++;
+                return;
+            }
+
+            const bestKey = candidateKeys[0];
+
+            timetableState[bestKey] = {
+                teacher_id: allocation.teacher_id,
+                teacher_name: allocation.teacher_name,
+                subject_id: allocation.subject_id,
+                subject_name: allocation.subject_name,
+                room_id: allocation.room_id || null,
+                room_name: allocation.room_name || "",
+                is_locked: false,
+            };
+
+            placed++;
+            placedThisPass = true;
+        });
+
+        if(!placedThisPass) break;
+    }
+
+    renderTable();
+    refreshAll();
+
+    alert(`Class teacher priority placed ${priorityResult.placed} first lecture${priorityResult.placed === 1 ? "" : "s"}. Smart Allocate placed ${placed} more lecture${placed === 1 ? "" : "s"}. ${priorityResult.skippedLocked ? priorityResult.skippedLocked + " locked first-period slot(s) were skipped. " : ""}${skipped ? skipped + " placement attempt(s) were skipped because no conflict-free slot was available." : ""}`);
+}
+
+function autoFill(){
+    saveUndo();
+    const priorityResult = assignClassTeacherFirstLectures(true);
+
+    renderTable();
+    refreshAll();
+
+    alert(`Class teacher priority placed ${priorityResult.placed} first lecture${priorityResult.placed === 1 ? "" : "s"}.${priorityResult.skippedLocked ? " " + priorityResult.skippedLocked + " locked first-period slot(s) were skipped." : ""}`);
+}
+
+function zoomIn(){
+    boardZoom = Math.min(1.5, boardZoom + .1);
+    applyZoom();
+}
+
+function zoomOut(){
+    boardZoom = Math.max(.55, boardZoom - .1);
+    applyZoom();
+}
+
+function resetZoom(){
+    boardZoom = 1;
+    applyZoom();
+}
+
+function applyZoom(){
+    const zoomArea = document.getElementById("zoomArea");
+    zoomArea.style.transform = `scale(${boardZoom})`;
+    zoomArea.style.transformOrigin = "top left";
+    zoomArea.style.width = `${100 / boardZoom}%`;
+}
+
+function saveTimetableLocal() {
+    let timetableId = document.getElementById("timetableSelect").value;
+
+    if (timetableId) {
+        saveTimetableToDatabase(timetableId);
+        return;
+    }
+
+    createTimetableThenSave("Master Timetable");
+}
+
+
+function createTimetableThenSave(timetableName) {
+    let academicYearId = document.getElementById("academicYearSelect").value;
+    const name = (timetableName || "").trim();
+
+    if (!name) {
+        alert("Please enter timetable name.");
+        return;
+    }
+
+    if (!academicYearId) {
+        const academicSelect = document.getElementById("academicYearSelect");
+
+        if (academicSelect.options.length > 1) {
+            academicSelect.selectedIndex = 1;
+            academicYearId = academicSelect.value;
+        }
+    }
+
+    if (!academicYearId) {
+        alert("Please create Academic Year first.");
+        return;
+    }
+
+    fetch("/api/create-timetable/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            name: name,
+            academic_year_id: academicYearId,
+            timetable_type: "PRIMARY"
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert(data.message);
+            return;
+        }
+
+        const select = document.getElementById("timetableSelect");
+
+        const option = document.createElement("option");
+        option.value = data.id;
+        option.textContent = data.name;
+        option.selected = true;
+
+        select.appendChild(option);
+
+        saveTimetableToDatabase(data.id);
+    })
+    .catch(error => {
+        console.error(error);
+        alert("Timetable create failed.");
+    });
+}
+
+
+function saveTimetableToDatabase(timetableId) {
+    const entries = [];
+
+    Object.keys(timetableState).forEach(key => {
+        const [classId, dayId, periodId] = key.split("_");
+        const lecture = timetableState[key];
+        const cell = document.querySelector(`[data-key="${key}"]`);
+
+        entries.push({
+            class_section_id: classId,
+            day_id: dayId,
+            day_name: cell ? cell.dataset.dayName : "",
+            period_id: periodId,
+            period_name: cell ? cell.dataset.periodName : "",
+            teacher_id: lecture.teacher_id,
+            subject_id: lecture.subject_id,
+            room_id: lecture.room_id || null,
+            is_locked: Boolean(lecture.is_locked),
+        });
+    });
+
+    fetch("/api/save-timetable/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            timetable_id: timetableId,
+            entries: entries,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+    })
+    .catch(error => {
+        console.error(error);
+        alert("Something went wrong while saving timetable.");
+    });
+}
+
+
+function loadLocalTimetable(){
+    const saved = localStorage.getItem("master_timetable_state");
+    if(saved) timetableState = normalizeTimetableState(JSON.parse(saved));
+}
+
+function undoLast(){
+    if(!undoStack.length){
+        alert("Nothing to undo.");
+        return;
+    }
+
+    timetableState = JSON.parse(undoStack.pop());
+    renderTable();
+    refreshAll();
+}
+
+function addTimetable() {
+    const timetableName = prompt("Enter timetable name:");
+
+    if (timetableName === null) return;
+
+    createTimetableThenSave(timetableName);
+}
+
+function clearTimetable(){
+    if(!confirm("Clear current timetable board?")) return;
+
+    saveUndo();
+    const lockedEntries = {};
+
+    Object.keys(timetableState).forEach(key => {
+        if(timetableState[key]?.is_locked){
+            lockedEntries[key] = timetableState[key];
+        }
+    });
+
+    timetableState = lockedEntries;
+    localStorage.removeItem("master_timetable_state");
+
+    renderTable();
+    refreshAll();
+}
+
+function exportTimetable(scope, format){
+    const timetableId = document.getElementById("timetableSelect").value;
+
+    if(!timetableId){
+        alert("Please select or create a timetable first.");
+        return;
+    }
+
+    window.location.href = `/api/export-timetable/${timetableId}/${scope}/${format}/`;
+}
+
+function bindControls(){
+    document.getElementById("helpBtn").addEventListener("click", showShortcutHelp);
+    document.getElementById("toggleTeacherPanel").addEventListener("click", toggleTeacherPanel);
+    document.getElementById("toggleStatusPanel").addEventListener("click", toggleStatusPanel);
+    document.getElementById("teacherSearch").addEventListener("input", renderTeacherPool);
+    document.getElementById("classSearch").addEventListener("input", renderTable);
+    document.getElementById("boardFilter").addEventListener("change", renderTable);
+    document.getElementById("timetableTeacherSearch").addEventListener("input", highlightTeacherInTimetable);
+    document.getElementById("academicYearSelect").addEventListener("change", function(){
+        window.location.href = currentBuilderUrl({
+            academic_year_id: this.value,
+            timetable_id: "",
+        });
+    });
+    document.getElementById("timetableSelect").addEventListener("change", function(){
+        window.location.href = currentBuilderUrl({
+            academic_year_id: document.getElementById("academicYearSelect").value,
+            timetable_id: this.value,
+        });
+    });
+
+    document.getElementById("modalTeacherSearch").addEventListener("input", renderTeacherSelectList);
+    document.getElementById("modalSubjectSearch").addEventListener("input", renderSubjectSelectList);
+    document.getElementById("modalRoomSearch").addEventListener("input", renderRoomSelectList);
+
+    document.getElementById("assignLectureBtn").addEventListener("click", assignLectureToActiveCell);
+
+    document.getElementById("undoBtn").addEventListener("click", undoLast);
+    document.getElementById("autoFillBtn").addEventListener("click", autoFill);
+    document.getElementById("smartAllocateBtn").addEventListener("click", smartAllocate);
+    document.getElementById("zoomInBtn").addEventListener("click", zoomIn);
+    document.getElementById("zoomOutBtn").addEventListener("click", zoomOut);
+    document.getElementById("zoomResetBtn").addEventListener("click", resetZoom);
+    document.getElementById("saveBtn").addEventListener("click", saveTimetableLocal);
+    document.getElementById("addTimetableBtn").addEventListener("click", addTimetable);
+    document.getElementById("deleteTimetableBtn").addEventListener("click", clearTimetable);
+    document.querySelectorAll(".export-option").forEach(button => {
+        button.addEventListener("click", function(){
+            exportTimetable(this.dataset.scope, this.dataset.format);
+        });
+    });
+    document.addEventListener("keydown", handleShortcutKeys);
+}
+
+function showShortcutHelp(){
+    shortcutModal.show();
+}
+
+function isTypingTarget(target){
+    const tagName = target.tagName ? target.tagName.toLowerCase() : "";
+    return tagName === "input" || tagName === "textarea" || tagName === "select" || target.isContentEditable;
+}
+
+function handleShortcutKeys(event){
+    if(isTypingTarget(event.target)) return;
+
+    const key = event.key.toLowerCase();
+
+    if(event.ctrlKey && key === "s"){
+        event.preventDefault();
+        saveTimetableLocal();
+        return;
+    }
+
+    if(event.ctrlKey && key === "z"){
+        event.preventDefault();
+        undoLast();
+        return;
+    }
+
+    if(key === "a"){
+        autoFill();
+        return;
+    }
+
+    if(key === "m"){
+        smartAllocate();
+        return;
+    }
+
+    if(event.key === "+" || event.key === "="){
+        zoomIn();
+        return;
+    }
+
+    if(event.key === "-"){
+        zoomOut();
+        return;
+    }
+
+    if(event.key === "0"){
+        resetZoom();
+        return;
+    }
+
+    if(key === "t"){
+        toggleTeacherPanel();
+        return;
+    }
+
+    if(key === "l"){
+        toggleStatusPanel();
+        return;
+    }
+
+    if(event.key === "?"){
+        showShortcutHelp();
+    }
+}
+
+function toggleTeacherPanel(){
+    teacherPanelHidden = !teacherPanelHidden;
+    applyPanelVisibility();
+}
+
+function toggleStatusPanel(){
+    statusPanelHidden = !statusPanelHidden;
+    applyPanelVisibility();
+}
+
+function applyPanelVisibility(){
+    const layout = document.getElementById("mainLayout");
+    const teacherButton = document.getElementById("toggleTeacherPanel");
+    const statusButton = document.getElementById("toggleStatusPanel");
+
+    layout.classList.toggle("hide-left", teacherPanelHidden);
+    layout.classList.toggle("hide-right", statusPanelHidden);
+
+    teacherButton.title = teacherPanelHidden ? "Show Teacher Pool" : "Hide Teacher Pool";
+    statusButton.title = statusPanelHidden ? "Show Live Status" : "Hide Live Status";
+
+    teacherButton.innerHTML = teacherPanelHidden
+        ? `<i class="bi bi-layout-sidebar"></i>`
+        : `<i class="bi bi-layout-sidebar-inset"></i>`;
+    statusButton.innerHTML = statusPanelHidden
+        ? `<i class="bi bi-layout-sidebar-reverse"></i>`
+        : `<i class="bi bi-layout-sidebar-inset-reverse"></i>`;
+}
+
+
+
+
+
+
+
+
+
+
+
+function highlightTeacherInTimetable() {
+    const search = document.getElementById("timetableTeacherSearch").value.toLowerCase();
+
+    document.querySelectorAll(".tt-cell").forEach(cell => {
+        cell.classList.remove("teacher-highlight");
+    });
+
+    if (!search) return;
+
+    Object.keys(timetableState).forEach(key => {
+        const lecture = timetableState[key];
+
+        if (
+            lecture.teacher_name &&
+            lecture.teacher_name.toLowerCase().includes(search)
+        ) {
+            const cell = document.querySelector(`[data-key="${key}"]`);
+
+            if (cell) {
+                cell.classList.add("teacher-highlight");
+            }
+        }
+    });
+}
+
+
+
+
+
+
+
+
+function loadDatabaseTimetable() {
+    const timetableId = document.getElementById("timetableSelect").value;
+
+    if (!timetableId) return;
+
+    fetch(`/api/load-timetable/?timetable_id=${timetableId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                timetableState = normalizeTimetableState(data.entries || {});
+                renderTable();
+                refreshAll();
+            }
+        });
+}
+
+
+
+
+
+ 
+</script>
+
+</body>
+</html>

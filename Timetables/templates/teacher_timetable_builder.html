@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ teacher.name }} Timetable Control</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+
+<style>
+:root{
+    --primary:#2563eb;
+    --success:#059669;
+    --danger:#dc2626;
+    --soft-bg:#f8fafc;
+    --border:#e5e7eb;
+    --text:#111827;
+    --muted:#6b7280;
+}
+
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:"Segoe UI",sans-serif;
+    background:#eef2ff;
+    color:var(--text);
+    overflow:hidden;
+}
+
+.topbar{
+    height:76px;
+    background:white;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    padding:0 22px;
+}
+
+.topbar h2{
+    margin:0;
+    font-size:1.35rem;
+    font-weight:900;
+}
+
+.topbar p{
+    margin:4px 0 0;
+    color:var(--muted);
+    font-size:.88rem;
+}
+
+.toolbar{
+    display:flex;
+    gap:10px;
+    align-items:end;
+    flex-wrap:wrap;
+}
+
+.toolbar label{
+    font-weight:800;
+    font-size:.78rem;
+    margin-bottom:4px;
+}
+
+.layout{
+    height:calc(100vh - 76px);
+    display:grid;
+    grid-template-columns:230px 1fr;
+}
+
+.side-panel{
+    background:white;
+    border-right:1px solid var(--border);
+    padding:16px;
+    overflow:auto;
+}
+
+.stat-box{
+    border:1px solid var(--border);
+    background:var(--soft-bg);
+    border-radius:8px;
+    padding:12px;
+    margin-bottom:10px;
+}
+
+.stat-box strong{
+    display:block;
+    font-size:1.35rem;
+}
+
+.board-wrapper{
+    overflow:auto;
+    padding:16px;
+    background:#f8fafc;
+}
+
+.timetable-table{
+    border-collapse:separate;
+    border-spacing:0;
+    min-width:1180px;
+    width:100%;
+    background:white;
+    border:1px solid var(--border);
+}
+
+.timetable-table th,
+.timetable-table td{
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+}
+
+.timetable-table th{
+    background:#f9fafb;
+    padding:10px;
+    text-align:center;
+    font-weight:900;
+    position:sticky;
+    top:0;
+    z-index:40;
+}
+
+.corner-cell{
+    min-width:160px;
+    width:160px;
+    position:sticky;
+    top:0;
+    left:0;
+    z-index:80 !important;
+    background:#eef2ff !important;
+}
+
+.period-cell{
+    min-width:160px;
+    width:160px;
+    position:sticky;
+    left:0;
+    z-index:30;
+    background:white;
+    padding:10px;
+    box-shadow:4px 0 10px rgba(15,23,42,.06);
+}
+
+.period-cell strong{
+    display:block;
+    font-size:.85rem;
+}
+
+.period-cell small,
+.day-header small{
+    color:var(--muted);
+}
+
+.day-header{
+    min-width:160px;
+    width:160px;
+}
+
+.teacher-cell{
+    min-width:160px;
+    width:160px;
+    height:86px;
+    padding:7px;
+    cursor:pointer;
+    background:white;
+    vertical-align:top;
+}
+
+.teacher-cell:hover{
+    background:#f1f5f9;
+}
+
+.teacher-cell.assigned{
+    background:rgba(5,150,105,.12);
+}
+
+.teacher-cell.disabled-cell{
+    cursor:not-allowed;
+    background:#f3f4f6;
+}
+
+.lecture-card{
+    height:100%;
+    min-height:66px;
+    border:1px solid #93c5fd;
+    background:linear-gradient(135deg,#dbeafe,#fff);
+    border-radius:8px;
+    padding:8px 34px 8px 8px;
+    position:relative;
+}
+
+.lecture-card.locked{
+    background:linear-gradient(135deg,#fef3c7,#fff);
+    border-color:#f59e0b;
+}
+
+.lecture-card strong{
+    display:block;
+    font-size:.82rem;
+}
+
+.lecture-card span,
+.lecture-card small{
+    display:block;
+    color:var(--muted);
+    font-size:.72rem;
+    line-height:1.25;
+}
+
+.remove-lecture{
+    position:absolute;
+    top:6px;
+    right:6px;
+    border:0;
+    background:#fee2e2;
+    color:var(--danger);
+    width:24px;
+    height:24px;
+    border-radius:8px;
+}
+
+.break-cell{
+    cursor:not-allowed;
+    background:#fff7ed;
+    color:#9a3412;
+    font-weight:900;
+    text-align:center;
+    padding:10px;
+}
+
+.break-cell small{
+    display:block;
+    color:#c2410c;
+    font-weight:700;
+}
+
+.select-option-card{
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:9px;
+    margin-bottom:8px;
+    cursor:pointer;
+}
+
+.select-option-card:hover,
+.select-option-card.active{
+    background:#eff6ff;
+    border-color:var(--primary);
+}
+
+.select-option-card.available{
+    background:#ecfdf5;
+    border-color:#34d399;
+}
+
+.select-option-card.occupied{
+    background:#fef2f2;
+    border-color:#f87171;
+}
+
+.select-option-card.active.available{
+    box-shadow:0 0 0 3px rgba(52,211,153,.3);
+}
+
+.select-option-card.active.occupied{
+    box-shadow:0 0 0 3px rgba(248,113,113,.3);
+}
+
+.modal-select-list{
+    max-height:245px;
+    overflow:auto;
+}
+
+@media(max-width:900px){
+    body{overflow:auto}
+    .topbar{height:auto; align-items:flex-start; padding:16px; flex-direction:column}
+    .layout{height:auto; grid-template-columns:1fr}
+    .side-panel{border-right:0; border-bottom:1px solid var(--border)}
+}
+</style>
+</head>
+
+<body>
+<div class="topbar">
+    <div>
+        <h2>{{ teacher.name }}</h2>
+        <p>{{ teacher.department|default:"No department" }} individual timetable control</p>
+    </div>
+
+    <div class="toolbar">
+        <div>
+            <label>Timetable</label>
+            <select class="form-select" id="timetableSelect">
+                {% for item in timetables %}
+                <option value="{{ item.id }}" {% if timetable and item.id == timetable.id %}selected{% endif %}>
+                    {{ item.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="btn btn-success" id="saveBtn"><i class="bi bi-save"></i> Save</button>
+        <button class="btn btn-light border" id="closeBtn"><i class="bi bi-x-lg"></i> Close</button>
+    </div>
+</div>
+
+<div class="layout">
+    <aside class="side-panel">
+        <div class="stat-box">
+            <strong id="lectureCount">0</strong>
+            <span>Assigned lectures</span>
+        </div>
+        <div class="stat-box">
+            <strong id="dayCount">0</strong>
+            <span>Working days</span>
+        </div>
+        <div class="text-muted small">
+            Periods are vertical and days are horizontal. Click a teaching slot to select class, subject, and room.
+        </div>
+    </aside>
+
+    <main class="board-wrapper">
+        <table class="timetable-table" id="teacherTimetableTable"></table>
+    </main>
+</div>
+
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Lecture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="fw-bold mb-2">Class</label>
+                        <input type="text" class="form-control mb-2" id="classSearch" placeholder="Search class...">
+                        <div class="modal-select-list" id="classSelectList"></div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="fw-bold mb-2">Subject</label>
+                        <input type="text" class="form-control mb-2" id="subjectSearch" placeholder="Search subject...">
+                        <div class="modal-select-list" id="subjectSelectList"></div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="fw-bold mb-2">Room</label>
+                        <input type="text" class="form-control mb-2" id="roomSearch" placeholder="Search room...">
+                        <div class="modal-select-list" id="roomSelectList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" id="assignBtn">
+                    <i class="bi bi-check-circle"></i> Add Lecture
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ class_sections_json|json_script:"classSectionsData" }}
+{{ subjects_json|json_script:"subjectsData" }}
+{{ rooms_json|json_script:"roomsData" }}
+{{ periods_json|json_script:"periodsData" }}
+{{ timetable_entries_json|json_script:"teacherEntriesData" }}
+{{ occupied_entries_json|json_script:"occupiedEntriesData" }}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+function initSearchableDropdowns(root){
+    if(typeof Choices === "undefined") return;
+
+    (root || document).querySelectorAll("select").forEach(select => {
+        if(select.dataset.searchReady === "true") return;
+
+        new Choices(select, {
+            searchEnabled: true,
+            shouldSort: false,
+            itemSelectText: "",
+            allowHTML: false,
+            placeholder: true,
+            searchPlaceholderValue: "Search..."
+        });
+
+        select.dataset.searchReady = "true";
+    });
+}
+
+const teacher = {
+    id: {{ teacher.id }},
+    name: "{{ teacher.name|escapejs }}",
+};
+const initialTimetableId = "{% if timetable %}{{ timetable.id }}{% endif %}";
+const classSections = JSON.parse(document.getElementById("classSectionsData").textContent);
+const subjects = JSON.parse(document.getElementById("subjectsData").textContent);
+const rooms = JSON.parse(document.getElementById("roomsData").textContent);
+const periods = JSON.parse(document.getElementById("periodsData").textContent);
+const rawTeacherEntries = JSON.parse(document.getElementById("teacherEntriesData").textContent);
+const occupiedEntries = JSON.parse(document.getElementById("occupiedEntriesData").textContent);
+const periodLookup = new Map(periods.map(period => [`${period.day_id}_${period.period_id}`, period]));
+let teacherEntries = normalizeTeacherEntries(rawTeacherEntries);
+let activeCellKey = null;
+let selectedClass = null;
+let selectedSubject = null;
+let selectedRoom = null;
+let assignModal = null;
+
+document.addEventListener("DOMContentLoaded", function(){
+    assignModal = new bootstrap.Modal(document.getElementById("assignModal"));
+    initSearchableDropdowns(document);
+    renderTable();
+    renderClassList();
+    renderSubjectList();
+    renderRoomList();
+    bindControls();
+    refreshStats();
+});
+
+function slotKey(dayId, periodId){
+    return `${dayId}_${periodId}`;
+}
+
+function isTeachingSlot(dayId, periodId){
+    const period = periodLookup.get(slotKey(dayId, periodId));
+    return Boolean(period && period.is_teaching_period);
+}
+
+function normalizeTeacherEntries(entries){
+    const normalized = {};
+
+    Object.keys(entries).forEach(key => {
+        const [classId, dayId, periodId] = key.split("_");
+        const entry = entries[key];
+
+        if(!isTeachingSlot(dayId, periodId)) return;
+
+        normalized[slotKey(dayId, periodId)] = {
+            ...entry,
+            class_section_id: entry.class_section_id || classId,
+            class_section_name: entry.class_section_name || findClassName(classId),
+        };
+    });
+
+    return normalized;
+}
+
+function findClassName(classId){
+    const section = classSections.find(item => String(item.id) === String(classId));
+    return section ? section.name : "";
+}
+
+function uniqueDays(){
+    const map = new Map();
+
+    periods.forEach(period => {
+        if(!map.has(period.day_id)){
+            map.set(period.day_id, {
+                id: period.day_id,
+                name: period.day_name,
+                type: period.day_type,
+            });
+        }
+    });
+
+    return Array.from(map.values());
+}
+
+function periodRows(){
+    const map = new Map();
+
+    periods.forEach(period => {
+        const key = `${period.period_number}_${period.period_name}_${period.period_type}`;
+        if(!map.has(key)){
+            map.set(key, {
+                period_number: period.period_number,
+                period_name: period.period_name,
+                period_type: period.period_type,
+                is_teaching_period: period.is_teaching_period,
+            });
+        }
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.period_number - b.period_number);
+}
+
+function periodForDay(row, day){
+    return periods.find(period =>
+        String(period.day_id) === String(day.id) &&
+        Number(period.period_number) === Number(row.period_number) &&
+        period.period_name === row.period_name &&
+        period.period_type === row.period_type
+    );
+}
+
+function renderTable(){
+    const table = document.getElementById("teacherTimetableTable");
+    const days = uniqueDays();
+    const rows = periodRows();
+
+    let html = `
+        <thead>
+            <tr>
+                <th class="corner-cell">Period / Day</th>
+    `;
+
+    days.forEach(day => {
+        html += `
+            <th class="day-header">
+                <strong>${day.name}</strong><br>
+                <small>${day.type}</small>
+            </th>
+        `;
+    });
+
+    html += `</tr></thead><tbody>`;
+
+    rows.forEach(row => {
+        html += `
+            <tr>
+                <td class="period-cell">
+                    <strong>${row.period_name}</strong>
+                    <small>${row.period_type}</small>
+                </td>
+        `;
+
+        days.forEach(day => {
+            const period = periodForDay(row, day);
+
+            if(!period){
+                html += `<td class="teacher-cell disabled-cell"></td>`;
+                return;
+            }
+
+            if(!period.is_teaching_period){
+                html += `
+                    <td class="break-cell">
+                        ${period.period_name}
+                        <small>${period.start_time || ""}${period.end_time ? " - " + period.end_time : ""}</small>
+                    </td>
+                `;
+                return;
+            }
+
+            const key = slotKey(period.day_id, period.period_id);
+            const lecture = teacherEntries[key];
+            const className = lecture ? "teacher-cell assigned" : "teacher-cell";
+
+            html += `
+                <td class="${className}"
+                    data-key="${key}"
+                    data-day-id="${period.day_id}"
+                    data-day-name="${period.day_name}"
+                    data-period-id="${period.period_id}"
+                    data-period-name="${period.period_name}">
+                    ${lecture ? lectureHtml(lecture) : ""}
+                </td>
+            `;
+        });
+
+        html += `</tr>`;
+    });
+
+    html += `</tbody>`;
+    table.innerHTML = html;
+    bindCells();
+    refreshStats();
+}
+
+function lectureHtml(lecture){
+    const locked = lecture.is_locked ? "locked" : "";
+    const lockLabel = lecture.is_locked ? `<small>Locked</small>` : "";
+
+    return `
+        <div class="lecture-card ${locked}">
+            <button class="remove-lecture" title="Remove lecture" type="button">
+                <i class="bi bi-trash"></i>
+            </button>
+            <strong>${lecture.class_section_name || "Class"}</strong>
+            <span>${lecture.subject_name || "Subject"}</span>
+            <small>${lecture.room_name || "No room"}</small>
+            ${lockLabel}
+        </div>
+    `;
+}
+
+function bindCells(){
+    document.querySelectorAll(".teacher-cell").forEach(cell => {
+        if(cell.classList.contains("disabled-cell")) return;
+
+        cell.addEventListener("click", function(e){
+            if(e.target.closest(".remove-lecture")){
+                e.stopPropagation();
+
+                if(teacherEntries[cell.dataset.key]?.is_locked){
+                    alert("This lecture is locked from the master board.");
+                    return;
+                }
+
+                delete teacherEntries[cell.dataset.key];
+                renderTable();
+                return;
+            }
+
+            if(teacherEntries[cell.dataset.key]?.is_locked){
+                alert("This lecture is locked from the master board.");
+                return;
+            }
+
+            openAssignModal(cell.dataset.key);
+        });
+    });
+}
+
+function openAssignModal(key){
+    activeCellKey = key;
+    selectedClass = null;
+    selectedSubject = null;
+    selectedRoom = null;
+
+    document.querySelectorAll(".select-option-card").forEach(item => item.classList.remove("active"));
+    renderClassList();
+    renderRoomList();
+    assignModal.show();
+}
+
+function renderClassList(){
+    const wrapper = document.getElementById("classSelectList");
+    const search = document.getElementById("classSearch").value.toLowerCase();
+    wrapper.innerHTML = "";
+
+    classSections.filter(section => section.name.toLowerCase().includes(search)).forEach(section => {
+        const [dayId, periodId] = activeCellKey ? activeCellKey.split("_") : ["", ""];
+        const occupied = activeCellKey ? occupiedByOtherTeacher(section.id, dayId, periodId) : null;
+        const item = document.createElement("div");
+        item.className = `select-option-card ${occupied ? "occupied" : "available"}`;
+        item.innerHTML = `
+            <strong>${section.name}</strong><br>
+            <small>${occupied ? "Engaged with " + (occupied.teacher_name || "another teacher") : "Available"}</small>
+        `;
+        item.onclick = () => {
+            selectedClass = section;
+            markActive(item);
+        };
+        wrapper.appendChild(item);
+    });
+}
+
+function renderSubjectList(){
+    const wrapper = document.getElementById("subjectSelectList");
+    const search = document.getElementById("subjectSearch").value.toLowerCase();
+    wrapper.innerHTML = "";
+
+    subjects.filter(subject => subject.name.toLowerCase().includes(search)).forEach(subject => {
+        const item = document.createElement("div");
+        item.className = "select-option-card";
+        item.innerHTML = `<strong>${subject.name}</strong><br><small>${subject.subject_type}</small>`;
+        item.onclick = () => {
+            selectedSubject = subject;
+            markActive(item);
+        };
+        wrapper.appendChild(item);
+    });
+}
+
+function renderRoomList(){
+    const wrapper = document.getElementById("roomSelectList");
+    const search = document.getElementById("roomSearch").value.toLowerCase();
+    wrapper.innerHTML = "";
+
+    rooms.filter(room => room.name.toLowerCase().includes(search)).forEach(room => {
+        const [dayId, periodId] = activeCellKey ? activeCellKey.split("_") : ["", ""];
+        const occupied = activeCellKey ? occupiedRoomByOtherTeacher(room.id, dayId, periodId) : null;
+        const item = document.createElement("div");
+        item.className = `select-option-card ${occupied ? "occupied" : "available"}`;
+        item.innerHTML = `
+            <strong>${room.name}</strong><br>
+            <small>${occupied ? "Engaged by " + (occupied.teacher_name || "another teacher") + " for " + (occupied.class_section_name || "another class") : "Available"}</small>
+        `;
+        item.onclick = () => {
+            selectedRoom = room;
+            markActive(item);
+        };
+        wrapper.appendChild(item);
+    });
+}
+
+function markActive(item){
+    item.parentElement.querySelectorAll(".select-option-card").forEach(x => x.classList.remove("active"));
+    item.classList.add("active");
+}
+
+function occupiedByOtherTeacher(classId, dayId, periodId){
+    return occupiedEntries[`${classId}_${dayId}_${periodId}`];
+}
+
+function occupiedRoomByOtherTeacher(roomId, dayId, periodId){
+    return Object.keys(occupiedEntries).map(key => {
+        const [, occupiedDayId, occupiedPeriodId] = key.split("_");
+        const entry = occupiedEntries[key];
+
+        if(
+            String(occupiedDayId) === String(dayId) &&
+            String(occupiedPeriodId) === String(periodId) &&
+            entry.room_id &&
+            String(entry.room_id) === String(roomId)
+        ){
+            return entry;
+        }
+
+        return null;
+    }).find(Boolean);
+}
+
+function addLecture(){
+    if(!activeCellKey) return;
+
+    if(!selectedClass || !selectedSubject){
+        alert("Please select class and subject.");
+        return;
+    }
+
+    const cell = document.querySelector(`[data-key="${activeCellKey}"]`);
+    const [dayId, periodId] = activeCellKey.split("_");
+    const occupiedClass = occupiedByOtherTeacher(selectedClass.id, dayId, periodId);
+    const occupiedRoom = selectedRoom ? occupiedRoomByOtherTeacher(selectedRoom.id, dayId, periodId) : null;
+
+    if(occupiedClass || occupiedRoom){
+        const messages = [];
+
+        if(occupiedClass){
+            messages.push(`Class is already assigned to ${occupiedClass.teacher_name || "another teacher"}`);
+        }
+
+        if(occupiedRoom){
+            messages.push(`Room is already used by ${occupiedRoom.teacher_name || "another teacher"} for ${occupiedRoom.class_section_name || "another class"}`);
+        }
+
+        const forceAssign = confirm(
+            `${messages.join(". ")}. Do you want to force assign this lecture to ${teacher.name}?`
+        );
+
+        if(!forceAssign) return;
+    }
+
+    teacherEntries[activeCellKey] = {
+        class_section_id: selectedClass.id,
+        class_section_name: selectedClass.name,
+        force_assign: Boolean(occupiedClass || occupiedRoom),
+        teacher_id: teacher.id,
+        teacher_name: teacher.name,
+        subject_id: selectedSubject.id,
+        subject_name: selectedSubject.name,
+        room_id: selectedRoom ? selectedRoom.id : null,
+        room_name: selectedRoom ? selectedRoom.name : "",
+        is_locked: teacherEntries[activeCellKey]?.is_locked || false,
+        day_id: cell.dataset.dayId,
+        day_name: cell.dataset.dayName,
+        period_id: cell.dataset.periodId,
+        period_name: cell.dataset.periodName,
+    };
+
+    assignModal.hide();
+    renderTable();
+}
+
+function saveTeacherTimetable(){
+    const timetableId = document.getElementById("timetableSelect").value || initialTimetableId;
+
+    if(!timetableId){
+        alert("Please create/select timetable first.");
+        return;
+    }
+
+    const entries = Object.keys(teacherEntries).map(key => {
+        const cell = document.querySelector(`[data-key="${key}"]`);
+        const lecture = teacherEntries[key];
+        const [dayId, periodId] = key.split("_");
+        const period = periodLookup.get(`${dayId}_${periodId}`);
+
+        return {
+            class_section_id: lecture.class_section_id,
+            day_id: cell ? cell.dataset.dayId : dayId,
+            day_name: cell ? cell.dataset.dayName : period?.day_name || lecture.day_name || "",
+            period_id: cell ? cell.dataset.periodId : periodId,
+            period_name: cell ? cell.dataset.periodName : period?.period_name || lecture.period_name || "",
+            subject_id: lecture.subject_id,
+            room_id: lecture.room_id || null,
+            force_assign: Boolean(lecture.force_assign),
+            is_locked: Boolean(lecture.is_locked),
+        };
+    });
+
+    fetch("/api/save-teacher-timetable/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            timetable_id: timetableId,
+            teacher_id: teacher.id,
+            entries: entries,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        if(data.success && window.opener){
+            window.opener.location.reload();
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        alert("Something went wrong while saving teacher timetable.");
+    });
+}
+
+function refreshStats(){
+    document.getElementById("lectureCount").innerText = Object.keys(teacherEntries).filter(key => {
+        const [dayId, periodId] = key.split("_");
+        return isTeachingSlot(dayId, periodId);
+    }).length;
+    document.getElementById("dayCount").innerText = uniqueDays().length;
+}
+
+function bindControls(){
+    document.getElementById("classSearch").addEventListener("input", renderClassList);
+    document.getElementById("subjectSearch").addEventListener("input", renderSubjectList);
+    document.getElementById("roomSearch").addEventListener("input", renderRoomList);
+    document.getElementById("assignBtn").addEventListener("click", addLecture);
+    document.getElementById("saveBtn").addEventListener("click", saveTeacherTimetable);
+    document.getElementById("closeBtn").addEventListener("click", () => window.close());
+    document.getElementById("timetableSelect").addEventListener("change", function(){
+        window.location.href = `/teacher-timetable/${teacher.id}/?timetable_id=${this.value}`;
+    });
+}
+</script>
+</body>
+</html>

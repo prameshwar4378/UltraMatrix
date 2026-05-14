@@ -1,0 +1,948 @@
+{% extends "school_software_base.html" %}
+{% load static %}
+
+{% block title %}UltraMatrix - Dashboard{% endblock title %}
+
+{% block content %}
+<style>
+:root {
+    --dash-primary: #123c7a;
+    --dash-secondary: #2563eb;
+    --dash-accent: #f4b942;
+    --dash-success: #16a34a;
+    --dash-danger: #dc2626;
+    --dash-warning: #f59e0b;
+    --dash-dark: #0f172a;
+    --dash-muted: #64748b;
+    --dash-bg: #f4f8fc;
+    --dash-card: rgba(255,255,255,.88);
+    --dash-border: rgba(148,163,184,.25);
+    --dash-shadow: 0 24px 70px rgba(15,23,42,.12);
+    --dash-radius: 24px;
+}
+
+.dashboard-shell {
+    min-height: calc(100vh - 60px);
+    padding: 24px;
+    background:
+        radial-gradient(circle at top left, rgba(37,99,235,.20), transparent 34%),
+        radial-gradient(circle at top right, rgba(244,185,66,.18), transparent 32%),
+        linear-gradient(135deg, #f8fbff 0%, #eef4ff 45%, #f8fafc 100%);
+    color: var(--dash-dark);
+}
+
+.dashboard-inner {
+    max-width: 1500px;
+    margin: auto;
+}
+
+.dashboard-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px;
+    padding: 28px;
+    background:
+        linear-gradient(135deg, rgba(18,60,122,.97), rgba(37,99,235,.92)),
+        url("{% static 'assets/img/dashboard-pattern.png' %}");
+    color: #fff;
+    box-shadow: 0 28px 80px rgba(18,60,122,.28);
+}
+
+.dashboard-hero::before,
+.dashboard-hero::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(8px);
+    opacity: .55;
+}
+
+.dashboard-hero::before {
+    width: 280px;
+    height: 280px;
+    background: rgba(244,185,66,.42);
+    right: -70px;
+    top: -90px;
+}
+
+.dashboard-hero::after {
+    width: 180px;
+    height: 180px;
+    background: rgba(255,255,255,.20);
+    left: 45%;
+    bottom: -80px;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 440px;
+    gap: 28px;
+    align-items: center;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 13px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.22);
+    backdrop-filter: blur(14px);
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.hero-title {
+    margin: 18px 0 10px;
+    font-size: clamp(2rem, 4vw, 4rem);
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: -.05em;
+}
+
+.hero-copy {
+    max-width: 760px;
+    margin: 0;
+    color: rgba(255,255,255,.82);
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.dash-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 46px;
+    padding: 12px 17px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,.22);
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 850;
+    backdrop-filter: blur(14px);
+    transition: all .25s ease;
+}
+
+.dash-btn:hover {
+    color: #fff;
+    transform: translateY(-3px);
+    background: rgba(255,255,255,.20);
+    box-shadow: 0 18px 35px rgba(0,0,0,.18);
+    text-decoration: none;
+}
+
+.dash-btn.primary {
+    background: #fff;
+    color: var(--dash-primary);
+    border-color: #fff;
+}
+
+.dash-btn.primary:hover {
+    color: var(--dash-primary);
+}
+
+.hero-glass-panel {
+    position: relative;
+    z-index: 2;
+    padding: 18px;
+    border-radius: 26px;
+    background: rgba(255,255,255,.13);
+    border: 1px solid rgba(255,255,255,.24);
+    backdrop-filter: blur(18px);
+}
+
+.hero-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 13px;
+}
+
+.hero-stat {
+    min-height: 118px;
+    padding: 17px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.16);
+    border: 1px solid rgba(255,255,255,.18);
+}
+
+.hero-stat i {
+    font-size: 1.2rem;
+    opacity: .85;
+}
+
+.hero-stat strong {
+    display: block;
+    margin-top: 14px;
+    font-size: 2rem;
+    font-weight: 950;
+    line-height: 1;
+}
+
+.hero-stat span {
+    display: block;
+    margin-top: 7px;
+    color: rgba(255,255,255,.74);
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.section-grid {
+    display: grid;
+    grid-template-columns: 1.35fr .65fr;
+    gap: 22px;
+    margin-top: 24px;
+}
+
+.dash-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--dash-radius);
+    background: var(--dash-card);
+    border: 1px solid var(--dash-border);
+    box-shadow: var(--dash-shadow);
+    backdrop-filter: blur(18px);
+}
+
+.card-padding {
+    padding: 22px;
+}
+
+.panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.panel-title {
+    margin: 0;
+    font-size: 1.16rem;
+    font-weight: 950;
+    letter-spacing: -.02em;
+}
+
+.panel-subtitle {
+    margin: 5px 0 0;
+    color: var(--dash-muted);
+    font-size: .88rem;
+    font-weight: 650;
+}
+
+.light-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: #eef4ff;
+    color: var(--dash-primary);
+    font-weight: 850;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all .24s ease;
+}
+
+.light-btn:hover {
+    background: var(--dash-primary);
+    color: #fff;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.adjustment-list {
+    display: grid;
+    gap: 13px;
+}
+
+.adjustment-item {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 15px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid rgba(226,232,240,.9);
+    transition: all .24s ease;
+}
+
+.adjustment-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 36px rgba(15,23,42,.10);
+}
+
+.adjustment-icon {
+    width: 52px;
+    height: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: 17px;
+    font-size: 1.35rem;
+}
+
+.adjustment-item.pending .adjustment-icon {
+    background: #fef2f2;
+    color: var(--dash-danger);
+}
+
+.adjustment-item.assigned .adjustment-icon {
+    background: #ecfdf5;
+    color: var(--dash-success);
+}
+
+.adjustment-item.cancelled .adjustment-icon {
+    background: #fffbeb;
+    color: var(--dash-warning);
+}
+
+.adjustment-main strong {
+    display: block;
+    font-weight: 950;
+    font-size: .96rem;
+}
+
+.adjustment-main small {
+    display: block;
+    margin-top: 4px;
+    color: var(--dash-muted);
+    font-weight: 650;
+}
+
+.status-pill {
+    padding: 8px 11px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 950;
+    text-transform: uppercase;
+}
+
+.status-pill.pending {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-pill.assigned {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-pill.cancelled {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.today-card {
+    background:
+        linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.82)),
+        radial-gradient(circle at top right, rgba(244,185,66,.20), transparent 45%);
+}
+
+.snapshot-box {
+    display: grid;
+    gap: 15px;
+}
+
+.snapshot-row {
+    padding: 15px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid rgba(226,232,240,.9);
+}
+
+.snapshot-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: .86rem;
+    font-weight: 850;
+}
+
+.progress-track {
+    height: 10px;
+    margin-top: 10px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--dash-secondary), #22c55e);
+}
+
+.progress-fill.danger {
+    background: linear-gradient(90deg, #ef4444, #f97316);
+}
+
+.progress-fill.warning {
+    background: linear-gradient(90deg, #f59e0b, #facc15);
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 18px;
+    margin-top: 24px;
+}
+
+.kpi-card {
+    padding: 19px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1px solid rgba(226,232,240,.9);
+    box-shadow: 0 18px 45px rgba(15,23,42,.08);
+    transition: all .25s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 24px 55px rgba(15,23,42,.12);
+}
+
+.kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 17px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--dash-primary), var(--dash-secondary));
+    box-shadow: 0 13px 28px rgba(37,99,235,.28);
+}
+
+.kpi-icon.green {
+    background: linear-gradient(135deg, #059669, #22c55e);
+}
+
+.kpi-icon.amber {
+    background: linear-gradient(135deg, #d97706, #facc15);
+}
+
+.kpi-icon.dark {
+    background: linear-gradient(135deg, #0f172a, #475569);
+}
+
+.kpi-value {
+    margin-top: 18px;
+    font-size: 2.1rem;
+    line-height: 1;
+    font-weight: 950;
+    letter-spacing: -.04em;
+}
+
+.kpi-label {
+    margin-top: 7px;
+    color: var(--dash-muted);
+    font-size: .84rem;
+    font-weight: 750;
+}
+
+.quick-grid {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 18px;
+    margin-top: 24px;
+}
+
+.quick-card {
+    min-height: 145px;
+    padding: 18px;
+    border-radius: 24px;
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(226,232,240,.9);
+    box-shadow: 0 18px 45px rgba(15,23,42,.07);
+    text-decoration: none;
+    color: var(--dash-dark);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all .25s ease;
+}
+
+.quick-card:hover {
+    color: var(--dash-dark);
+    transform: translateY(-5px);
+    box-shadow: 0 24px 55px rgba(15,23,42,.12);
+    text-decoration: none;
+}
+
+.quick-icon {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #eaf2ff, #f5f9ff);
+    color: var(--dash-primary);
+    font-size: 1.45rem;
+    line-height: 1;
+    box-shadow: inset 0 0 0 1px rgba(37,99,235,.08);
+
+}
+
+.quick-icon i {
+    font-size: 1.45rem;
+    line-height: 1;
+    color: var(--dash-primary);
+    position: relative;
+    top: 13px;
+    left: 13px;
+}
+
+.quick-card strong {
+    display: block;
+    font-size: .98rem;
+    font-weight: 950;
+}
+
+.quick-card span {
+    display: block;
+    margin-top: 4px;
+    color: var(--dash-muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.lower-grid {
+    display: grid;
+    grid-template-columns: .8fr 1.2fr;
+    gap: 22px;
+    margin-top: 24px;
+}
+
+.department-list {
+    display: grid;
+    gap: 12px;
+}
+
+.department-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 15px;
+    border-radius: 18px;
+    background: #fff;
+    border: 1px solid rgba(226,232,240,.9);
+}
+
+.department-item strong {
+    font-weight: 900;
+}
+
+.department-item span {
+    color: var(--dash-muted);
+    font-weight: 850;
+}
+
+.empty-state {
+    padding: 28px;
+    border-radius: 22px;
+    text-align: center;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    color: var(--dash-muted);
+    font-weight: 750;
+}
+
+@media (max-width: 1200px) {
+    .hero-content,
+    .section-grid,
+    .lower-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kpi-grid,
+    .quick-grid {
+        grid-template-columns: repeat(2,1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .dashboard-shell {
+        padding: 14px;
+    }
+
+    .dashboard-hero {
+        padding: 20px;
+        border-radius: 24px;
+    }
+
+    .hero-mini-grid,
+    .kpi-grid,
+    .quick-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .adjustment-item {
+        grid-template-columns: 48px 1fr;
+    }
+
+    .status-pill {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .panel-head {
+        flex-direction: column;
+    }
+}
+</style>
+
+<main id="main" class="main dashboard-shell">
+    <div class="dashboard-inner">
+
+        <section class="dashboard-hero">
+            <div class="hero-content">
+                <div>
+                    <span class="hero-badge">
+                        <i class="bi bi-stars"></i> AI Timetable Command Center
+                    </span>
+
+                    <h1 class="hero-title">
+                        {% if active_school %}
+                            {{ active_school.short_name|default:active_school.name }}
+                        {% else %}
+                            School
+                        {% endif %}
+                        Dashboard
+                    </h1>
+
+                    <p class="hero-copy">
+                        Monitor timetable readiness, teacher availability, proxy adjustments,
+                        academic setup, and daily operations from one professional control center.
+                    </p>
+
+                    <div class="hero-actions">
+                        <a class="dash-btn primary" href="{% url 'proxy_adjustment_panel' %}">
+                            <i class="bi bi-lightning-charge-fill"></i> Resolve Proxy
+                        </a>
+                        <a class="dash-btn" href="{% url 'timetable_builder' %}">
+                            <i class="bi bi-calendar-week"></i> Open Builder
+                        </a>
+                        <a class="dash-btn" href="{% url 'lesson_allocation_list' %}">
+                            <i class="bi bi-diagram-3"></i> Allocation Map
+                        </a>
+                        <a class="dash-btn" href="{% url 'teacher_list' %}">
+                            <i class="bi bi-person-workspace"></i> Teachers
+                        </a>
+                    </div>
+                </div>
+
+                <div class="hero-glass-panel">
+                    <div class="hero-mini-grid">
+                        <div class="hero-stat">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>{{ pending_adjustments }}</strong>
+                            <span>Pending proxy actions</span>
+                        </div>
+                        <div class="hero-stat">
+                            <i class="bi bi-person-x"></i>
+                            <strong>{{ unavailable_today }}</strong>
+                            <span>Unavailable today</span>
+                        </div>
+                        <div class="hero-stat">
+                            <i class="bi bi-check2-circle"></i>
+                            <strong>{{ coverage_percent }}%</strong>
+                            <span>Timetable coverage</span>
+                        </div>
+                        <div class="hero-stat">
+                            <i class="bi bi-speedometer2"></i>
+                            <strong>{{ setup_percent }}%</strong>
+                            <span>Setup readiness</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-grid">
+            <div class="dash-card card-padding">
+                <div class="panel-head">
+                    <div>
+                        <h2 class="panel-title">Priority Proxy Adjustments</h2>
+                        <p class="panel-subtitle">
+                            {{ today|date:"d M Y" }}
+                            {% if active_timetable %} · {{ active_timetable.name }}{% endif %}
+                        </p>
+                    </div>
+                    <a class="light-btn" href="{% url 'proxy_adjustment_panel' %}">
+                        <i class="bi bi-arrow-right-circle"></i> Adjust Now
+                    </a>
+                </div>
+
+                <div class="adjustment-list">
+                    {% if latest_adjustments %}
+                        {% for adjustment in latest_adjustments %}
+                            <div class="adjustment-item {% if adjustment.status == 'ASSIGNED' %}assigned{% elif adjustment.status == 'CANCELLED' %}cancelled{% else %}pending{% endif %}">
+                                <div class="adjustment-icon">
+                                    {% if adjustment.status == 'ASSIGNED' %}
+                                        <i class="bi bi-check2-circle"></i>
+                                    {% elif adjustment.status == 'CANCELLED' %}
+                                        <i class="bi bi-slash-circle"></i>
+                                    {% else %}
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    {% endif %}
+                                </div>
+
+                                <div class="adjustment-main">
+                                    <strong>
+                                        {{ adjustment.period_name }} · {{ adjustment.class_section|default:"Class not set" }}
+                                    </strong>
+                                    <small>
+                                        {{ adjustment.original_teacher|default:"Original teacher" }}
+                                        {% if adjustment.proxy_teacher %}
+                                            → {{ adjustment.proxy_teacher }}
+                                        {% else %}
+                                            → Needs proxy
+                                        {% endif %}
+                                        {% if adjustment.subject %} · {{ adjustment.subject }}{% endif %}
+                                    </small>
+                                </div>
+
+                                <span class="status-pill {% if adjustment.status == 'ASSIGNED' %}assigned{% elif adjustment.status == 'CANCELLED' %}cancelled{% else %}pending{% endif %}">
+                                    {{ adjustment.status }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="bi bi-check2-circle"></i>
+                            No proxy adjustments for today.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="dash-card card-padding today-card">
+                <div class="panel-head">
+                    <div>
+                        <h3 class="panel-title">Today Snapshot</h3>
+                        <p class="panel-subtitle">Admin desk quick summary</p>
+                    </div>
+                </div>
+
+                <div class="snapshot-box">
+                    <div class="snapshot-row">
+                        <div class="snapshot-meta">
+                            <span>Assigned Adjustments</span>
+                            <strong>{{ assigned_adjustments }}</strong>
+                        </div>
+                        <div class="progress-track">
+                            <span class="progress-fill" style="width:{% if assigned_adjustments %}100{% else %}0{% endif %}%"></span>
+                        </div>
+                    </div>
+
+                    <div class="snapshot-row">
+                        <div class="snapshot-meta">
+                            <span>Pending Adjustments</span>
+                            <strong>{{ pending_adjustments }}</strong>
+                        </div>
+                        <div class="progress-track">
+                            <span class="progress-fill danger" style="width:{% if pending_adjustments %}100{% else %}0{% endif %}%"></span>
+                        </div>
+                    </div>
+
+                    <div class="snapshot-row">
+                        <div class="snapshot-meta">
+                            <span>Cancelled Periods</span>
+                            <strong>{{ cancelled_adjustments }}</strong>
+                        </div>
+                        <div class="progress-track">
+                            <span class="progress-fill warning" style="width:{% if cancelled_adjustments %}100{% else %}0{% endif %}%"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-icon"><i class="bi bi-people"></i></span>
+                </div>
+                <div class="kpi-value">{{ active_teachers }}</div>
+                <div class="kpi-label">Active Teachers</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-icon green"><i class="bi bi-grid-3x3-gap"></i></span>
+                </div>
+                <div class="kpi-value">{{ active_class_sections }}</div>
+                <div class="kpi-label">Class Sections</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-icon amber"><i class="bi bi-diagram-3"></i></span>
+                </div>
+                <div class="kpi-value">{{ total_weekly_periods }}</div>
+                <div class="kpi-label">Weekly Planned Periods</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-top">
+                    <span class="kpi-icon dark"><i class="bi bi-door-open"></i></span>
+                </div>
+                <div class="kpi-value">{{ active_rooms }}</div>
+                <div class="kpi-label">Active Rooms</div>
+            </div>
+        </section>
+
+        <section class="quick-grid">
+            <a class="quick-card" href="{% url 'academic_setup_list' %}">
+                <span class="quick-icon"><i class="bi bi-calendar2-check"></i></span>
+                <div>
+                    <strong>Academic Setup</strong>
+                    <span>{{ working_days }} working days · {{ teaching_periods }} teaching periods</span>
+                </div>
+            </a>
+
+            <a class="quick-card" href="{% url 'class_setup_list' %}">
+                <span class="quick-icon"><i class="bi bi-building"></i></span>
+                <div>
+                    <strong>Class Setup</strong>
+                    <span>Levels, divisions and sections</span>
+                </div>
+            </a>
+
+            <a class="quick-card" href="{% url 'subject_list' %}">
+                <span class="quick-icon"><i class="bi bi-journal-bookmark"></i></span>
+                <div>
+                    <strong>Subjects</strong>
+                    <span>{{ active_subjects }} active subjects · {{ teacher_capabilities }} capabilities</span>
+                </div>
+            </a>
+
+            <a class="quick-card" href="{% url 'room_list' %}">
+                <span class="quick-icon"><i class="bi bi-pc-display-horizontal"></i></span>
+                <div>
+                    <strong>Rooms</strong>
+                    <span>Classrooms, labs and activity areas</span>
+                </div>
+            </a>
+
+            <a class="quick-card" href="{% url 'lesson_allocation_create' %}">
+                <span class="quick-icon"><i class="bi bi-plus-square"></i></span>
+                <div>
+                    <strong>New Allocation</strong>
+                    <span>Create teacher-subject workload</span>
+                </div>
+            </a>
+
+            <a class="quick-card" href="{% url 'teacher_create' %}">
+                <span class="quick-icon"><i class="bi bi-person-plus"></i></span>
+                <div>
+                    <strong>Add Teacher</strong>
+                    <span>Quick staff entry</span>
+                </div>
+            </a>
+
+            <a class="quick-card" href="{% url 'teacher_subject_create' %}">
+                <span class="quick-icon"><i class="bi bi-shield-check"></i></span>
+                <div>
+                    <strong>Capability</strong>
+                    <span>Define proxy-ready subjects</span>
+                </div>
+            </a>
+
+            <a class="quick-card" href="{% url 'timetable_builder_template_2' %}">
+                <span class="quick-icon"><i class="bi bi-layout-three-columns"></i></span>
+                <div>
+                    <strong>Builder View</strong>
+                    <span>Alternate timetable workspace</span>
+                </div>
+            </a>
+        </section>
+
+        <section class="lower-grid">
+            <div class="dash-card card-padding">
+                <div class="panel-head">
+                    <div>
+                        <h3 class="panel-title">System Readiness</h3>
+                        <p class="panel-subtitle">Scheduling health overview</p>
+                    </div>
+                </div>
+
+                <div class="snapshot-box">
+                    <div class="snapshot-row">
+                        <div class="snapshot-meta">
+                            <span>Setup Data</span>
+                            <strong>{{ setup_percent }}%</strong>
+                        </div>
+                        <div class="progress-track">
+                            <span class="progress-fill" style="width:{{ setup_percent }}%"></span>
+                        </div>
+                    </div>
+
+                    <div class="snapshot-row">
+                        <div class="snapshot-meta">
+                            <span>Assigned Slots</span>
+                            <strong>{{ coverage_percent }}%</strong>
+                        </div>
+                        <div class="progress-track">
+                            <span class="progress-fill" style="width:{{ coverage_percent }}%"></span>
+                        </div>
+                    </div>
+
+                    <div class="snapshot-row">
+                        <div class="snapshot-meta">
+                            <span>Locked Slots</span>
+                            <strong>{{ locked_percent }}%</strong>
+                        </div>
+                        <div class="progress-track">
+                            <span class="progress-fill" style="width:{{ locked_percent }}%;background:linear-gradient(90deg,#0f172a,#64748b);"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-card card-padding">
+                <div class="panel-head">
+                    <div>
+                        <h3 class="panel-title">Teacher Capacity By Department</h3>
+                        <p class="panel-subtitle">Helpful for proxy planning and workload balance</p>
+                    </div>
+                </div>
+
+                <div class="department-list">
+                    {% for department in department_load %}
+                        <div class="department-item">
+                            <strong>{{ department.department|default:"Unassigned department" }}</strong>
+                            <span>{{ department.total }} teachers</span>
+                        </div>
+                    {% empty %}
+                        <div class="empty-state">No teacher departments available yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+
+    </div>
+</main>
+{% endblock content %}

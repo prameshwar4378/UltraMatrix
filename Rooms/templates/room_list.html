@@ -1,0 +1,651 @@
+{% extends "school_software_base.html" %}
+
+{% block title %}Room Setup{% endblock title %}
+
+{% block content %}
+
+<style>
+    .room-page {
+        --primary: #4f46e5;
+        --primary-dark: #3730a3;
+        --surface: #ffffff;
+        --border: #e5e7eb;
+        --text: #111827;
+        --muted: #6b7280;
+    }
+
+    .page-toolbar, .filter-panel, .table-card, .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .page-toolbar {
+        padding: 22px;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: var(--text);
+        margin: 0;
+    }
+
+    .page-subtitle {
+        color: var(--muted);
+        margin: 6px 0 0;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        box-shadow: 0 10px 22px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-gradient:hover {
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        padding: 22px;
+    }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: #eef2ff;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 14px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text);
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: var(--muted);
+        font-size: .85rem;
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
+    .filter-panel {
+        padding: 22px;
+        margin-bottom: 24px;
+    }
+
+    .auto-panel {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 20px 22px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .auto-panel h5 {
+        margin: 0 0 6px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .auto-panel p {
+        margin: 0;
+        color: var(--muted);
+    }
+
+    .filter-title {
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 16px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        padding: 11px 14px;
+    }
+
+    .table-card {
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .table-header {
+        padding: 20px 22px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header h5 {
+        margin: 0;
+        font-weight: 800;
+    }
+
+    .table-modern {
+        margin: 0;
+    }
+
+    .table-modern thead th {
+        background: #f9fafb;
+        color: #374151;
+        border-bottom: 1px solid var(--border);
+        padding: 15px 18px;
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        font-weight: 800;
+    }
+
+    .table-modern tbody td {
+        padding: 18px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .table-modern tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .room-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+    }
+
+    .badge-soft {
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: .78rem;
+        font-weight: 800;
+    }
+
+    .badge-primary-soft { background: #eef2ff; color: #3730a3; }
+    .badge-success-soft { background: #dcfce7; color: #166534; }
+    .badge-danger-soft { background: #fee2e2; color: #991b1b; }
+    .badge-warning-soft { background: #fef3c7; color: #92400e; }
+
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-form {
+        display: inline-block;
+    }
+
+    .empty-state {
+        padding: 55px 20px;
+        text-align: center;
+        color: var(--muted);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: #c7d2fe;
+        margin-bottom: 12px;
+    }
+
+    @media(max-width: 1200px) {
+        .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media(max-width: 768px) {
+        .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media(max-width: 576px) {
+        .stat-grid { grid-template-columns: 1fr; }
+
+        .page-toolbar, .table-header, .auto-panel {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 14px;
+        }
+    }
+</style>
+
+<main id="main" class="main room-page">
+
+    <div class="pagetitle">
+        <h1>Room Setup</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item active">Rooms</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="page-toolbar d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="page-title">Rooms, Labs & Facilities</h2>
+            <p class="page-subtitle">Manage classrooms, computer labs, science labs, library and playground.</p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-light border" data-bs-toggle="modal" data-bs-target="#autoCreateRoomsModal">
+                <i class="bi bi-magic"></i> Auto Create Classrooms
+            </button>
+
+            <a href="javascript:void(0);"
+               data-url="{% url 'room_create' %}"
+               class="btn btn-gradient"
+               onclick="openCreateModal(this)">
+                <i class="bi bi-plus-circle"></i> New Room
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-door-open"></i></div>
+            <div class="stat-number">{{ total_rooms }}</div>
+            <div class="stat-label">Total Rooms</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-number">{{ active_rooms }}</div>
+            <div class="stat-label">Active Rooms</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-building"></i></div>
+            <div class="stat-number">{{ classrooms }}</div>
+            <div class="stat-label">Classrooms</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-pc-display"></i></div>
+            <div class="stat-number">{{ computer_labs }}</div>
+            <div class="stat-label">Computer Labs</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-eyedropper"></i></div>
+            <div class="stat-number">{{ science_labs }}</div>
+            <div class="stat-label">Science Labs</div>
+        </div>
+    </div>
+
+    <div class="auto-panel">
+        <div>
+            <h5><i class="bi bi-grid-3x3-gap me-1"></i> Classroom Auto Setup</h5>
+            <p>
+                Create one classroom for every active class and division combination.
+                Expected classroom rooms from current setup: <strong>{{ auto_expected_rooms }}</strong>.
+            </p>
+        </div>
+
+        <button type="button" class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#autoCreateRoomsModal">
+            <i class="bi bi-magic"></i> Generate Missing Rooms
+        </button>
+    </div>
+
+    <div class="filter-panel">
+        <div class="filter-title">
+            <i class="bi bi-funnel me-1"></i> Filter Rooms
+        </div>
+
+        <form method="get" class="row g-3">
+
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label">Room Type</label>
+                <select name="room_type" class="form-select">
+                    <option value="">All Room Types</option>
+                    <option value="CLASSROOM" {% if room_type_filter == "CLASSROOM" %}selected{% endif %}>Classroom</option>
+                    <option value="COMPUTER_LAB" {% if room_type_filter == "COMPUTER_LAB" %}selected{% endif %}>Computer Lab</option>
+                    <option value="SCIENCE_LAB" {% if room_type_filter == "SCIENCE_LAB" %}selected{% endif %}>Science Lab</option>
+                    <option value="LIBRARY" {% if room_type_filter == "LIBRARY" %}selected{% endif %}>Library</option>
+                    <option value="PLAYGROUND" {% if room_type_filter == "PLAYGROUND" %}selected{% endif %}>Playground</option>
+                    <option value="ACTIVITY_ROOM" {% if room_type_filter == "ACTIVITY_ROOM" %}selected{% endif %}>Activity Room</option>
+                </select>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+
+            <div class="col-lg-6 col-md-12">
+                <label class="form-label">Search</label>
+                <input type="text"
+                       name="search"
+                       class="form-control"
+                       placeholder="Search room, short name, school..."
+                       value="{{ search_query }}">
+            </div>
+
+            <div class="col-12 d-flex gap-2">
+                <button type="submit" class="btn btn-gradient">
+                    <i class="bi bi-search"></i> Apply Filter
+                </button>
+
+                <a href="{% url 'room_list' %}" class="btn btn-light border">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="table-card">
+        <div class="table-header">
+            <h5><i class="bi bi-list-ul me-1"></i> Room Records</h5>
+            <span class="text-muted small">Rooms used for class sections and timetable slots</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-modern align-middle">
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>School</th>
+                        <th>Type</th>
+                        <th>Capacity</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for room in rooms %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="room-avatar">
+                                    {{ room.short_name|default:room.name|slice:":2" }}
+                                </div>
+
+                                <div>
+                                    <strong>{{ room.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ room.short_name|default:"No short name" }}</small>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <strong>{{ room.school.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ room.school.school_code|default:"No Code" }}</small>
+                        </td>
+
+                        <td>
+                            {% if room.room_type == "COMPUTER_LAB" or room.room_type == "SCIENCE_LAB" %}
+                                <span class="badge-soft badge-warning-soft">
+                                    {{ room.get_room_type_display }}
+                                </span>
+                            {% else %}
+                                <span class="badge-soft badge-primary-soft">
+                                    {{ room.get_room_type_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <strong>{{ room.capacity }}</strong>
+                            <small class="text-muted">students</small>
+                        </td>
+
+                        <td>
+                            {% if room.is_active %}
+                                <span class="badge-soft badge-success-soft">
+                                    <i class="bi bi-check-circle me-1"></i> Active
+                                </span>
+                            {% else %}
+                                <span class="badge-soft badge-danger-soft">
+                                    <i class="bi bi-x-circle me-1"></i> Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-end">
+                            <a href="javascript:void(0);"
+                               class="btn btn-sm btn-outline-warning action-btn"
+                               data-url="{% url 'room_update' room.pk %}"
+                               onclick="openCreateModal(this)"
+                               title="Edit">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger action-btn"
+                                    title="Delete"
+                                    data-delete-url="{% url 'room_delete' room.pk %}"
+                                    data-room-name="{{ room.name }}"
+                                    data-room-school="{{ room.school.name }}"
+                                    onclick="openDeleteRoomModal(this)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="bi bi-door-open"></i>
+                                <h5>No Rooms Found</h5>
+                                <p>Create classrooms, labs and facilities before class section and timetable setup.</p>
+
+                                <a href="javascript:void(0);"
+                                   data-url="{% url 'room_create' %}"
+                                   class="btn btn-gradient"
+                                   onclick="openCreateModal(this)">
+                                    <i class="bi bi-plus-circle"></i> Create Room
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</main>
+
+<div class="modal fade" id="autoCreateRoomsModal" tabindex="-1" aria-labelledby="autoCreateRoomsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="autoCreateRoomsModalLabel">
+                    <i class="bi bi-magic me-2"></i> Auto Create Classrooms
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="post" action="{% url 'room_auto_create_classrooms' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-3">
+                        This creates missing classroom rooms from active class levels and active divisions.
+                        Existing classroom room names are skipped, so it is safe to run again.
+                    </p>
+
+                    <div class="mb-3">
+                        <label class="form-label">School</label>
+                        <select name="school" class="form-select">
+                            <option value="">All Schools</option>
+                            {% for school in schools %}
+                                <option value="{{ school.pk }}">{{ school.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Default Capacity</label>
+                        <input type="number" name="capacity" class="form-control" min="0" value="40">
+                    </div>
+
+                    {% if auto_room_targets %}
+                        <div class="alert alert-info small mb-0">
+                            {% for item in auto_room_targets %}
+                                <div>{{ item.school.name }}: {{ item.expected_count }} classroom room(s)</div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning small mb-0">
+                            Add class levels and divisions first, then use auto-create.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Create Missing Rooms
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteRoomModal" tabindex="-1" aria-labelledby="deleteRoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteRoomModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2"></i> Delete Room
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="d-flex gap-3">
+                    <div class="rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center flex-shrink-0"
+                         style="width:48px;height:48px;">
+                        <i class="bi bi-trash fs-4"></i>
+                    </div>
+
+                    <div>
+                        <h6 class="fw-bold mb-2">Are you sure you want to delete this room?</h6>
+                        <p class="mb-2">
+                            Room <strong id="deleteRoomName"></strong>
+                            <span class="text-muted" id="deleteRoomSchool"></span>
+                            will be removed from room setup.
+                        </p>
+                        <div class="alert alert-warning mb-0 py-2 small">
+                            Timetable or class-section references to this room may become empty where applicable.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+
+                <form method="post" id="deleteRoomForm" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete Room
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCreateModal(element, customWidth = 1050, customHeight = 740) {
+    const url = element.dataset.url;
+    const left = Math.max(0, (window.screen.width - customWidth) / 2);
+    const top = Math.max(0, (window.screen.height - customHeight) / 2);
+
+    const features = [
+        `width=${customWidth}`,
+        `height=${customHeight}`,
+        `left=${left}`,
+        `top=${top}`,
+        'scrollbars=yes',
+        'resizable=yes',
+        'location=no',
+        'menubar=no',
+        'toolbar=no',
+        'status=no'
+    ].join(',');
+
+    const newWindow = window.open(url, "roomWindow", features);
+
+    if (newWindow) {
+        newWindow.focus();
+
+        const checkWindow = setInterval(function () {
+            if (newWindow.closed) {
+                clearInterval(checkWindow);
+                window.location.reload();
+            }
+        }, 500);
+    }
+
+    return false;
+}
+
+function openDeleteRoomModal(button) {
+    document.getElementById("deleteRoomForm").action = button.dataset.deleteUrl;
+    document.getElementById("deleteRoomName").textContent = button.dataset.roomName || "this room";
+    document.getElementById("deleteRoomSchool").textContent = button.dataset.roomSchool ? `(${button.dataset.roomSchool})` : "";
+
+    const modal = new bootstrap.Modal(document.getElementById("deleteRoomModal"));
+    modal.show();
+}
+</script>
+
+{% endblock content %}

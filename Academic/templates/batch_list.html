@@ -1,0 +1,605 @@
+<!-- templates/batch_list.html -->
+{% extends "enrollment_software_base.html" %}
+
+{% block title %}Batch Management - Batches List{% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<style>
+    .card-body{
+        padding:0px!important;
+    }
+    /* Modern Card Design */
+    .card-modern {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: transform 0.2s;
+    }
+ 
+    /* Status Badges */
+    .badge-status {
+        padding: 0.35em 0.85em;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .badge-upcoming { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .badge-ongoing { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .badge-completed { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+    .badge-cancelled { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .badge-active { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+    .badge-inactive { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
+
+    /* Table Styling */
+    .table-modern {
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+    }
+
+    .table-modern thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+
+    .table-modern tbody td {
+        padding: 1.2rem 1.5rem;
+        border-bottom: 1px solid #f1f3fa;
+        vertical-align: middle;
+    }
+
+    .table-modern tbody tr:hover {
+        background-color: #f8f9ff;
+    }
+
+    /* Filter Card */
+    .filter-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border: none;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    /* Action Buttons */
+    .btn-action {
+        padding: 0.5rem 1.2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s;
+        border: none;
+    }
+
+    .btn-filter {
+        background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        color: white;
+    }
+
+    .btn-filter:hover {
+        background: linear-gradient(135deg, #8e44ad, #7d3c98);
+        color: white;
+    }
+
+    /* Progress Bar */
+    .progress-container {
+        width: 80px;
+        height: 6px;
+        background: #e9ecef;
+        border-radius: 3px;
+        overflow: hidden;
+        display: inline-block;
+        margin-left: 10px;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #2ecc71, #27ae60);
+        border-radius: 3px;
+    }
+
+    /* Stats Cards */
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 0.5rem;
+    }
+
+    /* Seat Indicator */
+    .seat-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .seat-available { background: #d1fae5; color: #065f46; }
+    .seat-limited { background: #fef3c7; color: #92400e; }
+    .seat-full { background: #fee2e2; color: #991b1b; }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .table-modern {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        .table-modern thead th,
+        .table-modern tbody td {
+            padding: 0.8rem;
+            font-size: 0.9rem;
+        }
+        
+        .stat-card {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+
+<main id="main" class="main">
+    <div class="pagetitle">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>Batch Management</h1>
+                <nav>
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item active">Batches</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="javascript:void(0);" 
+                    data-url="{% url 'create_batch' %}" 
+                    class="btn btn-primary"  
+                    onclick="openCreateModal(this)">
+                    <i class="bi bi-plus-circle me-1"></i> New Batch
+                </a>
+                <script>
+                    // Modal Function
+                    function openCreateModal(element, customWidth = 1200, customHeight = 800) {
+                        const url = element.dataset.url;
+                        
+                        // Calculate center position
+                        const width = customWidth;
+                        const height = customHeight;
+                        const left = Math.max(0, (window.screen.width - width) / 2);
+                        const top = Math.max(0, (window.screen.height - height) / 2);
+                        
+                        // Window features
+                        const features = [
+                            `width=${width}`,
+                            `height=${height}`,
+                            `left=${left}`,
+                            `top=${top}`,
+                            'scrollbars=yes',
+                            'resizable=yes',
+                            'centerscreen=yes',
+                            'location=no',
+                            'menubar=no',
+                            'toolbar=no',
+                            'status=no',
+                            'titlebar=no'
+                        ].join(',');
+                        
+                        // Open centered window
+                        const newWindow = window.open(url, "updateWindow", features);
+                        
+                        if (newWindow) {
+                            newWindow.focus();
+                            
+                            // Check if window is closed to refresh parent
+                            const checkWindow = setInterval(function() {
+                                if (newWindow.closed) {
+                                    clearInterval(checkWindow);
+                                    window.location.reload();
+                                }
+                            }, 500);
+                        }
+                        return false;
+                    }
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_batches }}</div>
+                <div class="stat-label">Total Batches</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-number">{{ active_batches }}</div>
+                <div class="stat-label">Active</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-number">{{ upcoming_batches }}</div>
+                <div class="stat-label">Upcoming</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-number">{{ ongoing_batches }}</div>
+                <div class="stat-label">Ongoing</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-number">{{ completed_batches }}</div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_students }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card card-modern filter-card">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        {% for status_code, status_name in status_choices %}
+                        <option value="{{ status_code }}" {% if status_filter == status_code %}selected{% endif %}>
+                            {{ status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label">Course Type</label>
+                    <select name="course_type" class="form-select">
+                        {% for value, label in course_type_choices %}
+                        <option value="{{ value }}" {% if course_type_filter == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label">Active Status</label>
+                    <select name="is_active" class="form-select">
+                        {% for value, label in active_choices %}
+                        <option value="{{ value }}" {% if active_filter == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Date From</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label">Date To</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" name="search" placeholder="Search by batch code or title..." 
+                               class="form-control border-0" value="{{ search_query }}">
+                    </div>
+                </div>
+
+                <div class="col-md-3 d-flex justify-content-between align-items-end">
+                    <div>
+                        <button type="submit" class="btn btn-action btn-filter me-2">
+                            <i class="bi bi-funnel me-1"></i> Apply Filters
+                        </button>
+                        <a href="{% url 'enrollment_batch_list' %}" class="btn btn-light">
+                            <i class="bi bi-x-circle me-1"></i> Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="card card-modern">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-modern">
+                    <thead>
+                        <tr>
+                            <th>Batch Code</th>
+                            <th>Batch Title</th>
+                            <th>Course</th>
+                            <th>Status</th>
+                            <th>Dates</th>
+                            <th>Students</th>
+                            <th>Seats</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for batch in batches %}
+                        <tr>
+                            <td>
+                                <strong>{{ batch.batch_code }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {% if batch.is_active %}
+                                        <span class="badge badge-status badge-active">Active</span>
+                                    {% else %}
+                                        <span class="badge badge-status badge-inactive">Inactive</span>
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td>
+                                <strong>{{ batch.batch_title }}</strong>
+                                {% if batch.description %}
+                                <br>
+                                <small class="text-muted">{{ batch.description|truncatechars:50 }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ batch.display_course_title|truncatechars:30 }}</strong>
+                                <br>
+                                <small class="text-muted">{{ batch.course_type }}</small>
+                            </td>
+                            <td>
+                                {% if batch.batch_status == 'upcoming' %}
+                                    <span class="badge badge-status badge-upcoming">Upcoming</span>
+                                {% elif batch.batch_status == 'ongoing' %}
+                                    <span class="badge badge-status badge-ongoing">Ongoing</span>
+                                {% elif batch.batch_status == 'completed' %}
+                                    <span class="badge badge-status badge-completed">Completed</span>
+                                {% elif batch.batch_status == 'cancelled' %}
+                                    <span class="badge badge-status badge-cancelled">Cancelled</span>
+                                {% endif %}
+                                <br>
+                                <small class="text-muted">{{ batch.duration_days }} days</small>
+                            </td>
+                            <td>
+                                <strong>{{ batch.start_date|date:"M d, Y" }}</strong>
+                                <br>
+                                <small class="text-muted">to {{ batch.end_date|date:"M d, Y"|default:"TBD" }}</small>
+                                {% if batch.days_remaining > 0 %}
+                                <br>
+                                <small class="text-success">
+                                    <i class="bi bi-clock"></i> {{ batch.days_remaining }} days left
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="text-primary">{{ batch.display_current_students }}/{{ batch.max_students }}</span>
+                                    <div class="d-flex align-items-center">
+                                        {{ batch.display_occupancy|floatformat:0 }}%
+                                        <div class="progress-container">
+                                            <div class="progress-bar" style="width: {{ batch.display_occupancy }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if batch.display_can_enroll %}
+                                    {% if batch.available_seats > 5 %}
+                                        <span class="seat-indicator seat-available">
+                                            <i class="bi bi-check-circle"></i> {{ batch.available_seats }} seats
+                                        </span>
+                                    {% elif batch.available_seats > 0 %}
+                                        <span class="seat-indicator seat-limited">
+                                            <i class="bi bi-exclamation-triangle"></i> {{ batch.available_seats }} left
+                                        </span>
+                                    {% else %}
+                                        <span class="seat-indicator seat-full">
+                                            <i class="bi bi-x-circle"></i> Full
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Closed</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'enroallments_batch_detail' batch.pk %}" 
+                                    class="btn btn-sm btn-outline-primary" 
+                                    title="View Batch">
+                                        <i class="bi bi-eye"></i>
+                                        <span class="d-none d-md-inline">View</span>
+                                    </a>
+                                    <a href="javascript:void(0);" 
+                                    class="btn btn-sm btn-outline-warning" 
+                                    data-url="{% url 'update_batch' batch.pk %}" 
+                                    onclick="openUpdateModal(this)">
+                                        <i class="bi bi-pencil-square"></i>
+                                        <span class="d-none d-md-inline">Edit</span>
+                                    </a> 
+                                    <a href="{% url 'delete_batch' batch.pk %}" 
+                                    class="btn btn-sm btn-outline-danger btn-delete" 
+                                    title="Delete Batch"
+                                    onclick="confirmDelete(this); return false;">
+                                        <i class="bi bi-trash"></i>
+                                        <span class="d-none d-md-inline">Delete</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="bi bi-calendar-week display-4 text-muted mb-3"></i>
+                                <h5>No batches found</h5>
+                                <p class="text-muted">Try adjusting your filters or add a new batch</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel">
+                                <i class="bi bi-exclamation-triangle text-danger me-2"></i> Confirm Deletion
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete batch <strong id="delete_info"></strong>?
+                            <div class="alert alert-warning mt-3">
+                                <i class="bi bi-exclamation-circle me-2"></i> 
+                                This action cannot be undone. Batches with enrolled students cannot be deleted.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <a id="deleteButton" href="#" class="btn btn-danger">
+                                <i class="bi bi-trash me-2"></i> Delete Batch
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if batches.paginator.num_pages > 1 %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination pagination-modern justify-content-center">
+                    {% if batches.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ batches.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in batches.paginator.page_range %}
+                        {% if batches.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > batches.number|add:'-3' and num < batches.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if batches.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ batches.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ batches.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <p class="text-center text-muted mt-2">
+                    Showing {{ batches.start_index }} - {{ batches.end_index }} of {{ batches.paginator.count }} entries
+                </p>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function(){
+            if(typeof Choices !== "undefined"){
+                document.querySelectorAll("select").forEach(function(select){
+                    new Choices(select, {searchEnabled:true, shouldSort:false, itemSelectText:"", allowHTML:false, searchPlaceholderValue:"Search..."});
+                });
+            }
+        });
+
+        // Update Modal Function
+        function openUpdateModal(element) {
+            const url = element.dataset.url;
+            const newWindow = window.open(url, "updateWindow", "width=1200,height=800,scrollbars=yes,resizable=yes");
+            if (newWindow) {
+                newWindow.focus();
+                const checkWindow = setInterval(function() {
+                    if (newWindow.closed) {
+                        clearInterval(checkWindow);
+                        window.location.reload();
+                    }
+                }, 500);
+            }
+            return false;
+        }
+        
+        // Delete Confirmation
+        function confirmDelete(button) {
+            var info = button.closest('tr').querySelector('td:nth-child(1)').textContent.trim();
+            var deleteUrl = button.getAttribute('href');
+            document.getElementById('delete_info').textContent = info;
+            document.getElementById('deleteButton').setAttribute('href', deleteUrl);
+            
+            $('#deleteModal').modal('show');
+            return false;
+        }
+    </script>     
+
+</main>
+{% endblock content %}

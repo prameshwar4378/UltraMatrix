@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Setup</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --light-bg: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-container {
+            max-width: 1250px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.1);
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 30px 40px;
+        }
+
+        .form-header h1 {
+            font-weight: 700;
+            font-size: 2.1rem;
+            margin-bottom: 6px;
+        }
+
+        .form-header p {
+            margin: 0;
+            opacity: .9;
+        }
+
+        .form-body {
+            padding: 40px;
+        }
+
+        .form-section {
+            background: var(--light-bg);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .section-title-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+        }
+
+        .section-title h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.35rem;
+            color: var(--text-primary);
+        }
+
+        .section-title p {
+            margin: 4px 0 0;
+            color: var(--text-secondary);
+            font-size: .95rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 22px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .form-label i {
+            color: var(--primary-color);
+        }
+
+        .form-control,
+        .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 13px 15px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(102,126,234,.15);
+        }
+
+        .day-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .period-table input,
+        .period-table select {
+            min-width: 130px;
+        }
+
+        .form-actions {
+            background: white;
+            padding-top: 25px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 26px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+        }
+
+        .btn-secondary {
+            background: var(--light-bg);
+            color: var(--text-secondary);
+            border: 2px solid var(--border-color);
+        }
+
+        @media(max-width:768px) {
+            body {
+                padding: 10px;
+            }
+
+            .form-body {
+                padding: 24px 18px;
+            }
+
+            .form-header {
+                padding: 24px 18px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="form-container">
+
+    <div class="form-header">
+        <h1><i class="bi bi-calendar2-week me-2"></i>{{ form_title }}</h1>
+        <p>{{ form_subtitle }}</p>
+    </div>
+
+    <form method="POST" class="form-body" id="academicSetupForm">
+        {% csrf_token %}
+
+        <input type="hidden" name="days_json" id="daysJson">
+        <input type="hidden" name="weekday_periods_json" id="weekdayPeriodsJson">
+        <input type="hidden" name="saturday_periods_json" id="saturdayPeriodsJson">
+
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-title-icon">
+                    <i class="bi bi-building"></i>
+                </div>
+                <div>
+                    <h3>Basic Academic Information</h3>
+                    <p>Select school and academic year details.</p>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div>
+                    <label class="form-label"><i class="bi bi-bank"></i> School</label>
+                    <select name="school" class="form-select" required>
+                        <option value="">Select School</option>
+                        {% for school in schools %}
+                            <option value="{{ school.id }}" {% if academic_year and academic_year.school_id == school.id %}selected{% endif %}>
+                                {{ school.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="form-label"><i class="bi bi-calendar"></i> Academic Year Name</label>
+                    <input type="text" name="academic_name" class="form-control" placeholder="2026-2027" value="{{ academic_year.name|default:'' }}" required>
+                </div>
+
+                <div>
+                    <label class="form-label"><i class="bi bi-calendar-plus"></i> Start Date</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ academic_year.start_date|date:'Y-m-d' }}" required>
+                </div>
+
+                <div>
+                    <label class="form-label"><i class="bi bi-calendar-check"></i> End Date</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ academic_year.end_date|date:'Y-m-d' }}" required>
+                </div>
+
+                <div>
+                    <label class="form-label"><i class="bi bi-clock-history"></i> Bell Schedule Name</label>
+                    <input type="text" name="bell_schedule_name" class="form-control" placeholder="Regular Single Shift Schedule" value="{{ bell_schedule.name|default:'' }}" required>
+                </div>
+
+                <div class="d-flex align-items-center pt-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="isActiveSwitch" {% if not academic_year or academic_year.is_active %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold" for="isActiveSwitch">
+                            Active Academic Setup
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-title-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div>
+                    <h3>Working Days</h3>
+                    <p>Enable or disable days for this setup.</p>
+                </div>
+            </div>
+
+            <div class="form-grid" id="daysWrapper"></div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-title-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <div>
+                    <h3>Monday to Friday Period Timing</h3>
+                    <p>These timings apply for Monday to Friday.</p>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-primary btn-sm mb-3" onclick="addWeekdayPeriod()">
+                <i class="bi bi-plus-circle"></i> Add Weekday Period
+            </button>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle period-table">
+                    <thead class="table-light">
+                    <tr>
+                        <th>No.</th>
+                        <th>Period Name</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="weekdayPeriodBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">
+                <div class="section-title-icon">
+                    <i class="bi bi-calendar-day"></i>
+                </div>
+                <div>
+                    <h3>Saturday Period Timing</h3>
+                    <p>Saturday can have different timing and fewer periods.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-1"></i>
+                Saturday may have 4 periods, shorter break, or no lunch.
+            </div>
+
+            <button type="button" class="btn btn-warning btn-sm mb-3" onclick="addSaturdayPeriod()">
+                <i class="bi bi-plus-circle"></i> Add Saturday Period
+            </button>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle period-table">
+                    <thead class="table-light">
+                    <tr>
+                        <th>No.</th>
+                        <th>Period Name</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="saturdayPeriodBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <div class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                Records are saved only after final submit.
+            </div>
+
+            <div class="d-flex gap-3">
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> {{ button_text }}
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+{{ initial_days_json|json_script:"initialDaysData" }}
+{{ initial_weekday_periods_json|json_script:"initialWeekdayPeriodsData" }}
+{{ initial_saturday_periods_json|json_script:"initialSaturdayPeriodsData" }}
+
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<script>
+function initSearchableDropdowns(root){
+    if(typeof Choices === "undefined") return;
+
+    (root || document).querySelectorAll("select").forEach(select => {
+        if(select.dataset.searchReady === "true") return;
+
+        new Choices(select, {
+            searchEnabled: true,
+            shouldSort: false,
+            itemSelectText: "",
+            allowHTML: false,
+            placeholder: true,
+            searchPlaceholderValue: "Search..."
+        });
+
+        select.dataset.searchReady = "true";
+    });
+}
+
+let days = JSON.parse(document.getElementById("initialDaysData").textContent);
+let weekdayPeriods = JSON.parse(document.getElementById("initialWeekdayPeriodsData").textContent);
+let saturdayPeriods = JSON.parse(document.getElementById("initialSaturdayPeriodsData").textContent);
+
+function renderDays() {
+    const wrapper = document.getElementById("daysWrapper");
+    wrapper.innerHTML = "";
+
+    days.forEach((day, index) => {
+        wrapper.innerHTML += `
+            <div class="day-card">
+                <div>
+                    <strong>${day.name}</strong>
+                    <div class="text-muted small">${day.day_type}</div>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" ${day.is_working ? "checked" : ""} onchange="toggleDay(${index})">
+                </div>
+            </div>
+        `;
+    });
+
+    initSearchableDropdowns(body);
+}
+
+function toggleDay(index) {
+    days[index].is_working = !days[index].is_working;
+}
+
+function periodTypeOptions(selected) {
+    const types = ["TEACHING", "BREAK", "LUNCH", "ASSEMBLY"];
+
+    return types.map(type => {
+        return `<option value="${type}" ${selected === type ? "selected" : ""}>${type}</option>`;
+    }).join("");
+}
+
+function renderRows(bodyId, data, updateFn, removeFn) {
+    const body = document.getElementById(bodyId);
+    body.innerHTML = "";
+
+    data.forEach((period, index) => {
+        body.innerHTML += `
+            <tr>
+                <td>
+                    <input type="number" class="form-control" value="${period.period_number}" onchange="${updateFn}(${index}, 'period_number', this.value)">
+                </td>
+
+                <td>
+                    <input type="text" class="form-control" value="${period.name}" onchange="${updateFn}(${index}, 'name', this.value)">
+                </td>
+
+                <td>
+                    <input type="time" class="form-control" value="${period.start_time}" onchange="${updateFn}(${index}, 'start_time', this.value)">
+                </td>
+
+                <td>
+                    <input type="time" class="form-control" value="${period.end_time}" onchange="${updateFn}(${index}, 'end_time', this.value)">
+                </td>
+
+                <td>
+                    <select class="form-select" onchange="${updateFn}(${index}, 'period_type', this.value)">
+                        ${periodTypeOptions(period.period_type)}
+                    </select>
+                </td>
+
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="${removeFn}(${index})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function renderWeekdayPeriods() {
+    renderRows("weekdayPeriodBody", weekdayPeriods, "updateWeekdayPeriod", "removeWeekdayPeriod");
+}
+
+function renderSaturdayPeriods() {
+    renderRows("saturdayPeriodBody", saturdayPeriods, "updateSaturdayPeriod", "removeSaturdayPeriod");
+}
+
+function addWeekdayPeriod() {
+    weekdayPeriods.push({
+        period_number: weekdayPeriods.length + 1,
+        name: "Period " + (weekdayPeriods.length + 1),
+        start_time: "09:00",
+        end_time: "09:40",
+        period_type: "TEACHING"
+    });
+
+    renderWeekdayPeriods();
+}
+
+function addSaturdayPeriod() {
+    saturdayPeriods.push({
+        period_number: saturdayPeriods.length + 1,
+        name: "Period " + (saturdayPeriods.length + 1),
+        start_time: "09:00",
+        end_time: "09:40",
+        period_type: "TEACHING"
+    });
+
+    renderSaturdayPeriods();
+}
+
+function updateWeekdayPeriod(index, field, value) {
+    weekdayPeriods[index][field] = value;
+}
+
+function updateSaturdayPeriod(index, field, value) {
+    saturdayPeriods[index][field] = value;
+}
+
+function removeWeekdayPeriod(index) {
+    weekdayPeriods.splice(index, 1);
+    renderWeekdayPeriods();
+}
+
+function removeSaturdayPeriod(index) {
+    saturdayPeriods.splice(index, 1);
+    renderSaturdayPeriods();
+}
+
+document.getElementById("academicSetupForm").addEventListener("submit", function () {
+    document.getElementById("daysJson").value = JSON.stringify(days);
+    document.getElementById("weekdayPeriodsJson").value = JSON.stringify(weekdayPeriods);
+    document.getElementById("saturdayPeriodsJson").value = JSON.stringify(saturdayPeriods);
+});
+
+renderDays();
+renderWeekdayPeriods();
+renderSaturdayPeriods();
+initSearchableDropdowns(document);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

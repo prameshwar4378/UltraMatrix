@@ -1,0 +1,304 @@
+.timetable-builder-page {
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --surface: #ffffff;
+    --soft-bg: #f8fafc;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+}
+
+.builder-shell {
+    background: #f8fafc;
+    border-radius: 24px;
+    padding: 22px;
+}
+
+.builder-header {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.builder-header h2 {
+    margin: 0;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.builder-header p {
+    margin: 6px 0 0;
+    color: var(--muted);
+}
+
+.builder-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.builder-filters {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.builder-filters label {
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.builder-layout {
+    display: grid;
+    grid-template-columns: 270px 1fr 250px;
+    gap: 20px;
+}
+
+.lesson-sidebar,
+.conflict-panel,
+.grid-area {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.lesson-sidebar,
+.conflict-panel {
+    padding: 18px;
+}
+
+.sidebar-header h5 {
+    margin: 0;
+    font-weight: 800;
+}
+
+.sidebar-header small {
+    color: var(--muted);
+}
+
+.lesson-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lesson-card {
+    background: linear-gradient(135deg, #eef2ff, #ffffff);
+    border: 1px solid #c7d2fe;
+    border-radius: 16px;
+    padding: 14px;
+    cursor: grab;
+    transition: all .25s ease;
+}
+
+.lesson-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(79, 70, 229, 0.15);
+}
+
+.lesson-card strong {
+    display: block;
+    color: var(--text);
+}
+
+.lesson-card span {
+    display: block;
+    color: var(--primary);
+    font-size: .9rem;
+    margin-top: 4px;
+}
+
+.lesson-card small {
+    color: var(--muted);
+}
+
+.grid-area {
+    overflow: hidden;
+}
+
+.grid-toolbar {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.grid-toolbar p {
+    margin: 4px 0 0;
+    color: var(--muted);
+}
+
+.timetable-scroll {
+    overflow: auto;
+    max-height: 620px;
+}
+
+.timetable-grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 850px;
+}
+
+.timetable-grid th {
+    background: #f9fafb;
+    color: #374151;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+.timetable-grid td {
+    border-bottom: 1px solid #f1f5f9;
+    border-right: 1px solid #f1f5f9;
+    padding: 10px;
+    min-width: 140px;
+    height: 95px;
+    vertical-align: top;
+}
+
+.sticky-col {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 6;
+}
+
+.period-cell {
+    font-weight: 800;
+    color: var(--text);
+    background: #f9fafb;
+}
+
+.drop-cell {
+    min-height: 78px;
+    border: 2px dashed #e5e7eb;
+    border-radius: 14px;
+    padding: 8px;
+    transition: all .2s ease;
+}
+
+.drop-cell:hover {
+    background: #f8fafc;
+    border-color: var(--primary);
+}
+
+.saturday-cell {
+    background: #fffbeb;
+}
+
+.status-card {
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 14px;
+}
+
+.status-card strong {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 900;
+}
+
+.status-card span {
+    font-size: .9rem;
+}
+
+.status-card.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-card.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-card.info {
+    background: #eef2ff;
+    color: #3730a3;
+}
+
+@media(max-width: 1200px) {
+    .builder-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .builder-filters {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 768px) {
+    .builder-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .builder-filters {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+
+.drag-ghost {
+    opacity: .4;
+}
+
+.drag-chosen {
+    transform: rotate(2deg);
+}
+
+.placed-lesson {
+    background: linear-gradient(
+        135deg,
+        #eef2ff,
+        #ffffff
+    );
+
+    border: 1px solid #c7d2fe;
+
+    border-radius: 14px;
+
+    padding: 10px;
+
+    cursor: grab;
+
+    transition: all .2s ease;
+
+    min-height: 72px;
+}
+
+.conflict-cell {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border: 2px solid #ef4444 !important;
+}
+
+.success-cell {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border: 2px solid #10b981 !important;
+}
+
+.placed-lesson:hover {
+    box-shadow: 0 10px 24px rgba(79,70,229,.15);
+}
