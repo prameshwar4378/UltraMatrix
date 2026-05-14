@@ -1,0 +1,617 @@
+{% extends "school_software_base.html" %}
+
+{% block title %}Welcome Setup{% endblock title %}
+
+{% block content %}
+<style>
+    :root {
+        --school-primary: #123c7a;
+        --school-primary-dark: #0d2c5d;
+        --school-secondary: #1d65c1;
+        --school-accent: #f4b942;
+        --school-bg: #f4f8fc;
+        --school-surface: #ffffff;
+        --school-border: #dbe5f0;
+        --school-text: #1b2b45;
+        --school-muted: #6b7a90;
+        --school-shadow: 0 22px 70px rgba(10, 31, 68, 0.14);
+        --school-shadow-soft: 0 12px 35px rgba(18, 60, 122, 0.09);
+        --school-radius: 22px;
+        --transition-base: all 0.35s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .onboarding-shell {
+        min-height: calc(100vh - 70px);
+        padding: 34px;
+        position: relative;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 10% 10%, rgba(29, 101, 193, .18), transparent 32%),
+            radial-gradient(circle at 90% 20%, rgba(244, 185, 66, .20), transparent 28%),
+            linear-gradient(135deg, #f5f9ff 0%, #eef5ff 50%, #ffffff 100%);
+    }
+
+    .onboarding-shell::before,
+    .onboarding-shell::after {
+        content: "";
+        position: absolute;
+        width: 280px;
+        height: 280px;
+        border-radius: 50%;
+        filter: blur(8px);
+        opacity: .55;
+        pointer-events: none;
+        animation: floatOrb 8s ease-in-out infinite;
+    }
+
+    .onboarding-shell::before {
+        left: -90px;
+        top: 120px;
+        background: rgba(18, 60, 122, .12);
+    }
+
+    .onboarding-shell::after {
+        right: -90px;
+        bottom: 60px;
+        background: rgba(244, 185, 66, .18);
+        animation-delay: -3s;
+    }
+
+    @keyframes floatOrb {
+        0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+        50% { transform: translate3d(20px, -22px, 0) scale(1.08); }
+    }
+
+    .onboarding-wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+
+    .onboarding-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(310px, .85fr);
+        gap: 24px;
+        align-items: stretch;
+        margin-bottom: 24px;
+    }
+
+    .onboarding-panel {
+        position: relative;
+        overflow: hidden;
+        background: rgba(255, 255, 255, .86);
+        border: 1px solid rgba(219, 229, 240, .9);
+        border-radius: var(--school-radius);
+        box-shadow: var(--school-shadow-soft);
+        backdrop-filter: blur(18px);
+        transition: var(--transition-base);
+    }
+
+    .onboarding-panel:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--school-shadow);
+    }
+
+    .intro-panel {
+        padding: 34px;
+        color: #fff;
+        background:
+            linear-gradient(135deg, rgba(13, 44, 93, .96), rgba(18, 60, 122, .94)),
+            radial-gradient(circle at 85% 20%, rgba(244, 185, 66, .35), transparent 28%);
+    }
+
+    .intro-panel::after {
+        content: "";
+        position: absolute;
+        inset: auto -80px -120px auto;
+        width: 310px;
+        height: 310px;
+        border-radius: 50%;
+        background: rgba(244, 185, 66, .20);
+    }
+
+    .intro-panel .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 9px 13px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .14);
+        border: 1px solid rgba(255, 255, 255, .18);
+        font-size: 13px;
+        font-weight: 900;
+        margin-bottom: 20px;
+        animation: fadeUp .75s ease both;
+    }
+
+    .intro-panel h1 {
+        max-width: 720px;
+        font-size: clamp(30px, 4vw, 46px);
+        line-height: 1.08;
+        font-weight: 950;
+        letter-spacing: -.8px;
+        margin: 0 0 14px;
+        animation: fadeUp .75s ease .08s both;
+    }
+
+    .intro-panel p {
+        max-width: 720px;
+        color: rgba(255, 255, 255, .84);
+        font-size: 16px;
+        line-height: 1.75;
+        margin: 0;
+        animation: fadeUp .75s ease .16s both;
+    }
+
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(18px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .school-panel {
+        padding: 26px;
+    }
+
+    .school-panel h2 {
+        font-size: 19px;
+        font-weight: 950;
+        margin-bottom: 16px;
+        color: var(--school-text);
+    }
+
+    .school-meta {
+        display: grid;
+        gap: 13px;
+    }
+
+    .school-meta div {
+        position: relative;
+        padding: 15px 16px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #f8fbff, #ffffff);
+        border: 1px solid #e5edf8;
+        transition: var(--transition-base);
+    }
+
+    .school-meta div:hover {
+        transform: translateX(5px);
+        border-color: rgba(29, 101, 193, .28);
+        box-shadow: 0 10px 25px rgba(18, 60, 122, .08);
+    }
+
+    .school-meta span {
+        display: block;
+        color: var(--school-muted);
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+    }
+
+    .school-meta strong {
+        display: block;
+        color: var(--school-text);
+        font-size: 15px;
+        margin-top: 5px;
+    }
+
+    .steps-layout {
+        display: grid;
+        grid-template-columns: 310px minmax(0, 1fr);
+        gap: 24px;
+    }
+
+    .steps-list {
+        padding: 16px;
+    }
+
+    .step-tab {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 13px;
+        border: 0;
+        border-radius: 16px;
+        background: transparent;
+        text-align: left;
+        color: #52637a;
+        font-weight: 900;
+        cursor: pointer;
+        position: relative;
+        transition: var(--transition-base);
+    }
+
+    .step-tab + .step-tab {
+        margin-top: 8px;
+    }
+
+    .step-tab:hover {
+        background: #f4f8ff;
+        color: var(--school-primary);
+        transform: translateX(4px);
+    }
+
+    .step-tab .step-number {
+        width: 36px;
+        height: 36px;
+        border-radius: 14px;
+        display: grid;
+        place-items: center;
+        background: #e8f0fb;
+        color: var(--school-primary);
+        font-size: 13px;
+        flex: 0 0 auto;
+        transition: var(--transition-base);
+    }
+
+    .step-tab.active {
+        background: linear-gradient(135deg, var(--school-primary), var(--school-secondary));
+        color: #fff;
+        box-shadow: 0 14px 28px rgba(18, 60, 122, .24);
+    }
+
+    .step-tab.active .step-number {
+        background: var(--school-accent);
+        color: var(--school-primary-dark);
+        transform: rotate(-5deg) scale(1.05);
+    }
+
+    .step-stage {
+        padding: 32px;
+    }
+
+    .feature-step {
+        display: none;
+        animation: stepReveal .45s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    .feature-step.active {
+        display: block;
+    }
+
+    @keyframes stepReveal {
+        from { opacity: 0; transform: translateY(16px) scale(.985); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .feature-step .label {
+        display: inline-flex;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(29, 101, 193, .09);
+        color: var(--school-secondary);
+        font-size: 12px;
+        font-weight: 950;
+        text-transform: uppercase;
+        letter-spacing: .7px;
+    }
+
+    .feature-step h2 {
+        font-size: clamp(28px, 3vw, 38px);
+        line-height: 1.16;
+        font-weight: 950;
+        color: var(--school-text);
+        margin: 15px 0 12px;
+        letter-spacing: -.5px;
+    }
+
+    .feature-step p {
+        max-width: 760px;
+        color: #52637a;
+        font-size: 16px;
+        line-height: 1.75;
+    }
+
+    .feature-points {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin: 26px 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .feature-points li {
+        min-height: 108px;
+        padding: 18px;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        background:
+            linear-gradient(135deg, rgba(248, 250, 252, .95), rgba(255, 255, 255, .95));
+        color: var(--school-text);
+        font-weight: 850;
+        line-height: 1.5;
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition-base);
+    }
+
+    .feature-points li::before {
+        content: "✓";
+        display: inline-grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        margin-bottom: 13px;
+        background: rgba(244, 185, 66, .22);
+        color: var(--school-primary);
+        font-weight: 950;
+    }
+
+    .feature-points li:hover {
+        transform: translateY(-7px);
+        border-color: rgba(29, 101, 193, .30);
+        box-shadow: 0 16px 34px rgba(18, 60, 122, .10);
+    }
+
+    .progress-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid #edf2f8;
+    }
+
+    .progress-track {
+        height: 10px;
+        flex: 1;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e2e8f0;
+    }
+
+    .progress-fill {
+        height: 100%;
+        width: 16.66%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--school-primary), var(--school-secondary), var(--school-accent));
+        transition: width .45s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    #stepCounter {
+        min-width: 58px;
+        text-align: right;
+        color: var(--school-primary);
+        font-weight: 950;
+    }
+
+    .action-row {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 11px;
+        margin-top: 24px;
+    }
+
+    .btn-onboarding {
+        min-height: 46px;
+        border-radius: 999px;
+        padding: 0 22px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: var(--school-primary);
+        font-weight: 950;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: var(--transition-base);
+    }
+
+    .btn-onboarding:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(18, 60, 122, .16);
+    }
+
+    .btn-onboarding:disabled {
+        opacity: .45;
+        cursor: not-allowed;
+    }
+
+    .btn-onboarding.primary {
+        border-color: var(--school-primary);
+        background: linear-gradient(135deg, var(--school-primary), var(--school-secondary));
+        color: #fff;
+    }
+
+    .finish-form {
+        display: none;
+    }
+
+    .finish-form.active {
+        display: block;
+        animation: fadeUp .35s ease both;
+    }
+
+    @media (max-width: 992px) {
+        .onboarding-shell {
+            padding: 20px;
+        }
+
+        .onboarding-hero,
+        .steps-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .steps-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .step-tab + .step-tab {
+            margin-top: 0;
+        }
+
+        .feature-points {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .steps-list {
+            grid-template-columns: 1fr;
+        }
+
+        .intro-panel,
+        .school-panel,
+        .step-stage {
+            padding: 22px;
+        }
+
+        .action-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-onboarding,
+        .finish-form,
+        .finish-form button {
+            width: 100%;
+        }
+    }
+</style>
+
+<main id="main" class="main onboarding-shell">
+    <div class="onboarding-wrap">
+        <section class="onboarding-hero">
+            <div class="onboarding-panel intro-panel">
+                <div class="eyebrow">
+                    <i class="bi bi-stars"></i>
+                    First time setup
+                </div>
+                <h1>Welcome to your smart school workspace</h1>
+                <p>Complete this short walkthrough once and unlock your professional timetable dashboard experience.</p>
+            </div>
+
+            <aside class="onboarding-panel school-panel">
+                <h2>Current Institute</h2>
+                <div class="school-meta">
+                    <div>
+                        <span>School</span>
+                        <strong>{{ school.name }}</strong>
+                    </div>
+                    <div>
+                        <span>Role</span>
+                        <strong>{{ school_user.get_role_display }}</strong>
+                    </div>
+                    <div>
+                        <span>Status</span>
+                        <strong>14 day trial started</strong>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="steps-layout">
+            <aside class="onboarding-panel steps-list" aria-label="Setup steps">
+                {% for feature in features %}
+                    <button class="step-tab {% if forloop.first %}active{% endif %}" type="button" data-step="{{ forloop.counter0 }}">
+                        <span class="step-number">{{ forloop.counter }}</span>
+                        <span>{{ feature.title }}</span>
+                    </button>
+                {% endfor %}
+            </aside>
+
+            <div class="onboarding-panel step-stage">
+                {% for feature in features %}
+                    <article class="feature-step {% if forloop.first %}active{% endif %}" data-step-panel="{{ forloop.counter0 }}">
+                        <div class="label">{{ feature.label }}</div>
+                        <h2>{{ feature.title }}</h2>
+                        <p>{{ feature.description }}</p>
+
+                        <ul class="feature-points">
+                            {% for point in feature.points %}
+                                <li>{{ point }}</li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+                {% endfor %}
+
+                <div class="progress-row">
+                    <div class="progress-track" aria-hidden="true">
+                        <div class="progress-fill" id="onboardingProgress"></div>
+                    </div>
+                    <strong id="stepCounter">1 / {{ features|length }}</strong>
+                </div>
+
+                <div class="action-row">
+                    <button class="btn-onboarding" type="button" id="prevStep">
+                        <i class="bi bi-arrow-left"></i>
+                        Previous
+                    </button>
+
+                    <button class="btn-onboarding primary" type="button" id="nextStep">
+                        Next
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+
+                    <form class="finish-form" method="post" id="finishForm">
+                        {% csrf_token %}
+                        <button class="btn-onboarding primary" type="submit">
+                            <i class="bi bi-check2-circle"></i>
+                            Finish and open dashboard
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+    (function () {
+        const tabs = Array.from(document.querySelectorAll(".step-tab"));
+        const panels = Array.from(document.querySelectorAll(".feature-step"));
+        const progress = document.getElementById("onboardingProgress");
+        const counter = document.getElementById("stepCounter");
+        const previous = document.getElementById("prevStep");
+        const next = document.getElementById("nextStep");
+        const finishForm = document.getElementById("finishForm");
+
+        let activeStep = 0;
+
+        function showStep(index) {
+            activeStep = Math.max(0, Math.min(index, panels.length - 1));
+
+            tabs.forEach((tab, tabIndex) => {
+                tab.classList.toggle("active", tabIndex === activeStep);
+            });
+
+            panels.forEach((panel, panelIndex) => {
+                panel.classList.toggle("active", panelIndex === activeStep);
+            });
+
+            previous.disabled = activeStep === 0;
+
+            const isLastStep = activeStep === panels.length - 1;
+            next.style.display = isLastStep ? "none" : "inline-flex";
+            finishForm.classList.toggle("active", isLastStep);
+
+            progress.style.width = `${((activeStep + 1) / panels.length) * 100}%`;
+            counter.textContent = `${activeStep + 1} / ${panels.length}`;
+        }
+
+        tabs.forEach((tab) => {
+            tab.addEventListener("click", () => {
+                showStep(Number(tab.dataset.step));
+            });
+        });
+
+        previous.addEventListener("click", () => showStep(activeStep - 1));
+        next.addEventListener("click", () => showStep(activeStep + 1));
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "ArrowRight") showStep(activeStep + 1);
+            if (event.key === "ArrowLeft") showStep(activeStep - 1);
+        });
+
+        showStep(0);
+    })();
+</script>
+{% endblock content %}

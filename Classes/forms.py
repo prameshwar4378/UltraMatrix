@@ -1,9 +1,10 @@
 from django import forms
+from Accounts.form_mixins import CurrentSchoolFormMixin
 from .models import ClassLevel, Division
 from Timetables.models import ClassSection
 
 
-class ClassLevelForm(forms.ModelForm):
+class ClassLevelForm(CurrentSchoolFormMixin, forms.ModelForm):
     class Meta:
         model = ClassLevel
         fields = [
@@ -25,7 +26,7 @@ class ClassLevelForm(forms.ModelForm):
         }
 
 
-class DivisionForm(forms.ModelForm):
+class DivisionForm(CurrentSchoolFormMixin, forms.ModelForm):
     class Meta:
         model = Division
         fields = [
@@ -43,7 +44,9 @@ class DivisionForm(forms.ModelForm):
         }
 
 
-class ClassSectionForm(forms.ModelForm):
+class ClassSectionForm(CurrentSchoolFormMixin, forms.ModelForm):
+    school_related_fields = ("class_level", "division", "class_teacher", "default_room")
+
     class Meta:
         model = ClassSection
         fields = [

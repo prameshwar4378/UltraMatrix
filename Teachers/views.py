@@ -1,6 +1,7 @@
 from io import BytesIO
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -13,6 +14,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from .models import Teacher
 from .forms import TeacherForm
 from Schools.models import School
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
 
 
 TEACHER_IMPORT_HEADERS = [
@@ -32,7 +34,10 @@ TEACHER_IMPORT_HEADERS = [
 
 
 def _filtered_teachers(request):
-    teachers = Teacher.objects.select_related("school").all().order_by("-id")
+    teachers = school_queryset(
+        request,
+        Teacher.objects.select_related("school"),
+    ).order_by("-id")
 
     search_query = request.GET.get("search", "")
     teacher_type_filter = request.GET.get("teacher_type", "")
@@ -60,16 +65,18 @@ def _filtered_teachers(request):
     return teachers, search_query, teacher_type_filter, status_filter
 
 
+@login_required
 def teacher_list(request):
     teachers, search_query, teacher_type_filter, status_filter = _filtered_teachers(request)
+    current_school = get_current_school(request)
 
     context = {
         "teachers": teachers,
-        "total_teachers": Teacher.objects.count(),
-        "active_teachers": Teacher.objects.filter(is_active=True).count(),
-        "full_time_teachers": Teacher.objects.filter(teacher_type="FULL_TIME").count(),
-        "part_time_teachers": Teacher.objects.filter(teacher_type="PART_TIME").count(),
-        "total_schools": School.objects.count(),
+        "total_teachers": teachers.count(),
+        "active_teachers": teachers.filter(is_active=True).count(),
+        "full_time_teachers": teachers.filter(teacher_type="FULL_TIME").count(),
+        "part_time_teachers": teachers.filter(teacher_type="PART_TIME").count(),
+        "total_schools": 1 if current_school else 0,
         "search_query": search_query,
         "teacher_type_filter": teacher_type_filter,
         "status_filter": status_filter,
@@ -78,9 +85,15 @@ def teacher_list(request):
     return render(request, "teacher_list.html", context)
 
 
+@login_required
 def teacher_create(request):
+    no_school_response = redirect_if_no_current_school(request)
+    if no_school_response:
+        return no_school_response
+
+    current_school = get_current_school(request)
     if request.method == "POST":
-        form = TeacherForm(request.POST)
+        form = TeacherForm(request.POST, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -91,7 +104,7 @@ def teacher_create(request):
             </script>
             """)
     else:
-        form = TeacherForm()
+        form = TeacherForm(current_school=current_school)
 
     return render(request, "teacher_form.html", {
         "form": form,
@@ -101,11 +114,13 @@ def teacher_create(request):
     })
 
 
+@login_required
 def teacher_update(request, pk):
-    teacher = get_object_or_404(Teacher, pk=pk)
+    teacher = get_school_object_or_404(request, Teacher.objects.all(), pk=pk)
+    current_school = get_current_school(request)
 
     if request.method == "POST":
-        form = TeacherForm(request.POST, instance=teacher)
+        form = TeacherForm(request.POST, instance=teacher, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -116,7 +131,7 @@ def teacher_update(request, pk):
             </script>
             """)
     else:
-        form = TeacherForm(instance=teacher)
+        form = TeacherForm(instance=teacher, current_school=current_school)
 
     return render(request, "teacher_form.html", {
         "form": form,
@@ -126,9 +141,10 @@ def teacher_update(request, pk):
     })
 
 
+@login_required
 @require_POST
 def teacher_delete(request, pk):
-    teacher = get_object_or_404(Teacher, pk=pk)
+    teacher = get_school_object_or_404(request, Teacher.objects.all(), pk=pk)
     name = teacher.name
     teacher.delete()
     messages.success(request, f"Teacher '{name}' deleted successfully.")
@@ -195,13 +211,15 @@ def _style_teacher_sheet(sheet, title):
     sheet.merge_cells(start_row=2, start_column=1, end_row=2, end_column=len(TEACHER_IMPORT_HEADERS))
 
 
+@login_required
 def teacher_import_template(request):
+    current_school = get_current_school(request)
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Teacher Import"
     _style_teacher_sheet(sheet, "Teacher Bulk Import Template")
 
-    sample_school = School.objects.filter(is_active=True).order_by("name").first()
+    sample_school = current_school or School.objects.filter(is_active=True).order_by("name").first()
     sample_school_code = sample_school.school_code if sample_school else "SCH001"
     sample_school_name = sample_school.name if sample_school else "Sample School"
     sample_rows = [
@@ -215,7 +233,8 @@ def teacher_import_template(request):
 
     schools_sheet = workbook.create_sheet("Schools")
     schools_sheet.append(["School Code", "School Name"])
-    for school in School.objects.order_by("name"):
+    schools = School.objects.filter(pk=current_school.pk) if current_school else School.objects.none()
+    for school in schools.order_by("name"):
         schools_sheet.append([school.school_code, school.name])
     schools_sheet.column_dimensions["A"].width = 22
     schools_sheet.column_dimensions["B"].width = 38
@@ -223,6 +242,7 @@ def teacher_import_template(request):
     return _teacher_workbook_response(workbook, "teacher-import-template.xlsx")
 
 
+@login_required
 def teacher_export_excel(request):
     teachers, _, _, _ = _filtered_teachers(request)
     workbook = Workbook()
@@ -277,8 +297,14 @@ def _school_from_import(school_code, school_name):
     return None
 
 
+@login_required
 @require_POST
 def teacher_import_excel(request):
+    current_school = get_current_school(request)
+    if not current_school:
+        messages.error(request, "No active school is linked with your session.")
+        return redirect("teacher_list")
+
     upload = request.FILES.get("teacher_file")
 
     if not upload:
@@ -311,8 +337,8 @@ def teacher_import_excel(request):
         school = _school_from_import(values[0], values[1])
         name = str(values[2] or "").strip()
 
-        if not school or not name:
-            skipped.append(f"Row {row_index}: school and name are required")
+        if not school or school.id != current_school.id or not name:
+            skipped.append(f"Row {row_index}: only your current school and teacher name are allowed")
             continue
 
         teacher_type = str(values[7] or "FULL_TIME").strip().upper()

@@ -1,6 +1,7 @@
 import csv
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -11,10 +12,11 @@ from Schools.models import School
 from Subjects.models import TeacherSubjectCapability
 from Timetables.models import ClassSection, LessonAllocation
 from .forms import LessonAllocationForm
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
 
 
 def _filtered_allocations(request):
-    allocations = LessonAllocation.objects.select_related(
+    allocations = school_queryset(request, LessonAllocation.objects.select_related(
         "school",
         "academic_year",
         "class_section",
@@ -23,7 +25,7 @@ def _filtered_allocations(request):
         "subject",
         "teacher",
         "default_room",
-    ).all().order_by("-id")
+    )).order_by("-id")
 
     search_query = request.GET.get("search", "")
     school_filter = request.GET.get("school", "")
@@ -55,26 +57,33 @@ def _filtered_allocations(request):
     return allocations, search_query, school_filter, academic_year_filter, status_filter
 
 
+@login_required
 def lesson_allocation_list(request):
+    current_school = get_current_school(request)
     allocations, search_query, school_filter, academic_year_filter, status_filter = _filtered_allocations(request)
 
-    total_weekly_periods = LessonAllocation.objects.aggregate(
-        total=Sum("weekly_periods")
-    )["total"] or 0
+    total_weekly_periods = 0
+    schools = School.objects.none()
+    academic_years = AcademicYear.objects.none()
+    if current_school:
+        schools = School.objects.filter(pk=current_school.pk).order_by("name")
+        academic_years = AcademicYear.objects.select_related("school").filter(school=current_school).order_by("school__name", "-start_date")
+        total_weekly_periods = allocations.aggregate(total=Sum("weekly_periods"))["total"] or 0
 
     context = {
         "allocations": allocations,
-        "total_allocations": LessonAllocation.objects.count(),
-        "active_allocations": LessonAllocation.objects.filter(is_active=True).count(),
-        "double_period_allocations": LessonAllocation.objects.filter(requires_double_period=True).count(),
+        "total_allocations": allocations.count(),
+        "active_allocations": allocations.filter(is_active=True).count(),
+        "double_period_allocations": allocations.filter(requires_double_period=True).count(),
         "total_weekly_periods": total_weekly_periods,
-        "active_sections": ClassSection.objects.filter(is_active=True).count(),
-        "active_subject_capabilities": TeacherSubjectCapability.objects.filter(
+        "active_sections": school_queryset(request, ClassSection.objects.all()).filter(is_active=True).count(),
+        "active_subject_capabilities": school_queryset(request, TeacherSubjectCapability.objects.all()).filter(
             teacher__is_active=True,
             subject__is_active=True,
         ).count(),
-        "schools": School.objects.all().order_by("name"),
-        "academic_years": AcademicYear.objects.select_related("school").all().order_by("school__name", "-start_date"),
+        "schools": schools,
+        "academic_years": academic_years,
+        "current_school": current_school,
         "search_query": search_query,
         "school_filter": school_filter,
         "academic_year_filter": academic_year_filter,
@@ -84,6 +93,7 @@ def lesson_allocation_list(request):
     return render(request, "lesson_allocation_list.html", context)
 
 
+@login_required
 def lesson_allocation_export_csv(request):
     allocations, search_query, school_filter, academic_year_filter, status_filter = _filtered_allocations(request)
 
@@ -119,9 +129,15 @@ def lesson_allocation_export_csv(request):
     return response
 
 
+@login_required
 def lesson_allocation_create(request):
+    no_school_response = redirect_if_no_current_school(request)
+    if no_school_response:
+        return no_school_response
+
+    current_school = get_current_school(request)
     if request.method == "POST":
-        form = LessonAllocationForm(request.POST)
+        form = LessonAllocationForm(request.POST, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -132,7 +148,7 @@ def lesson_allocation_create(request):
             </script>
             """)
     else:
-        form = LessonAllocationForm()
+        form = LessonAllocationForm(current_school=current_school)
 
     return render(request, "lesson_allocation_form.html", {
         "form": form,
@@ -142,11 +158,13 @@ def lesson_allocation_create(request):
     })
 
 
+@login_required
 def lesson_allocation_update(request, pk):
-    allocation = get_object_or_404(LessonAllocation, pk=pk)
+    allocation = get_school_object_or_404(request, LessonAllocation.objects.all(), pk=pk)
+    current_school = get_current_school(request)
 
     if request.method == "POST":
-        form = LessonAllocationForm(request.POST, instance=allocation)
+        form = LessonAllocationForm(request.POST, instance=allocation, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -157,7 +175,7 @@ def lesson_allocation_update(request, pk):
             </script>
             """)
     else:
-        form = LessonAllocationForm(instance=allocation)
+        form = LessonAllocationForm(instance=allocation, current_school=current_school)
 
     return render(request, "lesson_allocation_form.html", {
         "form": form,
@@ -167,18 +185,20 @@ def lesson_allocation_update(request, pk):
     })
 
 
+@login_required
 @require_POST
 def lesson_allocation_delete(request, pk):
-    allocation = get_object_or_404(LessonAllocation, pk=pk)
+    allocation = get_school_object_or_404(request, LessonAllocation.objects.all(), pk=pk)
     name = str(allocation)
     allocation.delete()
     messages.success(request, f"Lesson allocation '{name}' deleted successfully.")
     return redirect("lesson_allocation_list")
 
 
+@login_required
 @require_POST
 def lesson_allocation_toggle_status(request, pk):
-    allocation = get_object_or_404(LessonAllocation, pk=pk)
+    allocation = get_school_object_or_404(request, LessonAllocation.objects.all(), pk=pk)
     allocation.is_active = not allocation.is_active
     allocation.save(update_fields=["is_active"])
 
@@ -187,9 +207,15 @@ def lesson_allocation_toggle_status(request, pk):
     return redirect("lesson_allocation_list")
 
 
+@login_required
 @require_POST
 def lesson_allocation_quick_create(request):
-    school_id = request.POST.get("school")
+    current_school = get_current_school(request)
+    if not current_school:
+        messages.error(request, "No active school is linked with your session.")
+        return redirect("lesson_allocation_list")
+
+    school_id = current_school.id if current_school else request.POST.get("school")
     academic_year_id = request.POST.get("academic_year")
     weekly_periods = request.POST.get("weekly_periods") or 5
     include_backup = request.POST.get("include_backup") == "on"
@@ -203,7 +229,7 @@ def lesson_allocation_quick_create(request):
         messages.error(request, "Select school and academic year before quick creating allocations.")
         return redirect("lesson_allocation_list")
 
-    school = get_object_or_404(School, pk=school_id)
+    school = get_object_or_404(School, pk=school_id, school_users__user=request.user, school_users__is_active=True)
     academic_year = get_object_or_404(AcademicYear, pk=academic_year_id, school=school)
 
     capabilities = TeacherSubjectCapability.objects.select_related(

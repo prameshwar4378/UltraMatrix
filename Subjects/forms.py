@@ -1,8 +1,9 @@
 from django import forms
+from Accounts.form_mixins import CurrentSchoolFormMixin
 from .models import Subject, TeacherSubjectCapability
 
 
-class SubjectForm(forms.ModelForm):
+class SubjectForm(CurrentSchoolFormMixin, forms.ModelForm):
     class Meta:
         model = Subject
         fields = [
@@ -71,7 +72,9 @@ class SubjectForm(forms.ModelForm):
         return cleaned_data
 
 
-class TeacherSubjectCapabilityForm(forms.ModelForm):
+class TeacherSubjectCapabilityForm(CurrentSchoolFormMixin, forms.ModelForm):
+    school_related_fields = ("teacher", "subject", "class_levels")
+
     class Meta:
         model = TeacherSubjectCapability
         fields = [

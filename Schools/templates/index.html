@@ -41,6 +41,7 @@ body{
     radial-gradient(circle at 15% 20%,rgba(24,216,255,.18),transparent 30%),
     radial-gradient(circle at 85% 15%,rgba(244,185,66,.22),transparent 28%),
     linear-gradient(135deg,#f6f9ff,#eef6ff 60%,#ffffff);
+  background-attachment:fixed;
   min-height:100vh;
 }
 
@@ -658,14 +659,15 @@ body.lock-scroll{overflow:hidden}
       <nav class="desktop-menu" id="desktopMenu">
         <span class="nav-indicator" id="navIndicator"></span>
 
-        <button class="nav-btn" data-menu="academics">Features <i class="bi bi-chevron-down"></i></button>
-        <button class="nav-btn" data-menu="admissions">Solutions <i class="bi bi-chevron-down"></i></button>
-        <button class="nav-btn" data-menu="campus">Platform <i class="bi bi-chevron-down"></i></button>
-        <button class="nav-btn" data-menu="about">Company <i class="bi bi-chevron-down"></i></button>
-        <button class="nav-btn" data-menu="resources">Resources <i class="bi bi-chevron-down"></i></button>
+          <button class="nav-btn">Home </button>
+          <button class="nav-btn" data-menu="academics">Features <i class="bi bi-chevron-down"></i></button>
+          <button class="nav-btn" data-menu="admissions">AI Engine <i class="bi bi-chevron-down"></i></button>
+          <button class="nav-btn" data-menu="campus">Pricing <i class="bi bi-chevron-down"></i></button>
+          <button class="nav-btn" data-menu="resources">Resources <i class="bi bi-chevron-down"></i></button>
       </nav>
 
-      <a href="#" class="apply-btn">Request Demo <i class="bi bi-arrow-right"></i></a>
+      <a href="{% url 'login' %}" class="nav-btn">Login</a>
+      <a href="{% url 'school_signup' %}" class="apply-btn">Start Free Trial <i class="bi bi-arrow-right"></i></a>
       <button class="mobile-toggle" id="openMobile"><i class="bi bi-list"></i></button>
     </div>
 
@@ -695,79 +697,67 @@ body.lock-scroll{overflow:hidden}
 
 <script>
 const menuData = {
-  academics:{
-    kicker:"Core Product",
-    title:"AI Timetable Features",
-    icon:"bi-calendar2-week-fill",
-    badge:"Automation",
-    desc:"Plan complete school timetables with conflict checks, workload balance and smart scheduling controls.",
-    links:[
-      ["AI Builder","Generate class-wise schedules faster.","bi-cpu"],
-      ["Conflict Checks","Detect teacher, room and class clashes.","bi-shield-check"],
-      ["Proxy Adjustment","Assign substitutes for daily changes.","bi-person-lines-fill"],
-      ["Workload Balance","Track max periods per day and week.","bi-speedometer2"],
-      ["Room Planning","Manage classrooms, labs and capacity.","bi-door-open"],
-      ["Exports","Print PDF, Excel and daily proxy sheets.","bi-file-earmark-arrow-down"]
+  academics: {
+    kicker: "Core Features",
+    title: "Smart Scheduling Platform",
+    icon: "bi-calendar2-week-fill",
+    badge: "10x Faster",
+    desc: "Build school timetables faster with drag-drop planning, live conflicts, teacher workload control and daily proxy operations.",
+    links: [
+      ["Drag & Drop Planner", "Move lectures smoothly across timetable slots.", "bi-cursor-fill"],
+      ["Live Conflict Detection", "Catch teacher, room and class clashes instantly.", "bi-shield-check"],
+      ["Multi Timetable Support", "Create multiple active or draft timetable versions.", "bi-layers"],
+      ["Teacher Workload Balance", "Track daily and weekly teacher load limits.", "bi-speedometer2"],
+      ["Proxy Adjustment Panel", "Handle teacher leave and substitute lectures.", "bi-person-lines-fill"],
+      ["PDF & Excel Export", "Print and share timetable reports easily.", "bi-file-earmark-arrow-down"]
     ]
   },
-  admissions:{
-    kicker:"For Schools",
-    title:"Scheduling Solutions",
-    icon:"bi-building-check",
-    badge:"Use Cases",
-    desc:"Purpose-built for schools that need faster timetable planning and cleaner daily operations.",
-    links:[
-      ["School Admins","Central control for setup and planning.","bi-person-gear"],
-      ["Coordinators","Resolve daily proxy changes quickly.","bi-lightning-charge"],
-      ["Teachers","Teacher-wise timetable clarity.","bi-person-workspace"],
-      ["Multi Section","Handle levels, divisions and sections.","bi-grid-3x3-gap"],
-      ["Labs & Rooms","Avoid room double-booking.","bi-pc-display-horizontal"],
-      ["Reports","Export lists and adjustment sheets.","bi-clipboard-data"]
+
+  admissions: {
+    kicker: "AI Engine",
+    title: "AI Scheduling Intelligence",
+    icon: "bi-cpu-fill",
+    badge: "Smart AI",
+    desc: "Use AI to generate, optimize and improve school timetables with smarter teacher, room and subject distribution.",
+    links: [
+      ["AI Timetable Generator", "Generate complete schedules automatically.", "bi-stars"],
+      ["AI Conflict Resolver", "Resolve timetable clashes intelligently.", "bi-magic"],
+      ["AI Workload Balancing", "Distribute teacher periods more fairly.", "bi-bar-chart-line"],
+      ["Room Optimization", "Assign classrooms and labs without overlap.", "bi-door-open"],
+      ["Gap Reduction", "Reduce unnecessary teacher free gaps.", "bi-arrows-collapse"],
+      ["Quality Score", "Measure timetable quality before publishing.", "bi-graph-up-arrow"]
     ]
   },
-  campus:{
-    kicker:"SaaS Platform",
-    title:"Control Center",
-    icon:"bi-command",
-    badge:"Dashboard",
-    desc:"A clean command dashboard for setup readiness, timetable coverage and priority proxy work.",
-    links:[
-      ["Dashboard","Priority actions and quick controls.","bi-speedometer"],
-      ["Academic Setup","Years, days, bells and periods.","bi-calendar2-check"],
-      ["Teacher Setup","Availability and workload limits.","bi-people"],
-      ["Subject Mapping","Capabilities and backup teachers.","bi-diagram-3"],
-      ["Versioning","Manage active timetable versions.","bi-layers"],
-      ["Notifications","Keep teams aligned on changes.","bi-bell"]
+
+  campus: {
+    kicker: "Pricing",
+    title: "Flexible Plans",
+    icon: "bi-cash-stack",
+    badge: "For Every School",
+    desc: "Simple pricing for schools, academies and institutions with features based on usage and growth.",
+    links: [
+      ["Starter Plan", "Best for small schools starting digital scheduling.", "bi-box"],
+      ["Professional Plan", "Advanced timetable, export and proxy tools.", "bi-gem"],
+      ["Enterprise Plan", "AI engine, multi-school and custom support.", "bi-building-gear"],
+      ["Unlimited Timetables", "Create multiple timetable versions easily.", "bi-infinity"],
+      ["Export Permissions", "Control PDF and Excel access by plan.", "bi-file-lock"],
+      ["Onboarding Support", "Get help setting up your school data.", "bi-headset"]
     ]
   },
-  about:{
-    kicker:"About Ultoxy",
-    title:"Built For Timetables",
-    icon:"bi-stars",
-    badge:"AI SaaS",
-    desc:"Designed to reduce admin workload and make school scheduling more reliable.",
-    links:[
-      ["Why Us","Focused on timetable operations.","bi-bullseye"],
-      ["Reliability","Cleaner data and fewer manual errors.","bi-patch-check"],
-      ["Support","Help during setup and rollout.","bi-headset"],
-      ["Security","Role-aware school data access.","bi-lock"],
-      ["Scalability","Ready for growing institutions.","bi-graph-up-arrow"],
-      ["Contact","Talk to the product team.","bi-telephone"]
-    ]
-  },
-  resources:{
-    kicker:"Learn More",
-    title:"Resources",
-    icon:"bi-folder2-open",
-    badge:"Guides",
-    desc:"Explore product guides, demos, documentation and launch material.",
-    links:[
-      ["Product Demo","See the scheduling workflow.","bi-play-circle"],
-      ["Feature List","Review all SaaS capabilities.","bi-list-stars"],
-      ["Setup Guide","Prepare school data quickly.","bi-map"],
-      ["Proxy Guide","Manage daily adjustments.","bi-person-check"],
-      ["Pricing","Choose the right plan.","bi-cash-stack"],
-      ["FAQ","Answers for school admins.","bi-question-circle"]
+
+  resources: {
+    kicker: "Resources",
+    title: "Learn & Explore",
+    icon: "bi-folder2-open",
+    badge: "Guides",
+    desc: "Explore product demos, setup guides, FAQs and support resources for faster school onboarding.",
+    links: [
+      ["Product Demo", "See the timetable workflow in action.", "bi-play-circle"],
+      ["Feature Overview", "Explore all important SaaS capabilities.", "bi-list-stars"],
+      ["Interactive Demo", "Try a sample timetable experience.", "bi-window-fullscreen"],
+      ["Setup Guide", "Prepare teachers, rooms and subjects quickly.", "bi-map"],
+      ["FAQ", "Answers for school admins and owners.", "bi-question-circle"],
+      ["Contact Support", "Talk to our product support team.", "bi-chat-dots"]
     ]
   }
 };
@@ -1077,15 +1067,12 @@ renderMobile();
   </div>
 </section>
 <style>
-    .school-hero{
+.school-hero{
   position:relative;
   overflow:hidden;
   min-height:calc(100vh - 76px);
   padding:90px 28px;
-  background:
-    radial-gradient(circle at 15% 20%,rgba(24,216,255,.18),transparent 30%),
-    radial-gradient(circle at 85% 15%,rgba(244,185,66,.22),transparent 28%),
-    linear-gradient(135deg,#f6f9ff,#eef6ff 60%,#ffffff);
+  background:transparent;
 }
 
 .hero-container{
@@ -1429,6 +1416,950 @@ if(heroVisual){
 
 
  
+<section class="um-problem-solution">
+  <div class="um-ps-container">
+
+    <div class="um-ps-heading">
+      <span class="hero-badge">
+        <i class="bi bi-lightning-charge-fill"></i> Problem → Solution
+      </span>
+
+      <h2>
+        Stop Manual Timetable Stress.
+        <span>Start Smart Scheduling.</span>
+      </h2>
+
+      <p>
+        UltraMatrix removes daily timetable confusion with intelligent planning,
+        live conflict checks and AI-powered automation.
+      </p>
+    </div>
+
+    <div class="um-ps-grid">
+
+      <div class="um-ps-card problem-card">
+        <div class="um-card-top">
+          <span class="um-card-icon danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </span>
+          <div>
+            <small>Current Pain Points</small>
+            <h3>Before UltraMatrix</h3>
+          </div>
+        </div>
+
+        <div class="um-ps-list">
+          <div><i class="bi bi-x-circle"></i> Teacher conflicts</div>
+          <div><i class="bi bi-x-circle"></i> Manual Excel work</div>
+          <div><i class="bi bi-x-circle"></i> Time waste</div>
+          <div><i class="bi bi-x-circle"></i> Schedule confusion</div>
+        </div>
+      </div>
+
+      <div class="um-ps-center">
+        <div class="um-ps-arrow">
+          <i class="bi bi-arrow-right"></i>
+        </div>
+        <span>Transforms Into</span>
+      </div>
+
+      <div class="um-ps-card solution-card">
+        <div class="um-card-top">
+          <span class="um-card-icon success">
+            <i class="bi bi-stars"></i>
+          </span>
+          <div>
+            <small>Smart SaaS Solution</small>
+            <h3>With UltraMatrix</h3>
+          </div>
+        </div>
+
+        <div class="um-ps-list">
+          <div><i class="bi bi-check-circle-fill"></i> Drag & drop builder</div>
+          <div><i class="bi bi-check-circle-fill"></i> Smart conflict detection</div>
+          <div><i class="bi bi-check-circle-fill"></i> Multi-division handling</div>
+          <div><i class="bi bi-check-circle-fill"></i> PDF/Excel export</div>
+          <div><i class="bi bi-check-circle-fill"></i> AI automation</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<style>
+  .um-problem-solution{
+  position:relative;
+  padding:95px 28px;
+  overflow:hidden;
+}
+
+.um-problem-solution::before{
+  content:"";
+  position:absolute;
+  width:420px;
+  height:420px;
+  left:-180px;
+  top:20%;
+  border-radius:50%;
+  background:rgba(24,216,255,.16);
+  filter:blur(25px);
+  pointer-events:none;
+}
+
+.um-problem-solution::after{
+  content:"";
+  position:absolute;
+  width:360px;
+  height:360px;
+  right:-150px;
+  bottom:10%;
+  border-radius:50%;
+  background:rgba(244,185,66,.2);
+  filter:blur(25px);
+  pointer-events:none;
+}
+
+.um-ps-container{
+  width:100%;
+  max-width:1280px;
+  margin:auto;
+  position:relative;
+  z-index:2;
+}
+
+.um-ps-heading{
+  max-width:780px;
+  margin:0 auto 55px;
+  text-align:center;
+}
+
+.um-ps-heading h2{
+  margin:22px 0 16px;
+  color:var(--dark);
+  font-size:52px;
+  line-height:1.05;
+  font-weight:950;
+  letter-spacing:-1px;
+}
+
+.um-ps-heading h2 span{
+  display:block;
+  background:linear-gradient(135deg,var(--primary),var(--secondary),#18d8ff);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.um-ps-heading p{
+  margin:0 auto;
+  max-width:680px;
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.8;
+  font-weight:550;
+}
+
+.um-ps-grid{
+  display:grid;
+  grid-template-columns:1fr 130px 1fr;
+  align-items:center;
+  gap:24px;
+}
+
+.um-ps-card{
+  position:relative;
+  min-height:430px;
+  padding:30px;
+  border-radius:36px;
+  background:rgba(255,255,255,.74);
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 28px 75px rgba(18,60,122,.13);
+  backdrop-filter:blur(18px);
+  overflow:hidden;
+  transition:.4s var(--ease);
+
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  height:100%;
+}
+
+.um-ps-card:hover{
+  transform:translateY(-10px);
+  box-shadow:0 38px 95px rgba(18,60,122,.18);
+}
+
+.um-ps-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.45),transparent);
+  pointer-events:none;
+}
+
+.um-card-top{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:28px;
+}
+
+.um-card-icon{
+  width:64px;
+  height:64px;
+  min-width:64px;
+  border-radius:24px;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  font-size:28px;
+  box-shadow:0 18px 38px rgba(18,60,122,.18);
+}
+
+.um-card-icon.danger{
+  background:linear-gradient(135deg,#ff6b6b,#d63031);
+}
+
+.um-card-icon.success{
+  background:linear-gradient(135deg,var(--primary),var(--secondary),#18d8ff);
+}
+
+.um-card-top small{
+  display:block;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
+
+.um-card-top h3{
+  margin:4px 0 0;
+  color:var(--primary);
+  font-size:28px;
+  font-weight:950;
+}
+
+.um-ps-list{
+  position:relative;
+  z-index:1;
+  display:grid;
+  gap:14px;
+}
+
+.um-ps-list div{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  padding:16px 18px;
+  border-radius:20px;
+  color:var(--text);
+  font-size:15px;
+  font-weight:850;
+  background:rgba(255,255,255,.68);
+  border:1px solid rgba(18,60,122,.08);
+  box-shadow:0 10px 28px rgba(18,60,122,.06);
+  transition:.3s var(--ease);
+}
+
+.um-ps-list div:hover{
+  transform:translateX(8px);
+  background:#fff;
+}
+
+.problem-card .um-ps-list i{
+  color:#d63031;
+}
+
+.solution-card .um-ps-list i{
+  color:var(--secondary);
+}
+
+.um-ps-center{
+  text-align:center;
+  display:grid;
+  place-items:center;
+  gap:13px;
+}
+
+.um-ps-arrow{
+  width:92px;
+  height:92px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  color:#071527;
+  font-size:34px;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  box-shadow:0 22px 48px rgba(244,185,66,.35);
+  animation:umArrowPulse 2.4s ease-in-out infinite;
+}
+
+.um-ps-center span{
+  color:var(--primary);
+  font-size:12px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
+
+@keyframes umArrowPulse{
+  0%,100%{transform:translateX(0) scale(1)}
+  50%{transform:translateX(8px) scale(1.06)}
+}
+
+@media(max-width:991px){
+  .um-problem-solution{
+    padding:75px 18px;
+  }
+
+  .um-ps-heading h2{
+    font-size:42px;
+  }
+
+  .um-ps-grid{
+    grid-template-columns:1fr;
+  }
+
+  .um-ps-center{
+    transform:rotate(90deg);
+    margin:8px 0;
+  }
+
+  .um-ps-center span{
+    display:none;
+  }
+
+  .um-ps-card{
+    min-height:auto;
+  }
+}
+
+@media(max-width:575px){
+  .um-problem-solution{
+    padding:60px 14px;
+  }
+
+  .um-ps-heading h2{
+    font-size:34px;
+  }
+
+  .um-ps-card{
+    padding:22px;
+    border-radius:28px;
+  }
+
+  .um-card-top h3{
+    font-size:23px;
+  }
+
+  .um-card-icon{
+    width:56px;
+    height:56px;
+    min-width:56px;
+    border-radius:20px;
+    font-size:24px;
+  }
+
+  .um-ps-list div{
+    font-size:14px;
+    padding:14px;
+  }
+}
 </style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<section class="um-feature-universe">
+  <div class="um-fu-bg-grid"></div>
+  <span class="um-fu-orb orb-a"></span>
+  <span class="um-fu-orb orb-b"></span>
+
+  <div class="um-fu-container">
+    <div class="um-fu-heading">
+      <span class="hero-badge">
+        <i class="bi bi-stars"></i> Feature Intelligence
+      </span>
+
+      <h2>
+        One Smart Ecosystem
+        <span>For Complete Timetable Control</span>
+      </h2>
+
+      <p>
+        Every feature connects together like a scheduling engine — planning,
+        validation, workload balance, exports and AI automation in one flow.
+      </p>
+    </div>
+
+    <div class="um-fu-stage">
+
+      <div class="um-fu-core">
+        <span class="um-fu-core-ring ring-one"></span>
+        <span class="um-fu-core-ring ring-two"></span>
+        <span class="um-fu-core-ring ring-three"></span>
+
+        <div class="um-fu-core-box">
+          <i class="bi bi-cpu-fill"></i>
+          <strong>UltraMatrix AI</strong>
+          <small>Smart Timetable Engine</small>
+        </div>
+      </div>
+
+      <div class="um-fu-feature f1" data-title="Master Timetable Board" data-text="Control classes, divisions, periods and teachers from one visual command board.">
+        <i class="bi bi-calendar2-week-fill"></i>
+        <span>Master Board</span>
+      </div>
+
+      <div class="um-fu-feature f2" data-title="Teacher Conflict Detection" data-text="Detect teacher clashes instantly before final timetable publishing.">
+        <i class="bi bi-shield-check"></i>
+        <span>Conflict Detection</span>
+      </div>
+
+      <div class="um-fu-feature f3" data-title="Multi Timetable" data-text="Create draft, active and alternate timetable versions without confusion.">
+        <i class="bi bi-layers-fill"></i>
+        <span>Multi Timetable</span>
+      </div>
+
+      <div class="um-fu-feature f4" data-title="Primary/Secondary Builder" data-text="Build separate structures for primary, secondary and higher sections.">
+        <i class="bi bi-diagram-3-fill"></i>
+        <span>Section Builder</span>
+      </div>
+
+      <div class="um-fu-feature f5" data-title="Room Management" data-text="Manage classrooms, labs and special rooms with availability validation.">
+        <i class="bi bi-door-open-fill"></i>
+        <span>Room Management</span>
+      </div>
+
+      <div class="um-fu-feature f6" data-title="Smart Validation" data-text="Validate load, clashes, gaps, room conflicts and timetable quality.">
+        <i class="bi bi-patch-check-fill"></i>
+        <span>Smart Validation</span>
+      </div>
+
+      <div class="um-fu-feature f7" data-title="Export System" data-text="Export clean timetable reports in PDF and Excel format.">
+        <i class="bi bi-file-earmark-arrow-down-fill"></i>
+        <span>Export System</span>
+      </div>
+
+      <div class="um-fu-feature f8" data-title="AI Auto Generation" data-text="Generate complete timetable structures automatically using AI planning.">
+        <i class="bi bi-magic"></i>
+        <span>AI Generation</span>
+      </div>
+
+      <div class="um-fu-feature f9" data-title="Teacher Workload Tracking" data-text="Track daily and weekly teaching load for fair period distribution.">
+        <i class="bi bi-speedometer2"></i>
+        <span>Workload Tracking</span>
+      </div>
+
+      <div class="um-fu-preview" id="umFuPreview">
+        <small>Hover Feature</small>
+        <h3>AI Auto Generation</h3>
+        <p>Generate complete timetable structures automatically using AI planning.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<style>
+.um-feature-universe{
+  position:relative;
+  padding:110px 28px;
+  overflow:hidden;
+}
+
+.um-fu-bg-grid{
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(18,60,122,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(18,60,122,.055) 1px,transparent 1px);
+  background-size:54px 54px;
+  mask-image:radial-gradient(circle at center,#000 20%,transparent 72%);
+  animation:umGridMove 18s linear infinite;
+}
+
+@keyframes umGridMove{
+  to{background-position:108px 108px}
+}
+
+.um-fu-orb{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(18px);
+  pointer-events:none;
+  opacity:.7;
+}
+
+.orb-a{
+  width:320px;
+  height:320px;
+  left:-120px;
+  top:18%;
+  background:rgba(24,216,255,.18);
+  animation:umOrbFloat 8s ease-in-out infinite;
+}
+
+.orb-b{
+  width:280px;
+  height:280px;
+  right:-110px;
+  bottom:14%;
+  background:rgba(244,185,66,.22);
+  animation:umOrbFloat 9s ease-in-out infinite reverse;
+}
+
+@keyframes umOrbFloat{
+  50%{transform:translateY(-35px) scale(1.12)}
+}
+
+.um-fu-container{
+  width:100%;
+  max-width:1280px;
+  margin:auto;
+  position:relative;
+  z-index:2;
+}
+
+.um-fu-heading{
+  max-width:880px;
+  margin:0 auto 60px;
+  text-align:center;
+}
+
+.um-fu-heading h2{
+  margin:22px 0 16px;
+  color:var(--dark);
+  font-size:56px;
+  line-height:1.04;
+  font-weight:950;
+  letter-spacing:-1.2px;
+}
+
+.um-fu-heading h2 span{
+  display:block;
+  background:linear-gradient(135deg,var(--primary),var(--secondary),#18d8ff);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.um-fu-heading p{
+  max-width:730px;
+  margin:auto;
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.8;
+  font-weight:550;
+}
+
+.um-fu-stage{
+  position:relative;
+  min-height:760px;
+  border-radius:46px;
+  background:
+    radial-gradient(circle at 50% 50%,rgba(24,216,255,.16),transparent 24%),
+    linear-gradient(135deg,rgba(255,255,255,.62),rgba(255,255,255,.28));
+  border:1px solid rgba(255,255,255,.86);
+  box-shadow:0 40px 100px rgba(18,60,122,.15);
+  backdrop-filter:blur(18px);
+  overflow:hidden;
+}
+
+.um-fu-stage::before{
+  content:"";
+  position:absolute;
+  inset:70px;
+  border-radius:50%;
+  border:1px dashed rgba(18,60,122,.16);
+  animation:umSpin 34s linear infinite;
+}
+
+.um-fu-stage::after{
+  content:"";
+  position:absolute;
+  inset:145px;
+  border-radius:50%;
+  border:1px dashed rgba(244,185,66,.28);
+  animation:umSpin 25s linear infinite reverse;
+}
+
+@keyframes umSpin{
+  to{transform:rotate(360deg)}
+}
+
+.um-fu-core{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:260px;
+  height:260px;
+  transform:translate(-50%,-50%);
+  display:grid;
+  place-items:center;
+  z-index:5;
+}
+
+.um-fu-core-ring{
+  position:absolute;
+  border-radius:50%;
+  border:1px solid rgba(29,101,193,.18);
+}
+
+.ring-one{
+  width:260px;
+  height:260px;
+  animation:umPulseRing 3s ease-in-out infinite;
+}
+
+.ring-two{
+  width:205px;
+  height:205px;
+  border-color:rgba(24,216,255,.28);
+  animation:umPulseRing 3s ease-in-out infinite .5s;
+}
+
+.ring-three{
+  width:150px;
+  height:150px;
+  border-color:rgba(244,185,66,.36);
+  animation:umPulseRing 3s ease-in-out infinite 1s;
+}
+
+@keyframes umPulseRing{
+  50%{transform:scale(1.08);opacity:.45}
+}
+
+.um-fu-core-box{
+  width:170px;
+  height:170px;
+  border-radius:46px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  padding:22px;
+  color:#fff;
+  background:linear-gradient(145deg,#071527,var(--primary),var(--secondary));
+  box-shadow:
+    0 34px 80px rgba(18,60,122,.38),
+    inset 0 0 0 1px rgba(255,255,255,.16);
+  animation:umCoreFloat 4s ease-in-out infinite;
+}
+
+@keyframes umCoreFloat{
+  50%{transform:translateY(-12px)}
+}
+
+.um-fu-core-box i{
+  font-size:42px;
+  color:#ffe59a;
+}
+
+.um-fu-core-box strong{
+  display:block;
+  margin-top:10px;
+  font-size:18px;
+  font-weight:950;
+}
+
+.um-fu-core-box small{
+  color:#b9cce2;
+  font-size:12px;
+  font-weight:800;
+}
+
+.um-fu-feature{
+  position:absolute;
+  z-index:4;
+  width:190px;
+  min-height:150px;
+  padding:22px;
+  border-radius:32px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(255,255,255,.94);
+  box-shadow:0 26px 70px rgba(18,60,122,.14);
+  backdrop-filter:blur(16px);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:14px;
+  cursor:pointer;
+  transition:.45s var(--ease);
+  animation:umNodeFloat 5s ease-in-out infinite;
+}
+
+.um-fu-feature::before{
+  content:"";
+  position:absolute;
+  width:130px;
+  height:2px;
+  left:50%;
+  top:50%;
+  background:linear-gradient(90deg,rgba(29,101,193,.35),transparent);
+  transform-origin:left;
+  opacity:.55;
+  pointer-events:none;
+}
+
+.um-fu-feature i{
+  width:56px;
+  height:56px;
+  border-radius:22px;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  font-size:25px;
+  background:linear-gradient(135deg,var(--primary),var(--secondary),#18d8ff);
+  box-shadow:0 18px 34px rgba(18,60,122,.22);
+  transition:.4s var(--ease);
+}
+
+.um-fu-feature span{
+  color:var(--primary);
+  font-size:15px;
+  line-height:1.25;
+  font-weight:950;
+}
+
+.um-fu-feature:hover{
+  transform:translateY(-14px) scale(1.06);
+  background:#fff;
+  box-shadow:0 38px 95px rgba(18,60,122,.24);
+}
+
+.um-fu-feature:hover i{
+  transform:rotate(-8deg) scale(1.12);
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  color:#071527;
+}
+
+@keyframes umNodeFloat{
+  50%{margin-top:-14px}
+}
+
+.f1{left:8%;top:9%;animation-delay:-.2s}
+.f2{left:39%;top:4%;animation-delay:-.8s}
+.f3{right:8%;top:10%;animation-delay:-1.4s}
+.f4{left:3%;top:42%;animation-delay:-2s}
+.f5{right:3%;top:42%;animation-delay:-2.6s}
+.f6{left:10%;bottom:10%;animation-delay:-3.2s}
+.f7{left:39%;bottom:5%;animation-delay:-3.8s}
+.f8{right:10%;bottom:10%;animation-delay:-4.4s}
+.f9{left:50%;top:50%;transform:translate(-50%,245px);animation-delay:-5s}
+
+.f1::before{transform:rotate(35deg)}
+.f2::before{transform:rotate(86deg)}
+.f3::before{transform:rotate(145deg)}
+.f4::before{transform:rotate(0deg)}
+.f5::before{transform:rotate(180deg)}
+.f6::before{transform:rotate(-35deg)}
+.f7::before{transform:rotate(-86deg)}
+.f8::before{transform:rotate(-145deg)}
+.f9::before{display:none}
+
+.um-fu-preview{
+  position:absolute;
+  left:50%;
+  bottom:42px;
+  transform:translateX(-50%);
+  z-index:7;
+  width:min(520px,calc(100% - 36px));
+  padding:22px 26px;
+  border-radius:28px;
+  text-align:center;
+  background:rgba(7,21,39,.92);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 30px 75px rgba(7,21,39,.28);
+  backdrop-filter:blur(18px);
+}
+
+.um-fu-preview small{
+  color:#ffe59a;
+  font-size:11px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.14em;
+}
+
+.um-fu-preview h3{
+  margin:7px 0 8px;
+  color:#fff;
+  font-size:24px;
+  font-weight:950;
+}
+
+.um-fu-preview p{
+  margin:0;
+  color:#b9cce2;
+  font-size:14px;
+  line-height:1.6;
+  font-weight:650;
+}
+
+.um-fu-stage.reveal .um-fu-feature{
+  animation-name:umNodeFloat, umNodeReveal;
+  animation-duration:5s, .8s;
+  animation-timing-function:ease-in-out, var(--ease);
+  animation-fill-mode:none, both;
+}
+
+@keyframes umNodeReveal{
+  from{
+    opacity:0;
+    filter:blur(8px);
+  }
+  to{
+    opacity:1;
+    filter:blur(0);
+  }
+}
+
+@media(max-width:1100px){
+  .um-fu-stage{
+    min-height:auto;
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px;
+    padding:26px;
+  }
+
+  .um-fu-stage::before,
+  .um-fu-stage::after,
+  .um-fu-core,
+  .um-fu-feature::before{
+    display:none;
+  }
+
+  .um-fu-feature,
+  .f1,.f2,.f3,.f4,.f5,.f6,.f7,.f8,.f9{
+    position:relative;
+    inset:auto;
+    transform:none;
+    width:100%;
+    min-height:180px;
+  }
+
+  .um-fu-preview{
+    position:relative;
+    left:auto;
+    bottom:auto;
+    transform:none;
+    width:100%;
+    grid-column:1/-1;
+    order:-1;
+  }
+}
+
+@media(max-width:991px){
+  .um-feature-universe{
+    padding:80px 18px;
+  }
+
+  .um-fu-heading h2{
+    font-size:42px;
+  }
+}
+
+@media(max-width:575px){
+  .um-feature-universe{
+    padding:65px 14px;
+  }
+
+  .um-fu-heading h2{
+    font-size:34px;
+  }
+
+  .um-fu-stage{
+    grid-template-columns:1fr;
+    padding:18px;
+    border-radius:34px;
+  }
+
+  .um-fu-feature{
+    min-height:150px;
+    border-radius:26px;
+  }
+}
+</style>
+
+<script>
+(function(){
+  const stage = document.querySelector(".um-fu-stage");
+  const features = document.querySelectorAll(".um-fu-feature");
+  const preview = document.getElementById("umFuPreview");
+
+  if(!stage || !features.length || !preview) return;
+
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        stage.classList.add("reveal");
+        observer.unobserve(stage);
+      }
+    });
+  },{threshold:.25});
+
+  observer.observe(stage);
+
+  features.forEach((item,index)=>{
+    item.style.animationDelay = `${index * 90}ms`;
+
+    item.addEventListener("mouseenter",()=>{
+      preview.querySelector("h3").textContent = item.dataset.title;
+      preview.querySelector("p").textContent = item.dataset.text;
+      preview.animate([
+        {transform:"translateX(-50%) translateY(8px)",opacity:.6},
+        {transform:"translateX(-50%) translateY(0)",opacity:1}
+      ],{
+        duration:320,
+        easing:"cubic-bezier(.22,1,.36,1)"
+      });
+    });
+  });
+
+  stage.addEventListener("mousemove",(e)=>{
+    if(window.innerWidth <= 1100) return;
+
+    const rect = stage.getBoundingClientRect();
+    const x = (e.clientX - rect.left - rect.width / 2) / 45;
+    const y = (e.clientY - rect.top - rect.height / 2) / 45;
+
+    stage.style.transform = `rotateX(${-y * .18}deg) rotateY(${x * .18}deg)`;
+
+    features.forEach((node,i)=>{
+      const depth = (i % 3) + 1;
+      node.style.translate = `${x * depth}px ${y * depth}px`;
+    });
+  });
+
+  stage.addEventListener("mouseleave",()=>{
+    stage.style.transform = "";
+    features.forEach(node=>node.style.translate = "");
+  });
+})();
+</script>
+
 </body>
 </html>

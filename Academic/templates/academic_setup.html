@@ -232,10 +232,13 @@
             <div class="form-grid">
                 <div>
                     <label class="form-label"><i class="bi bi-bank"></i> School</label>
-                    <select name="school" class="form-select" required>
+                    {% if current_school %}
+                        <input type="hidden" name="school" value="{{ current_school.id }}">
+                    {% endif %}
+                    <select name="school" class="form-select" required {% if current_school %}disabled aria-readonly="true"{% endif %}>
                         <option value="">Select School</option>
                         {% for school in schools %}
-                            <option value="{{ school.id }}" {% if academic_year and academic_year.school_id == school.id %}selected{% endif %}>
+                            <option value="{{ school.id }}" {% if current_school and current_school.id == school.id %}selected{% elif academic_year and academic_year.school_id == school.id %}selected{% endif %}>
                                 {{ school.name }}
                             </option>
                         {% endfor %}
@@ -425,7 +428,7 @@ function renderDays() {
         `;
     });
 
-    initSearchableDropdowns(body);
+    initSearchableDropdowns(wrapper);
 }
 
 function toggleDay(index) {
@@ -477,6 +480,8 @@ function renderRows(bodyId, data, updateFn, removeFn) {
             </tr>
         `;
     });
+
+    initSearchableDropdowns(body);
 }
 
 function renderWeekdayPeriods() {

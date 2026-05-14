@@ -1,5 +1,6 @@
 import csv
 
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.views.decorators.http import require_POST
@@ -9,10 +10,14 @@ from .forms import SubjectForm, TeacherSubjectCapabilityForm
 
 from django.contrib import messages
 from django.http import HttpResponse
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
 
 
 def _filtered_subjects(request):
-    subjects = Subject.objects.select_related("school").all().order_by("-id")
+    subjects = school_queryset(
+        request,
+        Subject.objects.select_related("school"),
+    ).order_by("-id")
     search_query = request.GET.get("search", "")
     section_filter = request.GET.get("section_type", "")
     subject_type_filter = request.GET.get("subject_type", "")
@@ -41,21 +46,22 @@ def _filtered_subjects(request):
     return subjects, search_query, section_filter, subject_type_filter, status_filter
 
 
+@login_required
 def subject_list(request):
     subjects, search_query, section_filter, subject_type_filter, status_filter = _filtered_subjects(request)
-    capabilities = TeacherSubjectCapability.objects.select_related(
+    capabilities = school_queryset(request, TeacherSubjectCapability.objects.select_related(
         "school", "teacher", "subject"
-    ).prefetch_related("class_levels").all().order_by("-id")
+    ).prefetch_related("class_levels")).order_by("-id")
 
     context = {
         "subjects": subjects,
         "capabilities": capabilities[:8],
 
-        "total_subjects": Subject.objects.count(),
-        "active_subjects": Subject.objects.filter(is_active=True).count(),
-        "theory_subjects": Subject.objects.filter(subject_type="THEORY").count(),
-        "practical_subjects": Subject.objects.filter(subject_type="PRACTICAL").count(),
-        "total_capabilities": TeacherSubjectCapability.objects.count(),
+        "total_subjects": subjects.count(),
+        "active_subjects": subjects.filter(is_active=True).count(),
+        "theory_subjects": subjects.filter(subject_type="THEORY").count(),
+        "practical_subjects": subjects.filter(subject_type="PRACTICAL").count(),
+        "total_capabilities": capabilities.count(),
 
         "search_query": search_query,
         "section_filter": section_filter,
@@ -66,6 +72,7 @@ def subject_list(request):
     return render(request, "subject_list.html", context)
 
 
+@login_required
 def subject_export_csv(request):
     subjects, search_query, section_filter, subject_type_filter, status_filter = _filtered_subjects(request)
 
@@ -99,9 +106,15 @@ def subject_export_csv(request):
     return response
 
 
+@login_required
 def subject_create(request):
+    no_school_response = redirect_if_no_current_school(request)
+    if no_school_response:
+        return no_school_response
+
+    current_school = get_current_school(request)
     if request.method == "POST":
-        form = SubjectForm(request.POST)
+        form = SubjectForm(request.POST, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -112,7 +125,7 @@ def subject_create(request):
             </script>
             """)
     else:
-        form = SubjectForm()
+        form = SubjectForm(current_school=current_school)
 
     return render(request, "subject_form.html", {
         "form": form,
@@ -122,11 +135,13 @@ def subject_create(request):
     })
 
 
+@login_required
 def subject_update(request, pk):
-    subject = get_object_or_404(Subject, pk=pk)
+    subject = get_school_object_or_404(request, Subject.objects.all(), pk=pk)
+    current_school = get_current_school(request)
 
     if request.method == "POST":
-        form = SubjectForm(request.POST, instance=subject)
+        form = SubjectForm(request.POST, instance=subject, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -138,7 +153,7 @@ def subject_update(request, pk):
             </script>
             """)
     else:
-        form = SubjectForm(instance=subject)
+        form = SubjectForm(instance=subject, current_school=current_school)
 
     return render(request, "subject_form.html", {
         "form": form,
@@ -148,18 +163,20 @@ def subject_update(request, pk):
     })
 
 
+@login_required
 @require_POST
 def subject_delete(request, pk):
-    subject = get_object_or_404(Subject, pk=pk)
+    subject = get_school_object_or_404(request, Subject.objects.all(), pk=pk)
     name = subject.name
     subject.delete()
     messages.success(request, f"Subject '{name}' deleted successfully.")
     return redirect("subject_list")
 
 
+@login_required
 @require_POST
 def subject_toggle_status(request, pk):
-    subject = get_object_or_404(Subject, pk=pk)
+    subject = get_school_object_or_404(request, Subject.objects.all(), pk=pk)
     subject.is_active = not subject.is_active
     subject.save(update_fields=["is_active"])
 
@@ -168,9 +185,15 @@ def subject_toggle_status(request, pk):
     return redirect("subject_list")
 
 
+@login_required
 def teacher_subject_create(request):
+    no_school_response = redirect_if_no_current_school(request)
+    if no_school_response:
+        return no_school_response
+
+    current_school = get_current_school(request)
     if request.method == "POST":
-        form = TeacherSubjectCapabilityForm(request.POST)
+        form = TeacherSubjectCapabilityForm(request.POST, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -181,7 +204,7 @@ def teacher_subject_create(request):
             </script>
             """)
     else:
-        form = TeacherSubjectCapabilityForm()
+        form = TeacherSubjectCapabilityForm(current_school=current_school)
 
     return render(request, "teacher_subject_form.html", {
         "form": form,
@@ -190,11 +213,13 @@ def teacher_subject_create(request):
         "button_text": "Save Mapping",
     })
 
+@login_required
 def teacher_subject_update(request, pk):
-    capability = get_object_or_404(TeacherSubjectCapability, pk=pk)
+    capability = get_school_object_or_404(request, TeacherSubjectCapability.objects.all(), pk=pk)
+    current_school = get_current_school(request)
 
     if request.method == "POST":
-        form = TeacherSubjectCapabilityForm(request.POST, instance=capability)
+        form = TeacherSubjectCapabilityForm(request.POST, instance=capability, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -205,7 +230,7 @@ def teacher_subject_update(request, pk):
             </script>
             """)
     else:
-        form = TeacherSubjectCapabilityForm(instance=capability)
+        form = TeacherSubjectCapabilityForm(instance=capability, current_school=current_school)
 
     return render(request, "teacher_subject_form.html", {
         "form": form,
@@ -215,9 +240,10 @@ def teacher_subject_update(request, pk):
     })
 
 
+@login_required
 @require_POST
 def teacher_subject_delete(request, pk):
-    capability = get_object_or_404(TeacherSubjectCapability, pk=pk)
+    capability = get_school_object_or_404(request, TeacherSubjectCapability.objects.all(), pk=pk)
     name = str(capability)
     capability.delete()
     messages.success(request, f"Teacher subject mapping '{name}' deleted successfully.")

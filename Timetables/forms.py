@@ -1,8 +1,17 @@
 from django import forms
+from Accounts.form_mixins import CurrentSchoolFormMixin
 from .models import LessonAllocation
 
 
-class LessonAllocationForm(forms.ModelForm):
+class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
+    school_related_fields = (
+        "academic_year",
+        "class_section",
+        "subject",
+        "teacher",
+        "default_room",
+    )
+
     class Meta:
         model = LessonAllocation
 

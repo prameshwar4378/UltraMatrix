@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'AI_TIMETABLE_SAAS.tenancy.SchoolTenantMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -78,12 +80,17 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'Accounts.context_processors.school_context',
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'AI_TIMETABLE_SAAS.wsgi.application'
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "school_dashboard"
+LOGOUT_REDIRECT_URL = "login"
 
 
 # Database
@@ -95,6 +102,42 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+
+def _sqlite_tenant_databases():
+    """
+    SQLite has no separate schemas, so development isolation uses one database
+    file per school/tenant. Example: SCHOOL_SQLITE_TENANTS=school_1,school_2
+    """
+    
+    tenant_dir = BASE_DIR / "tenant_dbs"
+    tenant_databases = {}
+
+    for raw_alias in os.environ.get("SCHOOL_SQLITE_TENANTS", "").split(","):
+        alias = raw_alias.strip()
+        if not alias:
+            continue
+
+        tenant_databases[alias] = {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": tenant_dir / f"{alias}.sqlite3",
+        }
+
+    return tenant_databases
+
+
+DATABASES.update(_sqlite_tenant_databases())
+SCHOOL_TENANT_DATABASES = tuple(alias for alias in DATABASES if alias != "default")
+SCHOOL_TENANT_APPS = (
+    "Schools",
+    "Academic",
+    "Classes",
+    "Teachers",
+    "Subjects",
+    "Rooms",
+    "Timetables",
+)
+DATABASE_ROUTERS = ["AI_TIMETABLE_SAAS.db_router.SchoolTenantDatabaseRouter"]
 
 
 # Password validation

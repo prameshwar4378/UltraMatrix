@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.views.decorators.http import require_POST
 
@@ -7,13 +8,19 @@ from .forms import RoomForm
 from Classes.models import ClassLevel, Division
 from Schools.models import School
 from Timetables.models import ClassSection
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
 
+@login_required
 def room_list(request):
+    current_school = get_current_school(request)
 
     # Timetable.objects.filter(is_active=True).delete()
 
 
-    rooms = Room.objects.select_related("school").all().order_by("-id")
+    rooms = school_queryset(
+        request,
+        Room.objects.select_related("school"),
+    ).order_by("-id")
 
     search_query = request.GET.get("search", "")
     room_type_filter = request.GET.get("room_type", "")
@@ -36,8 +43,12 @@ def room_list(request):
     if status_filter == "inactive":
         rooms = rooms.filter(is_active=False)
 
+    schools = School.objects.none()
+    if current_school:
+        schools = School.objects.filter(pk=current_school.pk).order_by("name")
+
     auto_room_targets = []
-    for school in School.objects.all().order_by("name"):
+    for school in schools:
         class_count = ClassLevel.objects.filter(school=school, is_active=True).count()
         division_count = Division.objects.filter(school=school, is_active=True).count()
         expected_count = class_count * division_count
@@ -49,12 +60,13 @@ def room_list(request):
 
     context = {
         "rooms": rooms,
-        "total_rooms": Room.objects.count(),
-        "active_rooms": Room.objects.filter(is_active=True).count(),
-        "classrooms": Room.objects.filter(room_type="CLASSROOM").count(),
-        "computer_labs": Room.objects.filter(room_type="COMPUTER_LAB").count(),
-        "science_labs": Room.objects.filter(room_type="SCIENCE_LAB").count(),
-        "schools": School.objects.all().order_by("name"),
+        "total_rooms": rooms.count(),
+        "active_rooms": rooms.filter(is_active=True).count(),
+        "classrooms": rooms.filter(room_type="CLASSROOM").count(),
+        "computer_labs": rooms.filter(room_type="COMPUTER_LAB").count(),
+        "science_labs": rooms.filter(room_type="SCIENCE_LAB").count(),
+        "schools": schools,
+        "current_school": current_school,
         "auto_room_targets": auto_room_targets,
         "auto_expected_rooms": sum(item["expected_count"] for item in auto_room_targets),
         "search_query": search_query,
@@ -68,9 +80,15 @@ def room_list(request):
 from django.contrib import messages
 from django.http import HttpResponse
 
+@login_required
 def room_create(request):
+    no_school_response = redirect_if_no_current_school(request)
+    if no_school_response:
+        return no_school_response
+
+    current_school = get_current_school(request)
     if request.method == "POST":
-        form = RoomForm(request.POST)
+        form = RoomForm(request.POST, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -81,7 +99,7 @@ def room_create(request):
             </script>
             """)
     else:
-        form = RoomForm()
+        form = RoomForm(current_school=current_school)
 
     return render(request, "room_form.html", {
         "form": form,
@@ -91,11 +109,13 @@ def room_create(request):
     })
 
 
+@login_required
 def room_update(request, pk):
-    room = get_object_or_404(Room, pk=pk)
+    room = get_school_object_or_404(request, Room.objects.all(), pk=pk)
+    current_school = get_current_school(request)
 
     if request.method == "POST":
-        form = RoomForm(request.POST, instance=room)
+        form = RoomForm(request.POST, instance=room, current_school=current_school)
 
         if form.is_valid():
             form.save()
@@ -106,7 +126,7 @@ def room_update(request, pk):
             </script>
             """)
     else:
-        form = RoomForm(instance=room)
+        form = RoomForm(instance=room, current_school=current_school)
 
     return render(request, "room_form.html", {
         "form": form,
@@ -116,18 +136,25 @@ def room_update(request, pk):
     })
 
 
+@login_required
 @require_POST
 def room_delete(request, pk):
-    room = get_object_or_404(Room, pk=pk)
+    room = get_school_object_or_404(request, Room.objects.all(), pk=pk)
     room_name = room.name
     room.delete()
     messages.success(request, f"Room '{room_name}' deleted successfully.")
     return redirect("room_list")
 
 
+@login_required
 @require_POST
 def room_auto_create_classrooms(request):
-    school_id = request.POST.get("school")
+    current_school = get_current_school(request)
+    if not current_school:
+        messages.error(request, "No active school is linked with your session.")
+        return redirect("room_list")
+
+    school_id = current_school.id if current_school else request.POST.get("school")
     capacity = request.POST.get("capacity") or 40
 
     try:
@@ -135,9 +162,7 @@ def room_auto_create_classrooms(request):
     except ValueError:
         capacity = 40
 
-    schools = School.objects.all().order_by("name")
-    if school_id:
-        schools = schools.filter(pk=school_id)
+    schools = School.objects.filter(pk=school_id).order_by("name")
 
     created_count = 0
     skipped_count = 0

@@ -1,8 +1,9 @@
 from django import forms
+from Accounts.form_mixins import CurrentSchoolFormMixin
 from .models import Room
 
 
-class RoomForm(forms.ModelForm):
+class RoomForm(CurrentSchoolFormMixin, forms.ModelForm):
     class Meta:
         model = Room
         fields = [

@@ -1,0 +1,7 @@
+db.sqlite3
+tenant_dbs/
+runserver.*.log
+*.pyc
+__pycache__/
+media/
+venv/

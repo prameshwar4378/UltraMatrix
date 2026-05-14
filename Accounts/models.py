@@ -31,6 +31,8 @@ class SchoolUser(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    has_completed_onboarding = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

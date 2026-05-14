@@ -349,10 +349,13 @@
 
             <div class="col-lg-3 col-md-6">
                 <label class="form-label">School</label>
-                <select name="school" class="form-select">
+                {% if current_school %}
+                    <input type="hidden" name="school" value="{{ current_school.pk }}">
+                {% endif %}
+                <select name="school" class="form-select" {% if current_school %}disabled aria-readonly="true"{% endif %}>
                     <option value="">All Schools</option>
                     {% for school in schools %}
-                        <option value="{{ school.pk }}" {% if school_filter == school.pk|stringformat:"s" %}selected{% endif %}>{{ school.name }}</option>
+                        <option value="{{ school.pk }}" {% if current_school and current_school.pk == school.pk %}selected{% elif school_filter == school.pk|stringformat:"s" %}selected{% endif %}>{{ school.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -564,10 +567,13 @@
 
                     <div class="mb-3">
                         <label class="form-label">School</label>
-                        <select name="school" class="form-select" required>
+                        {% if current_school %}
+                            <input type="hidden" name="school" value="{{ current_school.pk }}">
+                        {% endif %}
+                        <select name="school" class="form-select" required {% if current_school %}disabled aria-readonly="true"{% endif %}>
                             <option value="">Select School</option>
                             {% for school in schools %}
-                                <option value="{{ school.pk }}">{{ school.name }}</option>
+                                <option value="{{ school.pk }}" {% if current_school and current_school.pk == school.pk %}selected{% endif %}>{{ school.name }}</option>
                             {% endfor %}
                         </select>
                     </div>

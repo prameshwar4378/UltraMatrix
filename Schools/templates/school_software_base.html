@@ -13288,36 +13288,155 @@
             }
 
             .header-nav .profile {
-                min-width: 240px;
-                padding-bottom: 0;
+                min-width: 360px;
+                padding: 10px;
                 top: 8px !important;
+                border: 0;
+                border-radius: 18px;
+                box-shadow: 0 24px 70px rgba(15, 23, 42, .18);
+                overflow: hidden;
             }
 
-            .header-nav .profile .dropdown-header h6 {
+            .profile-panel-header {
+                border-radius: 14px;
+                padding: 16px;
+                background: linear-gradient(135deg, #123c7a, #2563eb);
+                color: #fff;
+            }
+
+            .profile-panel-user {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .profile-panel-avatar {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+                display: grid;
+                place-items: center;
+                background: rgba(255, 255, 255, .16);
+                color: #fff;
+                font-weight: 800;
                 font-size: 18px;
-                margin-bottom: 0;
+                flex: 0 0 auto;
+            }
+
+            .profile-panel-header h6 {
+                margin: 0;
+                color: #fff;
+                font-size: 16px;
+                font-weight: 800;
+            }
+
+            .profile-panel-role {
+                display: inline-flex;
+                margin-top: 4px;
+                font-size: 12px;
+                font-weight: 700;
+                color: rgba(255, 255, 255, .82);
+            }
+
+            .profile-school-chip {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                margin-top: 14px;
+                padding: 10px 12px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, .12);
+                border: 1px solid rgba(255, 255, 255, .18);
+            }
+
+            .profile-school-chip span {
+                display: block;
+                font-size: 11px;
+                color: rgba(255, 255, 255, .70);
+                font-weight: 700;
+                text-transform: uppercase;
+            }
+
+            .profile-school-chip strong {
+                display: block;
+                margin-top: 2px;
+                color: #fff;
+                font-size: 13px;
+                line-height: 1.2;
+            }
+
+            .profile-status-pill {
+                white-space: nowrap;
+                border-radius: 999px;
+                padding: 6px 10px;
+                background: #f4b942;
+                color: #071527;
+                font-size: 12px;
+                font-weight: 800;
+            }
+
+            .profile-menu-list {
+                padding: 8px 0 4px;
+            }
+
+            .header-nav .profile .dropdown-item.profile-menu-item {
+                min-height: 48px;
+                border-radius: 12px;
+                padding: 10px 12px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                color: #172554;
+                font-size: 14px;
+                font-weight: 700;
+                transition: .2s ease;
+            }
+
+            .header-nav .profile .profile-menu-item i {
+                width: 34px;
+                height: 34px;
+                margin: 0;
+                border-radius: 10px;
+                display: grid;
+                place-items: center;
+                background: #eef4ff;
+                color: #123c7a;
+                font-size: 17px;
+                flex: 0 0 auto;
+            }
+
+            .profile-menu-copy {
+                display: flex;
+                flex-direction: column;
+                line-height: 1.25;
+            }
+
+            .profile-menu-copy small {
+                margin-top: 2px;
+                color: #64748b;
+                font-size: 11px;
                 font-weight: 600;
-                color: #444444;
             }
 
-            .header-nav .profile .dropdown-header span {
-                font-size: 14px;
+            .header-nav .profile .profile-menu-item:hover {
+                background: #f6f9ff;
+                transform: translateX(2px);
             }
 
-            .header-nav .profile .dropdown-item {
-                font-size: 14px;
-                padding: 10px 15px;
-                transition: 0.3s;
+            .profile-menu-divider {
+                height: 1px;
+                margin: 8px 2px;
+                background: #e5edf8;
             }
 
-            .header-nav .profile .dropdown-item i {
-                margin-right: 10px;
-                font-size: 18px;
-                line-height: 0;
+            .header-nav .profile .profile-logout {
+                color: #b91c1c;
             }
 
-            .header-nav .profile .dropdown-item:hover {
-                background-color: #f6f9ff;
+            .header-nav .profile .profile-logout i {
+                background: #fee2e2;
+                color: #b91c1c;
             }
 
             /*--------------------------------------------------------------
@@ -13462,25 +13581,39 @@
                 font-size: 14px;
                 font-weight: 600;
                 color: #0d175d;
-                transition: 0.3;
-                padding: 10px 0 10px 40px;
+                margin: 3px 12px 3px 28px;
+                padding: 10px 12px;
+                border-radius: 10px;
                 transition: 0.3s;
             }
 
             .sidebar-nav .nav-content a i {
-                font-size: 6px;
+                width: 24px;
+                min-width: 24px;
+                font-size: 15px;
                 margin-right: 8px;
                 line-height: 0;
-                border-radius: 50%;
+                color: #64748b;
             }
 
-            .sidebar-nav .nav-content a:hover,
-            .sidebar-nav .nav-content a.active {
+            .sidebar-nav .nav-content a:hover {
+                color: #0d175d;
+                background: #f6f9ff;
+            }
+
+            .sidebar-nav .nav-content a:hover i {
                 color: #0d175d;
             }
 
+            .sidebar-nav .nav-content a.active,
+            .sidebar-nav .nav-content a.active:hover {
+                color: #fff;
+                background: #0d175d;
+                box-shadow: 0 10px 24px rgba(13, 23, 93, .22);
+            }
+
             .sidebar-nav .nav-content a.active i {
-                background-color: #0d175d;
+                color: #fff;
             }
 
             /*--------------------------------------------------------------
@@ -14026,29 +14159,120 @@
                 <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
            
                     {% if request.user.profile_photo %}
-                    <img src="/media/{{request.user.profile_photo}}" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/4042/4042422.png" alt="Profile" class="rounded-circle" style="width: 40px; height: 40px;">
                     {% else %}
-                    <img src="/media/default-profile.webp" alt="Profile" class="rounded-circle"  style="width: 40px; height: 40px;">
+                    <img src="https://cdn-icons-png.flaticon.com/512/4042/4042422.png" alt="Profile" class="rounded-circle"  style="width: 40px; height: 40px;">
                     {% endif %}
                     
                     <span class="d-none d-md-block dropdown-toggle ps-2">{{request.user}}</span>
                 </a><!-- End Profile Iamge Icon -->
 
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
-                    <li class="dropdown-header">
-                        <h6>{{user.first_name}} {{user.last_name}}</h6>
-                        <span>Admin </span>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="#"  data-toggle="modal" data-target="#logout_model">
-                            <i class="bi bi-box-arrow-right"></i>
-                            <span>Sign Out</span>
-                        </a>
+                    <li class="profile-panel-header">
+                        <div class="profile-panel-user">
+                            <div class="profile-panel-avatar">
+                                {{ user.first_name|default:user.username|first|upper }}
+                            </div>
+                            <div>
+                                <h6>
+                                    {% if user.first_name or user.last_name %}
+                                        {{ user.first_name }} {{ user.last_name }}
+                                    {% else %}
+                                        {{ user.username }}
+                                    {% endif %}
+                                </h6>
+                                <span class="profile-panel-role">
+                                    {% if current_school_user %}
+                                        {{ current_school_user.get_role_display }}
+                                    {% else %}
+                                        Admin
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="profile-school-chip">
+                            <div>
+                                <span>Institute</span>
+                                <strong>
+                                    {% if current_school %}
+                                        {{ current_school.name }}
+                                    {% else %}
+                                        School not selected
+                                    {% endif %}
+                                </strong>
+                            </div>
+                            {% if current_subscription %}
+                                <div class="profile-status-pill">
+                                    {% if is_trial_active %}
+                                        {{ trial_days_remaining }} day{{ trial_days_remaining|pluralize }} left
+                                    {% else %}
+                                        {{ current_subscription.get_status_display }}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </li>
 
+                    <li class="profile-menu-list">
+                        <a class="dropdown-item profile-menu-item" href="{% url 'setup_completion_status' %}">
+                            <i class="bi bi-check2-circle"></i>
+                            <span class="profile-menu-copy">
+                                Setup Completion Status
+                                <small>{% if setup_percent is not None %}{{ setup_percent }}% complete{% else %}Review your onboarding progress{% endif %}</small>
+                            </span>
+                        </a>
+
+                        <a class="dropdown-item profile-menu-item" href="#">
+                            <i class="bi bi-building-gear"></i>
+                            <span class="profile-menu-copy">
+                                Institute Profile
+                                <small>Manage school identity and contact details</small>
+                            </span>
+                        </a>
+
+                        <a class="dropdown-item profile-menu-item" href="#">
+                            <i class="bi bi-credit-card"></i>
+                            <span class="profile-menu-copy">
+                                Subscription & Billing
+                                <small>Plan, trial, invoices, and payments</small>
+                            </span>
+                        </a>
+
+                        <a class="dropdown-item profile-menu-item" href="#">
+                            <i class="bi bi-speedometer2"></i>
+                            <span class="profile-menu-copy">
+                                Usage & Limits
+                                <small>Teachers, classes, timetables, and exports</small>
+                            </span>
+                        </a>
+
+                        <a class="dropdown-item profile-menu-item" href="#">
+                            <i class="bi bi-shield-lock"></i>
+                            <span class="profile-menu-copy">
+                                Security Settings
+                                <small>Password, sessions, and account access</small>
+                            </span>
+                        </a>
+
+                        <a class="dropdown-item profile-menu-item" href="#">
+                            <i class="bi bi-life-preserver"></i>
+                            <span class="profile-menu-copy">
+                                Help & Support
+                                <small>Guides, support requests, and product help</small>
+                            </span>
+                        </a>
+
+                        <div class="profile-menu-divider"></div>
+
+                        <a class="dropdown-item profile-menu-item profile-logout" href="#" data-bs-toggle="modal" data-bs-target="#logout_model" data-toggle="modal" data-target="#logout_model">
+                            <i class="bi bi-box-arrow-right"></i>
+                            <span class="profile-menu-copy">
+                                Logout
+                                <small>Sign out from this session</small>
+                            </span>
+                        </a>
+                    </li>
                 </ul><!-- End Profile Dropdown Items -->
             </li><!-- End Profile Nav -->
 
@@ -14060,69 +14284,124 @@
 <!-- ======= Sidebar ======= -->
 <aside id="sidebar" class="sidebar">
 
+    {% with current_url=request.resolver_match.url_name %}
     <ul class="sidebar-nav" id="sidebar-nav">
         <li class="nav-item">
-            <a class="nav-link" href="">
+            <a class="nav-link {% if current_url != 'school_dashboard' %}collapsed{% endif %}" href="{% url 'school_dashboard' %}">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
-        </li> 
-
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'academic_setup_list' %}">
-                <i class="bi bi-mortarboard-fill"></i>
-                <span>Academic Setup</span>
-            </a>
-        </li> 
-
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'class_setup_list' %}">
-                <i class="bi bi-building"></i>
-                <span>Class Setup List</span>
-            </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'teacher_list' %}">
-                <i class="bi bi-person-workspace"></i>
-                <span>Teacher List</span>
+            <a class="nav-link {% if current_url != 'academic_setup_list' and current_url != 'academic_setup' and current_url != 'academic_setup_update' and current_url != 'class_setup_list' and current_url != 'class_level_create' and current_url != 'class_level_update' and current_url != 'division_create' and current_url != 'division_update' and current_url != 'class_section_create' and current_url != 'class_section_update' and current_url != 'teacher_list' and current_url != 'teacher_create' and current_url != 'teacher_update' and current_url != 'subject_list' and current_url != 'subject_create' and current_url != 'subject_update' and current_url != 'teacher_subject_create' and current_url != 'teacher_subject_update' and current_url != 'room_list' and current_url != 'room_create' and current_url != 'room_update' and current_url != 'lesson_allocation_list' and current_url != 'lesson_allocation_create' and current_url != 'lesson_allocation_update' %}collapsed{% endif %}"
+               data-bs-target="#setup-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-sliders2-vertical"></i>
+                <span>Institute Setup</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul id="setup-nav" class="nav-content collapse {% if current_url == 'academic_setup_list' or current_url == 'academic_setup' or current_url == 'academic_setup_update' or current_url == 'class_setup_list' or current_url == 'class_level_create' or current_url == 'class_level_update' or current_url == 'division_create' or current_url == 'division_update' or current_url == 'class_section_create' or current_url == 'class_section_update' or current_url == 'teacher_list' or current_url == 'teacher_create' or current_url == 'teacher_update' or current_url == 'subject_list' or current_url == 'subject_create' or current_url == 'subject_update' or current_url == 'teacher_subject_create' or current_url == 'teacher_subject_update' or current_url == 'room_list' or current_url == 'room_create' or current_url == 'room_update' or current_url == 'lesson_allocation_list' or current_url == 'lesson_allocation_create' or current_url == 'lesson_allocation_update' %}show{% endif %}" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="{% url 'academic_setup_list' %}" class="{% if current_url == 'academic_setup_list' or current_url == 'academic_setup' or current_url == 'academic_setup_update' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-mortarboard-fill" style="font-size:15px;"></i><span>Academic Setup</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'class_setup_list' %}" class="{% if current_url == 'class_setup_list' or current_url == 'class_level_create' or current_url == 'class_level_update' or current_url == 'division_create' or current_url == 'division_update' or current_url == 'class_section_create' or current_url == 'class_section_update' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-building" style="font-size:15px;"></i><span>Class Setup</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'teacher_list' %}" class="{% if current_url == 'teacher_list' or current_url == 'teacher_create' or current_url == 'teacher_update' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-person-workspace" style="font-size:15px;"></i><span>Teachers</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'subject_list' %}" class="{% if current_url == 'subject_list' or current_url == 'subject_create' or current_url == 'subject_update' or current_url == 'teacher_subject_create' or current_url == 'teacher_subject_update' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-journal-bookmark-fill" style="font-size:15px;"></i><span>Subjects & Capabilities</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'room_list' %}" class="{% if current_url == 'room_list' or current_url == 'room_create' or current_url == 'room_update' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-door-open-fill" style="font-size:15px;"></i><span>Rooms</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'lesson_allocation_list' %}" class="{% if current_url == 'lesson_allocation_list' or current_url == 'lesson_allocation_create' or current_url == 'lesson_allocation_update' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-diagram-3-fill" style="font-size:15px;"></i><span>Lesson Allocation</span>
+                    </a>
+                </li>
+            </ul>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'subject_list' %}">
-                <i class="bi bi-journal-bookmark-fill"></i>
-                <span>Subject List</span>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'room_list' %}">
-                <i class="bi bi-door-open-fill"></i>
-                <span>Room List</span>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'lesson_allocation_list' %}">
-                <i class="bi bi-diagram-3-fill"></i>
-                <span>Lesson Allocation List</span>
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'timetable_builder' %}">
+            <a class="nav-link {% if current_url != 'timetable_builder' and current_url != 'timetable_builder_template_2' and current_url != 'timetable_builder_template_3' and current_url != 'teacher_timetable_builder' and current_url != 'proxy_adjustment_panel' %}collapsed{% endif %}"
+               data-bs-target="#timetable-nav" data-bs-toggle="collapse" href="#">
                 <i class="bi bi-calendar-week-fill"></i>
-                <span>Timetable Builder</span>
+                <span>Timetable</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul id="timetable-nav" class="nav-content collapse {% if current_url == 'timetable_builder' or current_url == 'timetable_builder_template_2' or current_url == 'timetable_builder_template_3' or current_url == 'teacher_timetable_builder' or current_url == 'proxy_adjustment_panel' %}show{% endif %}" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="{% url 'timetable_builder' %}" class="{% if current_url == 'timetable_builder' or current_url == 'timetable_builder_template_2' or current_url == 'timetable_builder_template_3' or current_url == 'teacher_timetable_builder' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-calendar3" style="font-size:15px;"></i><span>Timetable Builder</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'proxy_adjustment_panel' %}" class="{% if current_url == 'proxy_adjustment_panel' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-person-lines-fill" style="font-size:15px;"></i><span>Proxy Adjustment</span>
+                    </a>
+                </li>
+            </ul>
         </li>
+
         <li class="nav-item">
-            <a class="nav-link" href="{% url 'proxy_adjustment_panel' %}">
-                <i class="bi bi-person-lines-fill"></i>
-                <span>Proxy Adjustment</span>
+            <a class="nav-link {% if current_url == 'setup_completion_status' %}{% else %}collapsed{% endif %}" data-bs-target="#account-nav" data-bs-toggle="collapse" href="#">
+                <i class="bi bi-person-gear"></i>
+                <span>Account & Support</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul id="account-nav" class="nav-content collapse {% if current_url == 'setup_completion_status' %}show{% endif %}" data-bs-parent="#sidebar-nav">
+                <li>
+                    <a href="{% url 'setup_completion_status' %}" class="{% if current_url == 'setup_completion_status' %}active{% endif %}" style="text-decoration:none;">
+                        <i class="bi bi-check2-circle" style="font-size:15px;"></i><span>Setup Completion Status</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" style="text-decoration:none;">
+                        <i class="bi bi-building-gear" style="font-size:15px;"></i><span>Institute Profile</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" style="text-decoration:none;">
+                        <i class="bi bi-credit-card" style="font-size:15px;"></i><span>Subscription & Billing</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" style="text-decoration:none;">
+                        <i class="bi bi-speedometer2" style="font-size:15px;"></i><span>Usage & Limits</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" style="text-decoration:none;">
+                        <i class="bi bi-shield-lock" style="font-size:15px;"></i><span>Security Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" style="text-decoration:none;">
+                        <i class="bi bi-life-preserver" style="font-size:15px;"></i><span>Help & Support</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#logout_model" data-toggle="modal" data-target="#logout_model" style="text-decoration:none;">
+                        <i class="bi bi-box-arrow-right" style="font-size:15px;"></i><span>Logout</span>
+                    </a>
+                </li>
+            </ul>
         </li>
     </ul>
+    {% endwith %}
+    
 </aside><!--  End Sidebar-->
 
 
@@ -14143,7 +14422,11 @@
           <h5>Are you sure to Sign Out <b>"{{user.username}}"</b></h5>
         </div>
         <div class="modal-footer">
-          <a href="" class="btn btn-danger px-3 ">Yes</a> &nbsp;
+          <form method="post" action="{% url 'logout' %}" class="mb-0">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger px-3">Yes</button>
+          </form>
+          &nbsp;
           <button  type="button" class="btn btn-secondary bgcolor px-3" data-dismiss="modal">No</button>
         </div>
       </div>
@@ -17879,6 +18162,55 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         window.initSearchableDropdowns(document);
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var storageKey = "ultramatrix.sidebar.collapseState";
+        var sidebar = document.getElementById("sidebar-nav");
+        if (!sidebar) return;
+
+        function readState() {
+            try {
+                return JSON.parse(localStorage.getItem(storageKey) || "{}");
+            } catch (error) {
+                return {};
+            }
+        }
+
+        function writeState(state) {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+        }
+
+        function setGroupState(collapseEl, expanded) {
+            var trigger = sidebar.querySelector('[data-bs-target="#' + collapseEl.id + '"]');
+            collapseEl.classList.toggle("show", expanded);
+            if (trigger) {
+                trigger.classList.toggle("collapsed", !expanded);
+                trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
+            }
+        }
+
+        var savedState = readState();
+
+        sidebar.querySelectorAll(".nav-content.collapse[id]").forEach(function(collapseEl) {
+            if (Object.prototype.hasOwnProperty.call(savedState, collapseEl.id)) {
+                setGroupState(collapseEl, savedState[collapseEl.id] === "open");
+            }
+
+            collapseEl.addEventListener("shown.bs.collapse", function() {
+                var state = readState();
+                state[collapseEl.id] = "open";
+                writeState(state);
+            });
+
+            collapseEl.addEventListener("hidden.bs.collapse", function() {
+                var state = readState();
+                state[collapseEl.id] = "closed";
+                writeState(state);
+            });
+        });
     });
 </script>
 

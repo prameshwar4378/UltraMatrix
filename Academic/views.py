@@ -1,6 +1,7 @@
 import json
 
 from django.db import transaction
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.http import HttpResponse
@@ -9,6 +10,7 @@ from django.views.decorators.http import require_POST
 from Schools.models import School
 from .models import AcademicYear, Day, BellSchedule, Period
 from django.db.models import Q
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
 
 
 def _time_value(value):
@@ -88,7 +90,8 @@ def _periods_for_schedule(bell_schedule, day_type, defaults):
 
 
 def _save_academic_setup(request, academic_year=None):
-    school = get_object_or_404(School, id=request.POST.get("school"))
+    current_school = get_current_school(request)
+    school = current_school or get_object_or_404(School, id=request.POST.get("school"))
     days_data = json.loads(request.POST.get("days_json") or "[]")
     weekday_periods = json.loads(request.POST.get("weekday_periods_json") or "[]")
     saturday_periods = json.loads(request.POST.get("saturday_periods_json") or "[]")
@@ -162,8 +165,13 @@ def _save_academic_setup(request, academic_year=None):
 
     return academic_year
 
+@login_required
 def academic_setup_list(request):
-    academic_years = AcademicYear.objects.select_related("school").all().order_by("-id")
+    current_school = get_current_school(request)
+    academic_years = school_queryset(
+        request,
+        AcademicYear.objects.select_related("school"),
+    ).order_by("-id")
 
     status_filter = request.GET.get("status", "")
     search_query = request.GET.get("search", "")
@@ -191,10 +199,10 @@ def academic_setup_list(request):
 
     context = {
         "academic_years": academic_years,
-        "total_academic_years": AcademicYear.objects.count(),
-        "active_academic_years": AcademicYear.objects.filter(is_active=True).count(),
-        "inactive_academic_years": AcademicYear.objects.filter(is_active=False).count(),
-        "total_schools": School.objects.count(),
+        "total_academic_years": academic_years.count(),
+        "active_academic_years": academic_years.filter(is_active=True).count(),
+        "inactive_academic_years": academic_years.filter(is_active=False).count(),
+        "total_schools": 1 if current_school else 0,
         "status_filter": status_filter,
         "search_query": search_query,
         "date_from": date_from,
@@ -204,8 +212,16 @@ def academic_setup_list(request):
     return render(request, "academic_setup_list.html", context)
 
 
+@login_required
 def academic_setup(request):
+    no_school_response = redirect_if_no_current_school(request)
+    if no_school_response:
+        return no_school_response
+
+    current_school = get_current_school(request)
     schools = School.objects.filter(is_active=True).order_by("name")
+    if current_school:
+        schools = schools.filter(pk=current_school.pk)
 
     if request.method == "POST":
         _save_academic_setup(request)
@@ -219,6 +235,7 @@ def academic_setup(request):
 
     return render(request, "academic_setup.html", {
         "schools": schools,
+        "current_school": current_school,
         "academic_year": None,
         "bell_schedule": None,
         "initial_days_json": _default_days(),
@@ -230,9 +247,17 @@ def academic_setup(request):
     })
 
 
+@login_required
 def academic_setup_update(request, pk):
-    academic_year = get_object_or_404(AcademicYear.objects.select_related("school"), pk=pk)
+    current_school = get_current_school(request)
+    academic_year = get_school_object_or_404(
+        request,
+        AcademicYear.objects.select_related("school"),
+        pk=pk,
+    )
     schools = School.objects.filter(is_active=True).order_by("name")
+    if current_school:
+        schools = schools.filter(pk=current_school.pk)
     bell_schedule = BellSchedule.objects.filter(academic_year=academic_year).order_by("-is_active", "-id").first()
 
     if request.method == "POST":
@@ -246,6 +271,7 @@ def academic_setup_update(request, pk):
 
     return render(request, "academic_setup.html", {
         "schools": schools,
+        "current_school": current_school,
         "academic_year": academic_year,
         "bell_schedule": bell_schedule,
         "initial_days_json": _days_for_school(academic_year.school),
@@ -257,9 +283,10 @@ def academic_setup_update(request, pk):
     })
 
 
+@login_required
 @require_POST
 def academic_setup_delete(request, pk):
-    academic_year = get_object_or_404(AcademicYear, pk=pk)
+    academic_year = get_school_object_or_404(request, AcademicYear.objects.all(), pk=pk)
     name = academic_year.name
     academic_year.delete()
     messages.success(request, f"Academic setup '{name}' deleted successfully.")

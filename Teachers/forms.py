@@ -1,8 +1,9 @@
 from django import forms
+from Accounts.form_mixins import CurrentSchoolFormMixin
 from .models import Teacher, TeacherAvailability
 
 
-class TeacherForm(forms.ModelForm):
+class TeacherForm(CurrentSchoolFormMixin, forms.ModelForm):
     class Meta:
         model = Teacher
         fields = [

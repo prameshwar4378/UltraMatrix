@@ -1,0 +1,256 @@
+{% extends "school_software_base.html" %}
+
+{% block title %}Setup Completion Status{% endblock title %}
+
+{% block content %}
+<style>
+    .setup-status-shell {
+        min-height: calc(100vh - 70px);
+        padding: 28px;
+        background: #f5f8fc;
+    }
+
+    .setup-status-inner {
+        max-width: 1240px;
+        margin: 0 auto;
+    }
+
+    .setup-status-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 20px;
+        align-items: stretch;
+        margin-bottom: 22px;
+    }
+
+    .setup-status-panel,
+    .setup-status-card {
+        background: #fff;
+        border: 1px solid #dce7f3;
+        border-radius: 8px;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, .08);
+    }
+
+    .setup-status-panel {
+        padding: 28px;
+    }
+
+    .setup-status-panel h1 {
+        margin: 0 0 10px;
+        color: #0f172a;
+        font-size: 32px;
+        font-weight: 900;
+    }
+
+    .setup-status-panel p {
+        max-width: 780px;
+        margin: 0;
+        color: #64748b;
+        font-size: 16px;
+    }
+
+    .setup-score {
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        text-align: center;
+    }
+
+    .setup-score strong {
+        color: #123c7a;
+        font-size: 46px;
+        line-height: 1;
+        font-weight: 900;
+    }
+
+    .setup-score span {
+        display: block;
+        color: #64748b;
+        font-weight: 800;
+        margin-top: 8px;
+    }
+
+    .setup-progress {
+        height: 10px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e2e8f0;
+        margin: 20px 0 0;
+    }
+
+    .setup-progress div {
+        height: 100%;
+        width: var(--setup-percent);
+        border-radius: inherit;
+        background: #123c7a;
+    }
+
+    .setup-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .setup-status-card {
+        display: grid;
+        grid-template-columns: 52px minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: start;
+        padding: 18px;
+    }
+
+    .setup-icon {
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: #e8f0fb;
+        color: #123c7a;
+        font-size: 24px;
+    }
+
+    .setup-status-card.complete .setup-icon {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .setup-card-copy h2 {
+        margin: 0 0 6px;
+        color: #0f172a;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    .setup-card-copy p {
+        margin: 0 0 10px;
+        color: #64748b;
+        line-height: 1.5;
+    }
+
+    .setup-card-copy small {
+        color: #334155;
+        font-weight: 800;
+    }
+
+    .setup-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 34px;
+        padding: 0 10px;
+        border-radius: 8px;
+        color: #92400e;
+        background: #fef3c7;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .setup-status-card.complete .setup-badge {
+        color: #166534;
+        background: #dcfce7;
+    }
+
+    .setup-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        min-height: 38px;
+        padding: 0 13px;
+        border-radius: 8px;
+        background: #123c7a;
+        color: #fff;
+        font-weight: 900;
+        text-decoration: none;
+    }
+
+    .setup-action:hover {
+        color: #fff;
+        background: #0f2f62;
+    }
+
+    .empty-state {
+        padding: 28px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    @media (max-width: 992px) {
+        .setup-status-hero,
+        .setup-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .setup-status-card {
+            grid-template-columns: 44px minmax(0, 1fr);
+        }
+
+        .setup-badge {
+            grid-column: 2;
+            justify-self: start;
+        }
+    }
+</style>
+
+<main id="main" class="main setup-status-shell">
+    <div class="setup-status-inner">
+        <section class="setup-status-hero">
+            <div class="setup-status-panel">
+                <h1>Setup Completion Status</h1>
+                {% if active_school %}
+                    <p>{{ active_school.name }} is {{ setup_percent }}% ready. Complete the remaining steps to unlock a smooth timetable workflow.</p>
+                    <div class="setup-progress" aria-label="Setup progress">
+                        <div style="--setup-percent: {{ setup_percent }}%;"></div>
+                    </div>
+                {% else %}
+                    <p>No active school profile was found for your account.</p>
+                {% endif %}
+            </div>
+
+            <div class="setup-status-card setup-score">
+                <strong>{{ setup_percent }}%</strong>
+                <span>{{ completed_count }} of {{ setup_items|length }} steps complete</span>
+            </div>
+        </section>
+
+        {% if setup_items %}
+            <section class="setup-grid">
+                {% for item in setup_items %}
+                    <article class="setup-status-card {% if item.completed %}complete{% endif %}">
+                        <div class="setup-icon">
+                            <i class="bi {{ item.icon }}"></i>
+                        </div>
+                        <div class="setup-card-copy">
+                            <h2>{{ item.title }}</h2>
+                            <p>{{ item.description }}</p>
+                            <small>{{ item.metric }}</small>
+                            {% if not item.completed %}
+                                <br>
+                                <a class="setup-action" href="{% url item.url_name %}">
+                                    Complete setup
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                        <span class="setup-badge">
+                            {% if item.completed %}
+                                <i class="bi bi-check2-circle"></i>
+                                Complete
+                            {% else %}
+                                <i class="bi bi-exclamation-circle"></i>
+                                Pending
+                            {% endif %}
+                        </span>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <div class="setup-status-card empty-state">
+                Setup status will appear after your school profile is linked.
+            </div>
+        {% endif %}
+    </div>
+</main>
+{% endblock content %}
