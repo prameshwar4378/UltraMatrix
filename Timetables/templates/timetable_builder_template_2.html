@@ -330,6 +330,31 @@ body{
     font-size:1.25rem;
 }
 
+.dashboard-fab{
+    position:fixed;
+    left:18px;
+    bottom:18px;
+    z-index:150;
+    min-height:48px;
+    padding:0 16px;
+    border-radius:999px;
+    border:0;
+    background:#2563eb;
+    color:white;
+    box-shadow:0 14px 32px rgba(37,99,235,.28);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-weight:800;
+    text-decoration:none;
+}
+
+.dashboard-fab:hover{
+    background:#1d4ed8;
+    color:white;
+}
+
 .shortcut-grid{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
@@ -624,6 +649,17 @@ body{
     }
 }
 
+@media(max-width:640px){
+    .dashboard-fab{
+        width:48px;
+        padding:0;
+    }
+
+    .dashboard-fab span{
+        display:none;
+    }
+}
+
 
 
 
@@ -676,7 +712,7 @@ body{
 
     <div class="d-flex gap-2 flex-wrap"> 
         <button class="btn btn-light border" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
-        <button class="btn btn-warning text-white" id="autoFillBtn"><i class="bi bi-stars"></i> Auto Fill</button>
+        <!-- <button class="btn btn-warning text-white" id="autoFillBtn"><i class="bi bi-stars"></i> Auto Fill</button> -->
         <button class="btn btn-info text-white" id="smartAllocateBtn"><i class="bi bi-magic"></i> Smart Allocate</button>
         <button class="btn btn-light border" id="zoomOutBtn"><i class="bi bi-zoom-out"></i></button>
         <button class="btn btn-light border" id="zoomResetBtn">100%</button>
@@ -809,6 +845,11 @@ body{
     </aside>
 
 </div>
+
+<a class="dashboard-fab" href="{% url 'school_dashboard' %}" title="Dashboard">
+    <i class="bi bi-speedometer2"></i>
+    <span>Dashboard</span>
+</a>
 
 <button class="help-fab" id="helpBtn" type="button" title="Shortcut keys">
     <i class="bi bi-question-lg"></i>
@@ -2078,7 +2119,8 @@ function bindControls(){
     document.getElementById("assignLectureBtn").addEventListener("click", assignLectureToActiveCell);
 
     document.getElementById("undoBtn").addEventListener("click", undoLast);
-    document.getElementById("autoFillBtn").addEventListener("click", autoFill);
+    const autoFillButton = document.getElementById("autoFillBtn");
+    if(autoFillButton) autoFillButton.addEventListener("click", autoFill);
     document.getElementById("smartAllocateBtn").addEventListener("click", smartAllocate);
     document.getElementById("zoomInBtn").addEventListener("click", zoomIn);
     document.getElementById("zoomOutBtn").addEventListener("click", zoomOut);

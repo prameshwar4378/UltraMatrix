@@ -38,6 +38,12 @@ def _next_page_for_user(user):
 class SchoolLoginView(LoginView):
     template_name = "accounts/login.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("school_dashboard")
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
         redirect_url = self.get_redirect_url()
         if redirect_url:

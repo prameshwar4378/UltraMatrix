@@ -233,9 +233,55 @@ body{
     .toolbar{grid-template-columns:1fr}
     .action-row{grid-template-columns:1fr}
 }
+
+
+
+.dashboard-fab{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:150;
+    min-height:48px;
+    padding:0 16px;
+    border-radius:999px;
+    border:0;
+    background:#2563eb;
+    color:white;
+    box-shadow:0 14px 32px rgba(37,99,235,.28);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-weight:800;
+    text-decoration:none;
+}
+
+.dashboard-fab:hover{
+    background:#1d4ed8;
+    color:white;
+}
+
+
+@media(max-width:640px){
+    .dashboard-fab{
+        width:48px;
+        padding:0;
+    }
+
+    .dashboard-fab span{
+        display:none;
+    }
+}
+
 </style>
 </head>
 <body>
+
+<a class="dashboard-fab" href="{% url 'school_dashboard' %}" title="Dashboard">
+    <i class="bi bi-speedometer2"></i>
+    <span>Dashboard</span>
+</a>
+
 <div class="topbar">
     <div>
         <h1>Proxy Adjustment Panel</h1>

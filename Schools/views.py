@@ -22,8 +22,6 @@ from Accounts.utils import school_context_for_request
 from .models import School
 
 
-def index(request):
-    return render(request, 'index.html')
 
 
 def _setup_completion_items(school):

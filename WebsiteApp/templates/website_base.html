@@ -1,0 +1,1407 @@
+<!-- load static tag in this file -->
+ {% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UltraMatrix Software</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+
+
+
+:root{
+  --primary:#123c7a;
+  --secondary:#1d65c1;
+  --accent:#f4b942;
+  --dark:#071527;
+  --text:#1b2b45;
+  --muted:#6b7a90;
+  --white:#fff;
+  --glass:rgba(255,255,255,.88);
+  --shadow:0 24px 70px rgba(7,21,39,.18);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+*{box-sizing:border-box}
+
+section[id],
+article[id],
+.um-ai-block[id],
+.um-ai-points [id],
+.um-footer-newsletter[id]{
+  scroll-margin-top:96px;
+}
+
+a,
+a:hover,
+a:focus,
+a:active{
+  text-decoration:none;
+}
+
+body{
+  margin:0;
+  font-family:"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 15% 20%,rgba(24,216,255,.18),transparent 30%),
+    radial-gradient(circle at 85% 15%,rgba(244,185,66,.22),transparent 28%),
+    linear-gradient(135deg,#f6f9ff,#eef6ff 60%,#ffffff);
+  background-attachment:fixed;
+  min-height:100vh;
+}
+
+body.lock-scroll{overflow:hidden}
+
+.school-header{
+  position:sticky;
+  top:0;
+  z-index:1000;
+  width:100%;
+  background:rgba(255,255,255,.76);
+  backdrop-filter:blur(22px);
+  border-bottom:1px solid rgba(18,60,122,.08);
+  box-shadow:0 12px 38px rgba(18,60,122,.08);
+}
+
+.nav-inner{
+  width:100%;
+  padding:12px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+  position:relative;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+  color:var(--text);
+  min-width:max-content;
+}
+
+.brand-logo{
+  width:50px;
+  height:50px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  font-size:24px;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  box-shadow:0 14px 30px rgba(18,60,122,.25);
+}
+
+.brand-text strong{
+  display:block;
+  color:var(--primary);
+  font-size:18px;
+  font-weight:900;
+  line-height:1;
+}
+
+.brand-text span{
+  display:block;
+  margin-top:5px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+}
+
+.right-nav{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.desktop-menu{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  position:relative;
+}
+
+.nav-indicator{
+  position:absolute;
+  top:50%;
+  left:0;
+  height:46px;
+  border-radius:999px;
+  background:rgba(18,60,122,.09);
+  transform:translateY(-50%);
+  opacity:0;
+  pointer-events:none;
+  transition:.35s var(--ease);
+}
+
+.nav-btn{
+  border:0;
+  background:transparent;
+  padding:13px 16px;
+  border-radius:999px;
+  color:var(--text);
+  font-weight:850;
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  transition:.25s ease;
+  white-space:nowrap;
+}
+
+.nav-btn i{
+  font-size:12px;
+  transition:.25s ease;
+}
+
+.nav-btn:hover,
+.nav-btn.active{
+  color:var(--primary);
+}
+
+.nav-btn.dashboard-btn{
+  background:linear-gradient(135deg,#16a34a,#22c55e);
+  color:#fff;
+  box-shadow:0 14px 34px rgba(34,197,94,.26);
+}
+
+.nav-btn.dashboard-btn:hover{
+  color:#fff;
+  transform:translateY(-2px);
+}
+
+.nav-btn.active i{
+  transform:rotate(180deg);
+}
+
+.apply-btn{
+  border:0;
+  text-decoration:none;
+  padding:13px 22px;
+  border-radius:999px;
+  color:#071527;
+  font-weight:900;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  box-shadow:0 14px 34px rgba(244,185,66,.3);
+  transition:.3s var(--ease);
+  white-space:nowrap;
+}
+
+.apply-btn:hover{
+  transform:translateY(-3px);
+  color:#071527;
+}
+
+.mobile-toggle{
+  display:none;
+  width:48px;
+  height:48px;
+  border:0;
+  border-radius:16px;
+  color:#fff;
+  font-size:24px;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+}
+
+.backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(7,21,39,.18);
+  backdrop-filter:blur(4px);
+  z-index:998;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:.3s ease;
+}
+
+.backdrop.show{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+.mega-wrap{
+  position:absolute;
+  top:100%;
+  right:28px;
+  width:min(1120px,calc(100vw - 56px));
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(18px) scale(.985);
+  transition:.35s var(--ease);
+  z-index:1001;
+}
+
+.mega-wrap.open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translateY(0) scale(1);
+}
+
+.mega-panel{
+  margin-top:12px;
+  border-radius:30px;
+  padding:22px;
+  overflow:hidden;
+  position:relative;
+  background:linear-gradient(135deg,rgba(7,21,39,.96),rgba(12,34,66,.94));
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:var(--shadow);
+}
+
+.mega-panel:before{
+  content:"";
+  position:absolute;
+  inset:-120px;
+  background:
+    radial-gradient(circle at var(--x,50%) var(--y,50%),rgba(24,216,255,.25),transparent 24%),
+    radial-gradient(circle at 10% 10%,rgba(244,185,66,.18),transparent 30%),
+    radial-gradient(circle at 90% 90%,rgba(29,101,193,.22),transparent 30%);
+  pointer-events:none;
+}
+
+.mega-grid{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:320px 1fr;
+  gap:20px;
+}
+
+.mega-hero{
+  min-height:430px;
+  border-radius:26px;
+  padding:26px;
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.13);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  overflow:hidden;
+}
+
+.kicker{
+  display:inline-flex;
+  width:max-content;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  color:#ffe6a2;
+  background:rgba(244,185,66,.13);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.mega-hero h2{
+  color:#fff;
+  margin:18px 0 10px;
+  font-size:36px;
+  font-weight:950;
+  letter-spacing:-1px;
+  line-height:1;
+}
+
+.mega-hero p{
+  color:#b8c7dc;
+  font-size:14px;
+  line-height:1.7;
+  margin:0;
+}
+
+.orbit{
+  height:180px;
+  display:grid;
+  place-items:center;
+  position:relative;
+}
+
+.orbit-ring{
+  position:absolute;
+  border-radius:50%;
+  border:1px dashed rgba(255,255,255,.26);
+  animation:spin 14s linear infinite;
+}
+
+.orbit-ring.one{width:160px;height:160px}
+.orbit-ring.two{width:115px;height:115px;animation-direction:reverse;animation-duration:9s}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.core-icon{
+  width:82px;
+  height:82px;
+  border-radius:28px;
+  display:grid;
+  place-items:center;
+  font-size:36px;
+  color:#fff;
+  background:linear-gradient(135deg,var(--secondary),#18d8ff);
+  box-shadow:0 0 45px rgba(24,216,255,.35);
+  animation:float 3s ease-in-out infinite;
+}
+
+@keyframes float{
+  50%{transform:translateY(-8px)}
+}
+
+.mega-links{
+  border-radius:26px;
+  padding:18px;
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.12);
+}
+
+.mega-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.mega-top h3{
+  margin:0;
+  color:#fff;
+  font-size:17px;
+  font-weight:950;
+}
+
+.badge-pro{
+  color:#d9fbff;
+  background:rgba(24,216,255,.12);
+  border:1px solid rgba(24,216,255,.18);
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.card-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:13px;
+}
+
+.menu-card{
+  min-height:124px;
+  padding:16px;
+  border-radius:22px;
+  color:#fff;
+  display:flex;
+  align-items:flex-start;
+  gap:13px;
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(255,255,255,.055));
+  border:1px solid rgba(255,255,255,.13);
+  transition:.35s var(--ease);
+}
+
+.menu-card:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:radial-gradient(circle at var(--cx,50%) var(--cy,50%),rgba(255,255,255,.2),transparent 35%);
+  opacity:0;
+  transition:.25s ease;
+}
+
+.menu-card:hover{
+  transform:translateY(-7px);
+  background:linear-gradient(145deg,rgba(255,255,255,.17),rgba(255,255,255,.08));
+  box-shadow:0 24px 50px rgba(0,0,0,.22);
+  color:#fff;
+}
+
+.menu-card:hover:before{opacity:1}
+
+.menu-icon{
+  width:48px;
+  height:48px;
+  min-width:48px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,var(--secondary),#18d8ff);
+  box-shadow:0 14px 28px rgba(24,216,255,.24);
+  position:relative;
+  z-index:1;
+}
+
+.menu-content{
+  position:relative;
+  z-index:1;
+}
+
+.menu-content h4{
+  margin:0 0 6px;
+  color:#fff;
+  font-size:15px;
+  font-weight:950;
+}
+
+.menu-content p{
+  margin:0;
+  color:#b5c6d8;
+  font-size:13px;
+  line-height:1.45;
+}
+
+.mobile-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(7,21,39,.5);
+  backdrop-filter:blur(8px);
+  z-index:1100;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:.3s ease;
+}
+
+.mobile-backdrop.show{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+}
+
+.mobile-drawer{
+  position:fixed;
+  top:0;
+  right:0;
+  width:min(450px,94vw);
+  height:100dvh;
+  z-index:1200;
+  background:linear-gradient(145deg,#071527,#0c2445);
+  transform:translateX(110%);
+  transition:.42s var(--ease);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.mobile-drawer.show{transform:translateX(0)}
+
+.mobile-head{
+  padding:18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+
+.mobile-brand{
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.mobile-brand i{
+  width:44px;
+  height:44px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,var(--secondary),#18d8ff);
+}
+
+.mobile-brand strong{display:block;font-weight:950}
+.mobile-brand span{font-size:12px;color:#aebed2}
+
+.mobile-close{
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:16px;
+  color:#fff;
+  background:rgba(255,255,255,.1);
+}
+
+.mobile-body{
+  padding:16px;
+  overflow:auto;
+  flex:1;
+}
+
+.acc-item{
+  margin-bottom:12px;
+  border-radius:22px;
+  overflow:hidden;
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.11);
+}
+
+.acc-btn{
+  width:100%;
+  border:0;
+  background:transparent;
+  color:#fff;
+  padding:16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:left;
+}
+
+.acc-icon{
+  width:42px;
+  height:42px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,var(--secondary),#18d8ff);
+}
+
+.acc-title{flex:1}
+.acc-title strong{display:block;font-size:15px}
+.acc-title span{display:block;color:#aebed2;font-size:12px}
+
+.acc-chev{
+  transition:.25s ease;
+}
+
+.acc-item.open .acc-chev{
+  transform:rotate(180deg);
+}
+
+.acc-panel{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .4s var(--ease);
+}
+
+.acc-content{
+  padding:0 14px 14px;
+  display:grid;
+  gap:9px;
+}
+
+.mobile-link{
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.07);
+  transition:.25s ease;
+}
+
+.mobile-link:hover{
+  color:#fff;
+  transform:translateX(4px);
+  background:rgba(255,255,255,.12);
+}
+
+.mobile-link i{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  background:rgba(24,216,255,.12);
+}
+
+.mobile-link strong{
+  display:block;
+  font-size:13px;
+}
+
+.mobile-link span span{
+  display:block;
+  font-size:11px;
+  color:#9fb2c9;
+}
+
+@media(max-width:1100px){
+  .nav-btn{padding-inline:11px}
+}
+
+@media(max-width:991px){
+  .desktop-menu,
+  .apply-btn,
+  .mega-wrap{
+    display:none!important;
+  }
+
+  .mobile-toggle{
+    display:grid;
+    place-items:center;
+  }
+
+  .nav-inner{
+    padding:10px 16px;
+  }
+}
+
+@media(max-width:575px){
+  .brand-text span{display:none}
+  .brand-text strong{font-size:16px}
+  .brand-logo{width:46px;height:46px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="mobile-backdrop" id="mobileBackdrop"></div>
+
+<header class="school-header">
+  <div class="nav-inner">
+
+    <a href="{% url 'index' %}" class="brand">
+      <span class="brand-logo"><i class="bi bi-mortarboard-fill"></i></span>
+      <span class="brand-text">
+        <strong>UltraMatrix</strong>
+        <span>Smart scheduling SaaS</span>
+      </span>
+    </a>
+
+    <div class="right-nav">
+      <nav class="desktop-menu" id="desktopMenu">
+        <span class="nav-indicator" id="navIndicator"></span>
+
+          <a href="{% url 'index' %}" class="nav-btn">Home</a>
+          <button class="nav-btn" data-menu="academics">Features <i class="bi bi-chevron-down"></i></button>
+          <button class="nav-btn" data-menu="admissions">AI Engine <i class="bi bi-chevron-down"></i></button>
+          <button class="nav-btn" data-menu="campus">Pricing <i class="bi bi-chevron-down"></i></button>
+          <button class="nav-btn" data-menu="resources">Resources <i class="bi bi-chevron-down"></i></button>
+          <a href="{% url 'contact_us' %}" class="nav-btn">Contact us</a>
+      </nav>
+
+      {% if request.user.is_authenticated %}
+      <a href="{% url 'school_dashboard' %}" class="nav-btn dashboard-btn">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+      {% else %}
+      <a href="{% url 'login' %}" class="nav-btn">Login</a>
+      <a href="{% url 'school_signup' %}" class="apply-btn">Start Free Trial <i class="bi bi-arrow-right"></i></a>
+      {% endif %}
+      <button class="mobile-toggle" id="openMobile"><i class="bi bi-list"></i></button>
+    </div>
+
+    <div class="mega-wrap" id="megaWrap">
+      <div class="mega-panel" id="megaPanel">
+        <div class="mega-grid" id="megaContent"></div>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<aside class="mobile-drawer" id="mobileDrawer">
+  <div class="mobile-head">
+    <div class="mobile-brand">
+      <i class="bi bi-stars"></i>
+      <div>
+        <strong>UltraMatrix</strong>
+        <span>Explore Platform</span>
+      </div>
+    </div>
+    <button class="mobile-close" id="closeMobile"><i class="bi bi-x-lg"></i></button>
+  </div>
+
+  <div class="mobile-body" id="mobileAccordion"></div>
+</aside>
+
+<script>
+const menuData = {
+  academics: {
+    kicker: "Core Features",
+    title: "Smart Scheduling Platform",
+    icon: "bi-calendar2-week-fill",
+    badge: "10x Faster",
+    desc: "Build school timetables faster with drag-drop planning, live conflicts, teacher workload control and daily proxy operations.",
+    links: [
+      ["Drag & Drop Planner", "Move lectures smoothly across timetable slots.", "bi-cursor-fill", "{% url 'website_features' %}#drag-drop-planner"],
+      ["Live Conflict Detection", "Catch teacher, room and class clashes instantly.", "bi-shield-check", "{% url 'website_features' %}#live-conflict-detection"],
+      ["Multi Timetable Support", "Create multiple active or draft timetable versions.", "bi-layers", "{% url 'website_features' %}#multi-timetable-support"],
+      ["Teacher Workload Balance", "Track daily and weekly teacher load limits.", "bi-speedometer2", "{% url 'website_features' %}#teacher-workload-balance"],
+      ["Proxy Adjustment Panel", "Handle teacher leave and substitute lectures.", "bi-person-lines-fill", "{% url 'website_features' %}#proxy-adjustment-panel"],
+      ["PDF & Excel Export", "Print and share timetable reports easily.", "bi-file-earmark-arrow-down", "{% url 'website_features' %}#pdf-excel-export"]
+    ]
+  },
+
+  admissions: {
+    kicker: "AI Engine",
+    title: "AI Scheduling Intelligence",
+    icon: "bi-cpu-fill",
+    badge: "Smart AI",
+    desc: "Use AI to generate, optimize and improve school timetables with smarter teacher, room and subject distribution.",
+    links: [
+      ["AI Timetable Generator", "Generate complete schedules automatically.", "bi-stars", "{% url 'website_ai_engine' %}#ai-timetable-generator"],
+      ["AI Conflict Resolver", "Resolve timetable clashes intelligently.", "bi-magic", "{% url 'website_ai_engine' %}#ai-conflict-resolver"],
+      ["AI Workload Balancing", "Distribute teacher periods more fairly.", "bi-bar-chart-line", "{% url 'website_ai_engine' %}#ai-workload-balancing"],
+      ["Room Optimization", "Assign classrooms and labs without overlap.", "bi-door-open", "{% url 'website_ai_engine' %}#room-optimization"],
+      ["Gap Reduction", "Reduce unnecessary teacher free gaps.", "bi-arrows-collapse", "{% url 'website_ai_engine' %}#gap-reduction"],
+      ["Quality Score", "Measure timetable quality before publishing.", "bi-graph-up-arrow", "{% url 'website_ai_engine' %}#quality-score"]
+    ]
+  },
+
+  campus: {
+    kicker: "Pricing",
+    title: "Flexible Plans",
+    icon: "bi-cash-stack",
+    badge: "For Every School",
+    desc: "Simple pricing for schools, academies and institutions with features based on usage and growth.",
+    links: [
+      ["Starter Plan", "Best for small schools starting digital scheduling.", "bi-box", "{% url 'website_pricing' %}#starter-plan"],
+      ["Professional Plan", "Advanced timetable, export and proxy tools.", "bi-gem", "{% url 'website_pricing' %}#professional-plan"],
+      ["Enterprise Plan", "AI engine, multi-school and custom support.", "bi-building-gear", "{% url 'website_pricing' %}#enterprise-plan"],
+      ["Unlimited Timetables", "Create multiple timetable versions easily.", "bi-infinity", "{% url 'website_pricing' %}#price-compare"],
+      ["Export Permissions", "Control PDF and Excel access by plan.", "bi-file-lock", "{% url 'website_pricing' %}#price-compare"],
+      ["Onboarding Support", "Get help setting up your school data.", "bi-headset", "{% url 'website_pricing' %}#pricing-faqs"]
+    ]
+  },
+
+  resources: {
+    kicker: "Resources",
+    title: "Learn & Explore",
+    icon: "bi-folder2-open",
+    badge: "Guides",
+    desc: "Explore product demos, setup guides, FAQs and support resources for faster school onboarding.",
+    links: [
+      ["Product Demo", "See the timetable workflow in action.", "bi-play-circle", "{% url 'index' %}#product-demo"],
+      ["Feature Overview", "Explore all important SaaS capabilities.", "bi-list-stars", "{% url 'index' %}#feature-overview"],
+      ["Interactive Demo", "Try a sample timetable experience.", "bi-window-fullscreen", "{% url 'index' %}#interactive-demo"],
+      ["Setup Guide", "Prepare teachers, rooms and subjects quickly.", "bi-map", "{% url 'index' %}#setup-guide"],
+      ["FAQ", "Answers for school admins and owners.", "bi-question-circle", "{% url 'website_pricing' %}#pricing-faqs"],
+      ["Contact Support", "Talk to our product support team.", "bi-chat-dots", "{% url 'contact_us' %}"]
+    ]
+  }
+};
+
+const menuBtns = document.querySelectorAll(".nav-btn[data-menu]");
+const megaWrap = document.getElementById("megaWrap");
+const megaContent = document.getElementById("megaContent");
+const megaPanel = document.getElementById("megaPanel");
+const backdrop = document.getElementById("backdrop");
+const desktopMenu = document.getElementById("desktopMenu");
+const navIndicator = document.getElementById("navIndicator");
+
+const mobileDrawer = document.getElementById("mobileDrawer");
+const mobileBackdrop = document.getElementById("mobileBackdrop");
+const openMobile = document.getElementById("openMobile");
+const closeMobile = document.getElementById("closeMobile");
+const mobileAccordion = document.getElementById("mobileAccordion");
+
+let activeMenu = "academics";
+let closeTimer = null;
+
+function renderMega(type){
+  const data = menuData[type];
+  activeMenu = type;
+
+  megaContent.innerHTML = `
+    <div class="mega-hero">
+      <div>
+        <div class="kicker"><i class="bi bi-stars"></i>${data.kicker}</div>
+        <h2>${data.title}</h2>
+        <p>${data.desc}</p>
+      </div>
+
+      <div class="orbit">
+        <span class="orbit-ring one"></span>
+        <span class="orbit-ring two"></span>
+        <span class="core-icon"><i class="bi ${data.icon}"></i></span>
+      </div>
+    </div>
+
+    <div class="mega-links">
+      <div class="mega-top">
+        <h3>${data.title} Menu</h3>
+        <span class="badge-pro"><i class="bi bi-lightning-charge"></i> ${data.badge}</span>
+      </div>
+
+      <div class="card-grid">
+        ${data.links.map(link=>`
+          <a href="${link[3]}" class="menu-card">
+            <span class="menu-icon"><i class="bi ${link[2]}"></i></span>
+            <span class="menu-content">
+              <h4>${link[0]}</h4>
+              <p>${link[1]}</p>
+            </span>
+          </a>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  bindCardMouse();
+}
+
+function openMega(type){
+  clearTimeout(closeTimer);
+  renderMega(type);
+  megaWrap.classList.add("open");
+  backdrop.classList.add("show");
+
+  menuBtns.forEach(btn=>{
+    btn.classList.toggle("active",btn.dataset.menu===type);
+  });
+
+  moveIndicator(document.querySelector(`.nav-btn[data-menu="${type}"]`));
+}
+
+function closeMega(){
+  megaWrap.classList.remove("open");
+  backdrop.classList.remove("show");
+  menuBtns.forEach(btn=>btn.classList.remove("active"));
+  navIndicator.style.opacity = "0";
+}
+
+function delayClose(){
+  clearTimeout(closeTimer);
+  closeTimer=setTimeout(closeMega,180);
+}
+
+function moveIndicator(btn){
+  if(!btn)return;
+  const menuRect = desktopMenu.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+
+  navIndicator.style.width = btnRect.width + "px";
+  navIndicator.style.transform = `translate(${btnRect.left - menuRect.left}px,-50%)`;
+  navIndicator.style.opacity = "1";
+}
+
+function bindCardMouse(){
+  document.querySelectorAll(".menu-card").forEach(card=>{
+    card.addEventListener("mousemove",e=>{
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty("--cx",(e.clientX-rect.left)+"px");
+      card.style.setProperty("--cy",(e.clientY-rect.top)+"px");
+    });
+    card.addEventListener("click",closeMega);
+  });
+}
+
+menuBtns.forEach(btn=>{
+  btn.addEventListener("mouseenter",()=>openMega(btn.dataset.menu));
+  btn.addEventListener("click",()=>{
+    if(activeMenu===btn.dataset.menu && megaWrap.classList.contains("open")){
+      closeMega();
+    }else{
+      openMega(btn.dataset.menu);
+    }
+  });
+});
+
+desktopMenu.addEventListener("mouseenter",()=>clearTimeout(closeTimer));
+desktopMenu.addEventListener("mouseleave",delayClose);
+megaWrap.addEventListener("mouseenter",()=>clearTimeout(closeTimer));
+megaWrap.addEventListener("mouseleave",delayClose);
+backdrop.addEventListener("click",closeMega);
+
+megaPanel.addEventListener("mousemove",e=>{
+  const rect = megaPanel.getBoundingClientRect();
+  megaPanel.style.setProperty("--x",(e.clientX-rect.left)+"px");
+  megaPanel.style.setProperty("--y",(e.clientY-rect.top)+"px");
+});
+
+function renderMobile(){
+  mobileAccordion.innerHTML = Object.entries(menuData).map(([key,data],index)=>`
+    <div class="acc-item">
+      <button class="acc-btn" type="button">
+        <span class="acc-icon"><i class="bi ${data.icon}"></i></span>
+        <span class="acc-title">
+          <strong>${data.title}</strong>
+          <span>${data.kicker}</span>
+        </span>
+        <i class="bi bi-chevron-down acc-chev"></i>
+      </button>
+      <div class="acc-panel">
+        <div class="acc-content">
+          ${data.links.map(link=>`
+            <a href="${link[3]}" class="mobile-link">
+              <i class="bi ${link[2]}"></i>
+              <span>
+                <strong>${link[0]}</strong>
+                <span>${link[1]}</span>
+              </span>
+            </a>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  bindAccordion();
+  document.querySelectorAll(".mobile-link").forEach(link=>{
+    link.addEventListener("click",closeMobileMenu);
+  });
+}
+
+function bindAccordion(){
+  document.querySelectorAll(".acc-item").forEach(item=>{
+    const btn = item.querySelector(".acc-btn");
+    const panel = item.querySelector(".acc-panel");
+
+    if(item.classList.contains("open")){
+      panel.style.maxHeight = panel.scrollHeight + "px";
+    }
+
+    btn.addEventListener("click",()=>{
+      const isOpen = item.classList.contains("open");
+
+      document.querySelectorAll(".acc-item").forEach(other=>{
+        other.classList.remove("open");
+        other.querySelector(".acc-panel").style.maxHeight = 0;
+      });
+
+      if(!isOpen){
+        item.classList.add("open");
+        panel.style.maxHeight = panel.scrollHeight + "px";
+      }
+    });
+  });
+}
+
+function openMobileMenu(){
+  mobileDrawer.classList.add("show");
+  mobileBackdrop.classList.add("show");
+  document.body.classList.add("lock-scroll");
+}
+
+function closeMobileMenu(){
+  mobileDrawer.classList.remove("show");
+  mobileBackdrop.classList.remove("show");
+  document.body.classList.remove("lock-scroll");
+}
+
+openMobile.addEventListener("click",openMobileMenu);
+closeMobile.addEventListener("click",closeMobileMenu);
+mobileBackdrop.addEventListener("click",closeMobileMenu);
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    closeMega();
+    closeMobileMenu();
+  }
+});
+
+window.addEventListener("resize",()=>{
+  moveIndicator(document.querySelector(".nav-btn.active"));
+  if(window.innerWidth>991)closeMobileMenu();
+});
+
+renderMega("academics");
+renderMobile();
+</script>
+
+
+
+
+
+
+
+
+
+
+{% block content %}
+  
+{% endblock content %}
+
+
+
+<a class="website-help-fab" href="{% url 'contact_us' %}" title="Need help?">
+  <i class="bi bi-chat-dots-fill"></i>
+  <span>Help</span>
+</a>
+
+
+
+
+<footer class="um-footer">
+  <div class="um-footer-glow glow-one"></div>
+  <div class="um-footer-glow glow-two"></div>
+
+  <div class="um-footer-container">
+
+    <div class="um-footer-main">
+
+      <div class="um-footer-brand">
+        <a href="#" class="um-footer-logo">
+          <span><i class="bi bi-mortarboard-fill"></i></span>
+          <div>
+            <strong>UltraMatrix</strong>
+            <small>Smart scheduling SaaS</small>
+          </div>
+        </a>
+
+        <p>
+          AI-powered timetable software for schools, classes and institutes.
+          Build, validate, export and publish schedules faster.
+        </p>
+
+        <div class="um-footer-social">
+          <a href="#"><i class="bi bi-facebook"></i></a>
+          <a href="#"><i class="bi bi-instagram"></i></a>
+          <a href="#"><i class="bi bi-linkedin"></i></a>
+          <a href="#"><i class="bi bi-youtube"></i></a>
+        </div>
+      </div>
+
+      <div class="um-footer-links">
+        <h4>Platform</h4>
+        <a href="{% url 'website_features' %}#drag-drop-planner">Master Board</a>
+        <a href="{% url 'website_ai_engine' %}#ai-timetable-generator">AI Generation</a>
+        <a href="{% url 'website_features' %}#live-conflict-detection">Conflict Check</a>
+        <a href="{% url 'website_features' %}#pdf-excel-export">Export System</a>
+      </div>
+
+      <div class="um-footer-links">
+        <h4>Company</h4>
+        <a href="{% url 'index' %}#product-demo">About</a>
+        <a href="{% url 'website_pricing' %}#pricing-plans">Pricing</a>
+        <a href="{% url 'index' %}#setup-guide">Resources</a>
+        <a href="{% url 'contact_us' %}">Contact</a>
+      </div>
+
+      <div class="um-footer-newsletter" id="book-demo">
+        <h4>Book a Demo</h4>
+        <p>See how UltraMatrix can simplify your institute timetable workflow.</p>
+
+        <form class="um-footer-form">
+          <input type="email" placeholder="Enter email address">
+          <button type="submit">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <div class="um-footer-bottom">
+      <p>© 2026 UltraMatrix Software. All rights reserved.</p>
+
+      <div>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms</a>
+        <a href="#">Support</a>
+      </div>
+    </div>
+
+  </div>
+</footer>
+
+<style>
+.um-footer{
+  position:relative;
+  overflow:hidden;
+  padding:90px 28px 28px;
+  background:linear-gradient(145deg,#071527,#0d2c5d 55%,#123c7a);
+}
+
+.website-help-fab{
+  position:fixed;
+  right:22px;
+  bottom:22px;
+  z-index:1200;
+  min-height:54px;
+  padding:0 20px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  color:#fff;
+  background:linear-gradient(135deg,#16a34a,#22c55e);
+  box-shadow:0 18px 44px rgba(22,163,74,.32);
+  border:1px solid rgba(255,255,255,.35);
+  font-weight:950;
+  text-decoration:none;
+  transition:.25s var(--ease);
+}
+
+.website-help-fab:hover{
+  color:#fff;
+  transform:translateY(-3px);
+  box-shadow:0 24px 58px rgba(22,163,74,.38);
+}
+
+.website-help-fab i{
+  font-size:18px;
+}
+
+.um-footer::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:54px 54px;
+  mask-image:radial-gradient(circle at center,#000 25%,transparent 78%);
+}
+
+.um-footer-glow{
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+}
+
+.um-footer .glow-one{
+  width:360px;
+  height:360px;
+  left:-140px;
+  top:20%;
+  background:rgba(24,216,255,.16);
+}
+
+.um-footer .glow-two{
+  width:300px;
+  height:300px;
+  right:-120px;
+  bottom:8%;
+  background:rgba(244,185,66,.18);
+}
+
+.um-footer-container{
+  width:100%;
+  max-width:1280px;
+  margin:auto;
+  position:relative;
+  z-index:2;
+}
+
+.um-footer-main{
+  display:grid;
+  grid-template-columns:1.3fr .7fr .7fr 1fr;
+  gap:34px;
+  padding:42px;
+  border-radius:42px;
+  background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(18px);
+  box-shadow:0 35px 95px rgba(0,0,0,.2);
+}
+
+.um-footer-logo{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  color:#fff;
+}
+
+.um-footer-logo span{
+  width:56px;
+  height:56px;
+  border-radius:20px;
+  display:grid;
+  place-items:center;
+  color:#071527;
+  font-size:26px;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  box-shadow:0 18px 40px rgba(244,185,66,.28);
+}
+
+.um-footer-logo strong{
+  display:block;
+  font-size:22px;
+  font-weight:950;
+}
+
+.um-footer-logo small{
+  color:#b9cce2;
+  font-size:12px;
+  font-weight:700;
+}
+
+.um-footer-brand p,
+.um-footer-newsletter p{
+  margin:22px 0;
+  color:#b9cce2;
+  font-size:14px;
+  line-height:1.8;
+  font-weight:550;
+}
+
+.um-footer-social{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.um-footer-social a{
+  width:42px;
+  height:42px;
+  border-radius:16px;
+  display:grid;
+  place-items:center;
+  color:#fff;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.1);
+  transition:.3s var(--ease);
+}
+
+.um-footer-social a:hover{
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  transform:translateY(-5px);
+}
+
+.um-footer-links h4,
+.um-footer-newsletter h4{
+  margin:0 0 20px;
+  color:#fff;
+  font-size:17px;
+  font-weight:950;
+}
+
+.um-footer-links{
+  display:flex;
+  flex-direction:column;
+}
+
+.um-footer-links a{
+  width:max-content;
+  margin-bottom:13px;
+  color:#b9cce2;
+  font-size:14px;
+  font-weight:650;
+  transition:.25s ease;
+}
+
+.um-footer-links a:hover{
+  color:#ffe59a;
+  transform:translateX(6px);
+}
+
+.um-footer-form{
+  display:flex;
+  gap:10px;
+  padding:8px;
+  border-radius:22px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.1);
+}
+
+.um-footer-form input{
+  width:100%;
+  border:0;
+  outline:0;
+  color:#fff;
+  background:transparent;
+  padding:12px 10px;
+  font-size:14px;
+}
+
+.um-footer-form input::placeholder{
+  color:#8fa4bd;
+}
+
+.um-footer-form button{
+  width:48px;
+  height:48px;
+  min-width:48px;
+  border:0;
+  border-radius:16px;
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+}
+
+.um-footer-bottom{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+  padding:26px 6px 0;
+}
+
+.um-footer-bottom p{
+  margin:0;
+  color:#9fb2c9;
+  font-size:13px;
+  font-weight:600;
+}
+
+.um-footer-bottom div{
+  display:flex;
+  gap:18px;
+  flex-wrap:wrap;
+}
+
+.um-footer-bottom a{
+  color:#9fb2c9;
+  font-size:13px;
+  font-weight:700;
+}
+
+.um-footer-bottom a:hover{
+  color:#ffe59a;
+}
+
+@media(max-width:991px){
+  .um-footer{
+    padding:75px 18px 24px;
+  }
+
+  .um-footer-main{
+    grid-template-columns:1fr 1fr;
+    padding:30px;
+  }
+}
+
+@media(max-width:575px){
+  .um-footer{
+    padding:60px 14px 22px;
+  }
+
+  .um-footer-main{
+    grid-template-columns:1fr;
+    padding:24px;
+    border-radius:30px;
+  }
+
+  .um-footer-bottom{
+    text-align:center;
+    justify-content:center;
+  }
+
+  .um-footer-bottom div{
+    justify-content:center;
+  }
+
+  .website-help-fab{
+    right:16px;
+    bottom:16px;
+    width:52px;
+    padding:0;
+  }
+
+  .website-help-fab span{
+    display:none;
+  }
+}
+</style>
+
+
+</body>
+</html>

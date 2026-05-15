@@ -1,0 +1,1151 @@
+{% extends "website_base.html" %}
+{% block content %}
+<main class="um-pricing-page">
+  <section class="um-pricing-hero" id="pricing-overview">
+    <div class="um-pricing-shell">
+      <div class="um-pricing-copy">
+        <span class="um-pricing-kicker">
+          <i class="bi bi-lightning-charge-fill"></i>
+          Flexible plans for every school
+        </span>
+
+        <h1>Simple pricing for smarter school scheduling</h1>
+
+        <p>
+          Start with the essentials, upgrade when your institute grows, and unlock AI timetable
+          automation, conflict detection, exports, proxy tools and priority onboarding.
+        </p>
+
+        <div class="um-pricing-actions">
+          <a href="{% url 'school_signup' %}" class="um-price-action um-price-action-primary">
+            Start Free Trial
+            <i class="bi bi-arrow-right"></i>
+          </a>
+
+          <a href="#price-compare" class="um-price-action um-price-action-secondary">
+            Compare Plans
+            <i class="bi bi-grid-3x3-gap"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="um-pricing-highlights" aria-label="Pricing highlights">
+        <div>
+          <i class="bi bi-calendar2-check-fill"></i>
+          <strong>Unlimited drafts</strong>
+          <span>Create and refine timetable versions before publishing.</span>
+        </div>
+
+        <div>
+          <i class="bi bi-shield-check"></i>
+          <strong>Live conflict checks</strong>
+          <span>Catch teacher, class and room clashes while planning.</span>
+        </div>
+
+        <div>
+          <i class="bi bi-headset"></i>
+          <strong>Setup support</strong>
+          <span>Get onboarding help when your school data is ready.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="um-plan-section" id="pricing-plans" aria-labelledby="pricing-plans-title">
+    <div class="um-pricing-shell">
+      <div class="um-section-heading">
+        <span>Plans</span>
+        <h2 id="pricing-plans-title">Choose the plan that fits your workflow</h2>
+      </div>
+
+      <div class="um-plan-grid">
+        <article class="um-plan-card" id="starter-plan">
+          <div class="um-plan-top">
+            <span class="um-plan-tag">Starter</span>
+            <i class="bi bi-box-seam"></i>
+          </div>
+
+          <h3>Small schools starting digital scheduling.</h3>
+
+          <div class="um-plan-price">
+            <strong>Rs 999</strong>
+            <span>/ month</span>
+          </div>
+
+          <ul class="um-plan-list">
+            <li><i class="bi bi-check-circle-fill"></i> Basic timetable builder</li>
+            <li><i class="bi bi-check-circle-fill"></i> Teacher and room conflict checks</li>
+            <li><i class="bi bi-check-circle-fill"></i> PDF timetable export</li>
+            <li><i class="bi bi-check-circle-fill"></i> Email support</li>
+          </ul>
+
+          <a href="{% url 'school_signup' %}" class="um-plan-button">Start Starter</a>
+        </article>
+
+        <article class="um-plan-card um-plan-card-featured" id="professional-plan">
+          <div class="um-popular-badge">
+            <i class="bi bi-gem"></i>
+            Most Popular
+          </div>
+
+          <div class="um-plan-top">
+            <span class="um-plan-tag">Professional</span>
+            <i class="bi bi-stars"></i>
+          </div>
+
+          <h3>Advanced automation for growing institutes.</h3>
+
+          <div class="um-plan-price">
+            <strong>Rs 2499</strong>
+            <span>/ month</span>
+          </div>
+
+          <ul class="um-plan-list">
+            <li><i class="bi bi-check-circle-fill"></i> AI conflict resolver</li>
+            <li><i class="bi bi-check-circle-fill"></i> PDF and Excel export</li>
+            <li><i class="bi bi-check-circle-fill"></i> Multi timetable versions</li>
+            <li><i class="bi bi-check-circle-fill"></i> Proxy adjustment panel</li>
+            <li><i class="bi bi-check-circle-fill"></i> Priority support</li>
+          </ul>
+
+          <a href="{% url 'school_signup' %}" class="um-plan-button um-plan-button-featured">Get Professional</a>
+        </article>
+
+        <article class="um-plan-card" id="enterprise-plan">
+          <div class="um-plan-top">
+            <span class="um-plan-tag">Enterprise</span>
+            <i class="bi bi-building-gear"></i>
+          </div>
+
+          <h3>Custom support for groups and large schools.</h3>
+
+          <div class="um-plan-price">
+            <strong>Custom</strong>
+            <span>pricing</span>
+          </div>
+
+          <ul class="um-plan-list">
+            <li><i class="bi bi-check-circle-fill"></i> Multi-school setup</li>
+            <li><i class="bi bi-check-circle-fill"></i> Advanced AI scheduling engine</li>
+            <li><i class="bi bi-check-circle-fill"></i> Custom permissions and exports</li>
+            <li><i class="bi bi-check-circle-fill"></i> Dedicated onboarding</li>
+          </ul>
+
+          <a href="{% url 'school_signup' %}" class="um-plan-button">Contact Sales</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="um-compare-section" id="price-compare" aria-labelledby="pricing-compare-title">
+    <div class="um-pricing-shell">
+      <div class="um-section-heading">
+        <span>Compare</span>
+        <h2 id="pricing-compare-title">Plan details at a glance</h2>
+        <p>Scan the key limits and premium features before selecting a plan.</p>
+      </div>
+
+      <div class="um-compare-panel">
+        <div class="um-compare-row um-compare-head">
+          <span>Feature</span>
+          <span>Starter</span>
+          <span>Professional</span>
+          <span>Enterprise</span>
+        </div>
+
+        <div class="um-compare-row">
+          <div class="um-feature-cell">
+            <i class="bi bi-layers-fill"></i>
+            <div>
+              <strong>Timetable versions</strong>
+              <small>Plan, test and publish schedules safely.</small>
+            </div>
+          </div>
+          <span data-label="Starter"><b>2</b> active drafts</span>
+          <span data-label="Professional"><b>Unlimited</b> drafts</span>
+          <span data-label="Enterprise"><b>Unlimited</b> across schools</span>
+        </div>
+
+        <div class="um-compare-row">
+          <div class="um-feature-cell">
+            <i class="bi bi-shield-check"></i>
+            <div>
+              <strong>Conflict detection</strong>
+              <small>Catch clashes before the timetable is shared.</small>
+            </div>
+          </div>
+          <span data-label="Starter">Teacher and room</span>
+          <span data-label="Professional">Teacher, room and workload</span>
+          <span data-label="Enterprise">Custom rules</span>
+        </div>
+
+        <div class="um-compare-row">
+          <div class="um-feature-cell">
+            <i class="bi bi-cpu-fill"></i>
+            <div>
+              <strong>AI scheduling</strong>
+              <small>Use automation to generate and improve plans.</small>
+            </div>
+          </div>
+          <span data-label="Starter" class="um-muted-value">Not included</span>
+          <span data-label="Professional"><b>Included</b></span>
+          <span data-label="Enterprise"><b>Advanced</b> AI engine</span>
+        </div>
+
+        <div class="um-compare-row">
+          <div class="um-feature-cell">
+            <i class="bi bi-file-earmark-arrow-down-fill"></i>
+            <div>
+              <strong>Exports</strong>
+              <small>Share printable reports with teams and staff.</small>
+            </div>
+          </div>
+          <span data-label="Starter">PDF</span>
+          <span data-label="Professional">PDF and Excel</span>
+          <span data-label="Enterprise">Custom export formats</span>
+        </div>
+
+        <div class="um-compare-row">
+          <div class="um-feature-cell">
+            <i class="bi bi-headset"></i>
+            <div>
+              <strong>Support</strong>
+              <small>Get the right help for setup and rollout.</small>
+            </div>
+          </div>
+          <span data-label="Starter">Email</span>
+          <span data-label="Professional"><b>Priority</b> support</span>
+          <span data-label="Enterprise"><b>Dedicated</b> onboarding</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="um-faq-section" id="pricing-faqs" aria-labelledby="pricing-faq-title">
+    <div class="um-pricing-shell">
+      <div class="um-section-heading">
+        <span>FAQs</span>
+        <h2 id="pricing-faq-title">Frequently asked questions</h2>
+        <p>Quick answers for schools comparing plans, billing and setup support.</p>
+      </div>
+
+      <div class="um-faq-layout">
+        <div class="um-faq-aside">
+          <i class="bi bi-question-circle-fill"></i>
+          <strong>Need help choosing?</strong>
+          <span>
+            Start with Professional if you need AI, Excel exports and proxy handling. Starter is best for basic timetable management.
+          </span>
+          <a href="{% url 'school_signup' %}">
+            Start Free Trial
+            <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+
+        <div class="um-faq-list">
+          <details open>
+            <summary>
+              <span>Can I start with a free trial?</span>
+              <i class="bi bi-chevron-down"></i>
+            </summary>
+            <p>
+              Yes. You can start a trial, add school data, test timetable creation and decide which plan fits your institute before continuing.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              <span>Can I upgrade or change my plan later?</span>
+              <i class="bi bi-chevron-down"></i>
+            </summary>
+            <p>
+              Yes. You can begin with Starter and move to Professional when you need AI conflict solving, Excel exports or proxy adjustment tools.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              <span>Which plan includes AI timetable scheduling?</span>
+              <i class="bi bi-chevron-down"></i>
+            </summary>
+            <p>
+              Professional includes AI scheduling features for most schools. Enterprise is better for custom rules, multi-school setups and advanced AI workflows.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              <span>Do you support PDF and Excel exports?</span>
+              <i class="bi bi-chevron-down"></i>
+            </summary>
+            <p>
+              Starter includes PDF export. Professional includes both PDF and Excel exports, while Enterprise can support custom export requirements.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              <span>Is onboarding support included?</span>
+              <i class="bi bi-chevron-down"></i>
+            </summary>
+            <p>
+              Professional includes priority support. Enterprise includes dedicated onboarding for schools that need guided setup, permissions and custom workflows.
+            </p>
+          </details>
+
+          <details>
+            <summary>
+              <span>Can one account manage multiple timetable versions?</span>
+              <i class="bi bi-chevron-down"></i>
+            </summary>
+            <p>
+              Yes. Starter supports limited active drafts, while Professional and Enterprise are designed for unlimited planning versions and more advanced review flows.
+            </p>
+          </details>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<style>
+.um-pricing-page{
+  overflow:hidden;
+  color:var(--text);
+  background:
+    linear-gradient(180deg,#f7fbff 0%,#ffffff 45%,#eef6ff 100%);
+}
+
+.um-pricing-shell{
+  width:100%;
+  max-width:1200px;
+  margin:0 auto;
+  position:relative;
+}
+
+.um-pricing-hero{
+  position:relative;
+  padding:96px 24px 42px;
+  background:
+    linear-gradient(rgba(18,60,122,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(18,60,122,.05) 1px,transparent 1px),
+    linear-gradient(135deg,#f7fbff 0%,#eef6ff 58%,#ffffff 100%);
+  background-size:52px 52px,52px 52px,auto;
+}
+
+.um-pricing-copy{
+  max-width:860px;
+  margin:0 auto;
+  text-align:center;
+}
+
+.um-pricing-kicker{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  max-width:100%;
+  padding:10px 16px;
+  border-radius:999px;
+  color:var(--primary);
+  background:rgba(255,255,255,.88);
+  border:1px solid rgba(18,60,122,.08);
+  box-shadow:0 14px 34px rgba(18,60,122,.08);
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:0;
+  text-transform:uppercase;
+}
+
+.um-pricing-copy h1{
+  margin:26px auto 18px;
+  max-width:900px;
+  color:var(--dark);
+  font-size:68px;
+  line-height:1.03;
+  font-weight:950;
+  letter-spacing:0;
+}
+
+.um-pricing-copy p{
+  max-width:760px;
+  margin:0 auto;
+  color:var(--muted);
+  font-size:18px;
+  line-height:1.8;
+  font-weight:550;
+}
+
+.um-pricing-actions{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-top:32px;
+}
+
+.um-price-action{
+  min-height:56px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:15px 24px;
+  border-radius:18px;
+  font-size:15px;
+  font-weight:900;
+  text-align:center;
+  transition:.25s var(--ease);
+}
+
+.um-price-action-primary{
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  box-shadow:0 18px 42px rgba(244,185,66,.28);
+}
+
+.um-price-action-secondary{
+  color:var(--primary);
+  background:#fff;
+  border:1px solid rgba(18,60,122,.1);
+  box-shadow:0 14px 34px rgba(18,60,122,.06);
+}
+
+.um-price-action:hover{
+  transform:translateY(-4px);
+}
+
+.um-pricing-highlights{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+  margin-top:54px;
+}
+
+.um-pricing-highlights div{
+  min-width:0;
+  min-height:154px;
+  padding:22px;
+  border-radius:8px;
+  background:rgba(255,255,255,.9);
+  border:1px solid rgba(18,60,122,.08);
+  box-shadow:0 18px 50px rgba(18,60,122,.08);
+}
+
+.um-pricing-highlights i{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  font-size:20px;
+}
+
+.um-pricing-highlights strong{
+  display:block;
+  margin-top:18px;
+  color:var(--primary);
+  font-size:16px;
+  font-weight:950;
+}
+
+.um-pricing-highlights span{
+  display:block;
+  margin-top:8px;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.65;
+  font-weight:650;
+}
+
+.um-plan-section,
+.um-compare-section{
+  padding:72px 24px;
+}
+
+.um-section-heading{
+  max-width:720px;
+  margin:0 auto 34px;
+  text-align:center;
+}
+
+.um-section-heading span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:7px 13px;
+  border-radius:999px;
+  color:var(--primary);
+  background:rgba(18,60,122,.08);
+  font-size:12px;
+  font-weight:950;
+  text-transform:uppercase;
+}
+
+.um-section-heading h2{
+  margin:16px 0 0;
+  color:var(--dark);
+  font-size:42px;
+  line-height:1.15;
+  font-weight:950;
+  letter-spacing:0;
+}
+
+.um-section-heading p{
+  max-width:560px;
+  margin:14px auto 0;
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.7;
+  font-weight:650;
+}
+
+.um-plan-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:22px;
+  align-items:stretch;
+}
+
+.um-plan-card{
+  min-width:0;
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+  padding:28px;
+  border-radius:8px;
+  background:#fff;
+  border:1px solid rgba(18,60,122,.1);
+  box-shadow:0 24px 70px rgba(18,60,122,.1);
+  position:relative;
+}
+
+.um-plan-card-featured{
+  color:#fff;
+  background:linear-gradient(145deg,#071527,#123c7a 68%,#1d65c1);
+  box-shadow:0 34px 90px rgba(18,60,122,.24);
+}
+
+.um-popular-badge{
+  align-self:flex-start;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:34px;
+  margin-bottom:20px;
+  padding:8px 12px;
+  border-radius:999px;
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  font-size:12px;
+  font-weight:950;
+}
+
+.um-plan-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.um-plan-tag{
+  display:inline-flex;
+  align-items:center;
+  min-height:34px;
+  padding:8px 12px;
+  border-radius:999px;
+  color:var(--primary);
+  background:rgba(18,60,122,.08);
+  font-size:12px;
+  font-weight:950;
+  text-transform:uppercase;
+}
+
+.um-plan-card-featured .um-plan-tag{
+  color:#fff;
+  background:rgba(255,255,255,.12);
+}
+
+.um-plan-top > i{
+  width:46px;
+  height:46px;
+  min-width:46px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  font-size:20px;
+}
+
+.um-plan-card-featured .um-plan-top > i{
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+}
+
+.um-plan-card h3{
+  margin:24px 0 18px;
+  color:var(--dark);
+  font-size:24px;
+  line-height:1.25;
+  font-weight:950;
+  letter-spacing:0;
+}
+
+.um-plan-card-featured h3{
+  color:#fff;
+}
+
+.um-plan-price{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  min-height:64px;
+  padding-bottom:22px;
+  border-bottom:1px solid rgba(18,60,122,.1);
+}
+
+.um-plan-card-featured .um-plan-price{
+  border-bottom-color:rgba(255,255,255,.16);
+}
+
+.um-plan-price strong{
+  color:var(--primary);
+  font-size:42px;
+  line-height:1;
+  font-weight:950;
+  overflow-wrap:anywhere;
+}
+
+.um-plan-card-featured .um-plan-price strong{
+  color:#fff;
+}
+
+.um-plan-price span{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:800;
+  padding-bottom:5px;
+}
+
+.um-plan-card-featured .um-plan-price span{
+  color:#c7d7ec;
+}
+
+.um-plan-list{
+  list-style:none;
+  display:grid;
+  gap:13px;
+  margin:24px 0 28px;
+  padding:0;
+}
+
+.um-plan-list li{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.55;
+  font-weight:750;
+}
+
+.um-plan-card-featured .um-plan-list li{
+  color:#d3e1f1;
+}
+
+.um-plan-list i{
+  color:#00a86b;
+  margin-top:2px;
+}
+
+.um-plan-card-featured .um-plan-list i{
+  color:#ffe59a;
+}
+
+.um-plan-button{
+  min-height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-top:auto;
+  padding:14px 18px;
+  border-radius:8px;
+  color:var(--primary);
+  background:rgba(18,60,122,.08);
+  font-size:14px;
+  font-weight:950;
+  text-align:center;
+  transition:.25s var(--ease);
+}
+
+.um-plan-button-featured{
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+}
+
+.um-plan-button:hover{
+  color:var(--primary);
+  transform:translateY(-4px);
+  box-shadow:0 18px 38px rgba(18,60,122,.12);
+}
+
+.um-plan-button-featured:hover{
+  color:#071527;
+}
+
+.um-compare-section{
+  background:
+    linear-gradient(rgba(18,60,122,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(18,60,122,.045) 1px,transparent 1px),
+    linear-gradient(180deg,#ffffff,#eef6ff);
+  background-size:46px 46px,46px 46px,auto;
+}
+
+.um-compare-panel{
+  display:grid;
+  gap:10px;
+  overflow:hidden;
+  padding:12px;
+  border-radius:8px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(18,60,122,.1);
+  box-shadow:0 28px 80px rgba(18,60,122,.12);
+  backdrop-filter:blur(14px);
+}
+
+.um-compare-row{
+  display:grid;
+  grid-template-columns:minmax(250px,1.25fr) repeat(3,minmax(0,1fr));
+  gap:10px;
+  align-items:stretch;
+}
+
+.um-feature-cell,
+.um-compare-row > span{
+  min-width:0;
+  min-height:78px;
+  display:flex;
+  align-items:center;
+  padding:18px;
+  border-radius:8px;
+  background:#fff;
+  border:1px solid rgba(18,60,122,.08);
+  box-shadow:0 10px 24px rgba(18,60,122,.045);
+}
+
+.um-feature-cell{
+  gap:14px;
+}
+
+.um-feature-cell i{
+  width:44px;
+  height:44px;
+  min-width:44px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  color:#fff;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  font-size:18px;
+}
+
+.um-feature-cell strong{
+  display:block;
+  color:var(--primary);
+  font-size:15px;
+  line-height:1.25;
+  font-weight:950;
+}
+
+.um-feature-cell small{
+  display:block;
+  margin-top:5px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.45;
+  font-weight:650;
+}
+
+.um-compare-row > span{
+  justify-content:center;
+  text-align:center;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.5;
+  font-weight:800;
+  overflow-wrap:anywhere;
+}
+
+.um-compare-row > span b{
+  color:var(--primary);
+  font-weight:950;
+}
+
+.um-muted-value{
+  color:#96a3b7!important;
+}
+
+.um-compare-head{
+  position:sticky;
+  top:0;
+  z-index:1;
+}
+
+.um-compare-head > span{
+  min-height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:14px 18px;
+  border-radius:8px;
+  color:#fff;
+  background:linear-gradient(135deg,#071527,#123c7a);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 14px 30px rgba(7,21,39,.12);
+  font-size:13px;
+  font-weight:950;
+  text-align:center;
+}
+
+.um-compare-head > span:first-child{
+  justify-content:flex-start;
+}
+
+.um-faq-section{
+  padding:76px 24px 96px;
+  background:linear-gradient(180deg,#eef6ff 0%,#ffffff 100%);
+}
+
+.um-faq-layout{
+  display:grid;
+  grid-template-columns:minmax(260px,.78fr) minmax(0,1.42fr);
+  gap:24px;
+  align-items:start;
+}
+
+.um-faq-aside{
+  min-width:0;
+  position:sticky;
+  top:98px;
+  padding:28px;
+  border-radius:8px;
+  color:#fff;
+  background:linear-gradient(145deg,#071527,#123c7a 68%,#1d65c1);
+  box-shadow:0 28px 80px rgba(18,60,122,.18);
+}
+
+.um-faq-aside > i{
+  width:54px;
+  height:54px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  font-size:24px;
+}
+
+.um-faq-aside strong{
+  display:block;
+  margin-top:22px;
+  color:#fff;
+  font-size:24px;
+  line-height:1.2;
+  font-weight:950;
+}
+
+.um-faq-aside span{
+  display:block;
+  margin-top:12px;
+  color:#c7d7ec;
+  font-size:14px;
+  line-height:1.75;
+  font-weight:650;
+}
+
+.um-faq-aside a{
+  min-height:52px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  margin-top:24px;
+  padding:14px 18px;
+  border-radius:8px;
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  font-size:14px;
+  font-weight:950;
+}
+
+.um-faq-list{
+  display:grid;
+  gap:14px;
+}
+
+.um-faq-list details{
+  border-radius:8px;
+  background:#fff;
+  border:1px solid rgba(18,60,122,.1);
+  box-shadow:0 18px 50px rgba(18,60,122,.08);
+  overflow:hidden;
+}
+
+.um-faq-list summary{
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:18px 22px;
+  color:var(--dark);
+  cursor:pointer;
+  list-style:none;
+  font-size:16px;
+  font-weight:950;
+}
+
+.um-faq-list summary::-webkit-details-marker{
+  display:none;
+}
+
+.um-faq-list summary i{
+  width:36px;
+  height:36px;
+  min-width:36px;
+  display:grid;
+  place-items:center;
+  border-radius:8px;
+  color:var(--primary);
+  background:rgba(18,60,122,.08);
+  transition:.25s var(--ease);
+}
+
+.um-faq-list details[open] summary{
+  color:var(--primary);
+}
+
+.um-faq-list details[open] summary i{
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  transform:rotate(180deg);
+}
+
+.um-faq-list p{
+  margin:0;
+  padding:0 22px 22px;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.75;
+  font-weight:650;
+}
+
+@media(max-width:1199px){
+  .um-pricing-copy h1{
+    font-size:58px;
+  }
+
+  .um-plan-card{
+    padding:24px;
+  }
+
+  .um-plan-price strong{
+    font-size:36px;
+  }
+}
+
+@media(max-width:991px){
+  .um-pricing-hero{
+    padding:76px 18px 36px;
+  }
+
+  .um-pricing-copy h1{
+    font-size:48px;
+  }
+
+  .um-pricing-highlights,
+  .um-plan-grid{
+    grid-template-columns:1fr;
+  }
+
+  .um-pricing-highlights div{
+    min-height:auto;
+  }
+
+  .um-plan-card-featured{
+    order:-1;
+  }
+
+  .um-plan-section,
+  .um-compare-section{
+    padding:58px 18px;
+  }
+
+  .um-section-heading h2{
+    font-size:34px;
+  }
+
+  .um-faq-section{
+    padding:58px 18px 76px;
+  }
+
+  .um-faq-layout{
+    grid-template-columns:1fr;
+  }
+
+  .um-faq-aside{
+    position:relative;
+    top:auto;
+  }
+}
+
+@media(max-width:860px){
+  .um-compare-panel{
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-color:var(--primary) rgba(18,60,122,.1);
+    scrollbar-width:thin;
+  }
+
+  .um-compare-row{
+    min-width:830px;
+    grid-template-columns:260px repeat(3,180px);
+  }
+
+  .um-compare-panel::-webkit-scrollbar{
+    height:8px;
+  }
+
+  .um-compare-panel::-webkit-scrollbar-track{
+    border-radius:999px;
+    background:rgba(18,60,122,.1);
+  }
+
+  .um-compare-panel::-webkit-scrollbar-thumb{
+    border-radius:999px;
+    background:linear-gradient(135deg,var(--primary),var(--secondary));
+  }
+}
+
+@media(max-width:575px){
+  .um-pricing-hero{
+    padding:62px 14px 30px;
+  }
+
+  .um-pricing-kicker{
+    width:100%;
+    border-radius:8px;
+  }
+
+  .um-pricing-copy h1{
+    font-size:38px;
+    line-height:1.08;
+  }
+
+  .um-pricing-copy p{
+    font-size:15px;
+    line-height:1.75;
+  }
+
+  .um-pricing-actions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .um-price-action{
+    width:100%;
+    border-radius:8px;
+  }
+
+  .um-pricing-highlights{
+    margin-top:36px;
+  }
+
+  .um-pricing-highlights div,
+  .um-plan-card{
+    padding:20px;
+  }
+
+  .um-plan-section,
+  .um-compare-section,
+  .um-faq-section{
+    padding:46px 14px;
+  }
+
+  .um-section-heading{
+    margin-bottom:24px;
+  }
+
+  .um-section-heading h2{
+    font-size:28px;
+  }
+
+  .um-plan-card h3{
+    font-size:21px;
+  }
+
+  .um-plan-price{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:5px;
+  }
+
+  .um-plan-price strong{
+    font-size:32px;
+  }
+
+  .um-plan-price span{
+    padding-bottom:0;
+  }
+
+  .um-feature-cell{
+    gap:12px;
+  }
+
+  .um-feature-cell i{
+    width:38px;
+    height:38px;
+    min-width:38px;
+    font-size:16px;
+  }
+
+  .um-faq-aside{
+    padding:22px;
+  }
+
+  .um-faq-aside strong{
+    font-size:21px;
+  }
+
+  .um-faq-aside a{
+    width:100%;
+  }
+
+  .um-faq-list summary{
+    min-height:64px;
+    padding:16px;
+    font-size:15px;
+  }
+
+  .um-faq-list p{
+    padding:0 16px 18px;
+  }
+
+  .um-compare-row{
+    min-width:780px;
+    grid-template-columns:240px repeat(3,170px);
+  }
+
+  .um-feature-cell,
+  .um-compare-row > span{
+    padding:14px;
+  }
+}
+</style>
+{% endblock content %}

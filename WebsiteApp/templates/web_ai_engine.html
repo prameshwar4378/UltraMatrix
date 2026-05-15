@@ -1,0 +1,515 @@
+{% extends "website_base.html" %}
+{% block content %}
+  
+<!-- AI ENGINE SECTIONS START -->
+
+<section class="um-ai-page-section">
+  <div class="um-ai-container">
+
+    <!-- SECTION 1 -->
+    <div class="um-ai-block" id="ai-timetable-generator">
+      <div class="um-ai-content">
+        <span class="um-ai-badge"><i class="bi bi-stars"></i> AI Generator</span>
+        <h2>AI Timetable Generator</h2>
+        <p>
+          Generate complete school schedules automatically by analyzing teachers,
+          subjects, rooms, divisions and available periods.
+        </p>
+
+        <div class="um-ai-points">
+          <div><i class="bi bi-check-circle-fill"></i> Auto lecture placement</div>
+          <div><i class="bi bi-check-circle-fill"></i> Smart subject distribution</div>
+          <div><i class="bi bi-check-circle-fill"></i> Faster timetable creation</div>
+        </div>
+      </div>
+
+      <div class="um-ai-visual generator-visual">
+        <div class="um-ai-card-ui">
+          <div class="um-ai-card-head">
+            <strong>Generating Timetable</strong>
+            <span>AI Active</span>
+          </div>
+          <div class="um-ai-loader"></div>
+          <div class="um-ai-mini-grid">
+            <span></span><span class="blue"></span><span></span>
+            <span class="gold"></span><span></span><span class="cyan"></span>
+            <span></span><span class="blue"></span><span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="um-ai-block reverse" id="ai-conflict-resolver">
+      <div class="um-ai-content">
+        <span class="um-ai-badge"><i class="bi bi-magic"></i> Conflict Resolver</span>
+        <h2>AI Conflict Resolver</h2>
+        <p>
+          Resolve teacher, class and room clashes intelligently before publishing
+          the final timetable.
+        </p>
+
+        <div class="um-ai-points">
+          <div><i class="bi bi-shield-check"></i> Teacher clash detection</div>
+          <div><i class="bi bi-door-open"></i> Room overlap prevention</div>
+          <div><i class="bi bi-lightning-charge-fill"></i> One-click smart correction</div>
+        </div>
+      </div>
+
+      <div class="um-ai-visual conflict-visual">
+        <div class="um-ai-conflict-box safe">
+          <i class="bi bi-check-circle-fill"></i>
+          <strong>Safe Slot</strong>
+          <span>No conflict detected</span>
+        </div>
+
+        <div class="um-ai-conflict-box danger">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <strong>Conflict Found</strong>
+          <span>Teacher already assigned</span>
+        </div>
+
+        <div class="um-ai-fix-arrow">
+          <i class="bi bi-arrow-repeat"></i>
+          AI Fix
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3 -->
+    <div class="um-ai-block" id="ai-workload-balancing">
+      <div class="um-ai-content">
+        <span class="um-ai-badge"><i class="bi bi-bar-chart-line-fill"></i> Workload Balance</span>
+        <h2>AI Workload Balancing</h2>
+        <p>
+          Distribute teacher periods fairly across daily and weekly schedules
+          using intelligent workload monitoring.
+        </p>
+
+        <div class="um-ai-points">
+          <div><i class="bi bi-check-circle-fill"></i> Daily load control</div>
+          <div><i class="bi bi-check-circle-fill"></i> Weekly period balance</div>
+          <div><i class="bi bi-check-circle-fill"></i> Overload warning</div>
+        </div>
+      </div>
+
+      <div class="um-ai-visual workload-visual">
+        <div class="um-ai-load-row">
+          <span>Rahul Sir</span>
+          <div><b style="width:60%"></b></div>
+          <small>18/30</small>
+        </div>
+
+        <div class="um-ai-load-row">
+          <span>Sharma Mam</span>
+          <div><b style="width:76%"></b></div>
+          <small>23/30</small>
+        </div>
+
+        <div class="um-ai-load-row warning">
+          <span>Mehta Sir</span>
+          <div><b style="width:94%"></b></div>
+          <small>29/30</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 4 -->
+    <div class="um-ai-block reverse" id="room-optimization">
+      <div class="um-ai-content">
+        <span class="um-ai-badge"><i class="bi bi-graph-up-arrow"></i> Optimization</span>
+        <h2>Room Optimization & Quality Score</h2>
+        <p>
+          Assign classrooms and labs without overlap, reduce unnecessary teacher
+          gaps and measure timetable quality before publishing.
+        </p>
+
+        <div class="um-ai-points">
+          <div><i class="bi bi-door-open-fill"></i> Room optimization</div>
+          <div id="gap-reduction"><i class="bi bi-arrows-collapse"></i> Gap reduction</div>
+          <div id="quality-score"><i class="bi bi-speedometer2"></i> Quality score</div>
+        </div>
+      </div>
+
+      <div class="um-ai-visual quality-visual">
+        <div class="um-ai-score-circle">
+          <strong>94%</strong>
+          <span>Quality Score</span>
+        </div>
+
+        <div class="um-ai-quality-list">
+          <div><i class="bi bi-check-circle-fill"></i> Room clash free</div>
+          <div><i class="bi bi-check-circle-fill"></i> Low teacher gaps</div>
+          <div><i class="bi bi-check-circle-fill"></i> Balanced workload</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+.um-ai-page-section{
+  position:relative;
+  padding:100px 28px;
+  overflow:hidden;
+}
+
+.um-ai-container{
+  width:100%;
+  max-width:1280px;
+  margin:auto;
+  display:grid;
+  gap:90px;
+}
+
+.um-ai-block{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  align-items:center;
+  gap:70px;
+}
+
+.um-ai-block.reverse .um-ai-content{
+  order:2;
+}
+
+.um-ai-block.reverse .um-ai-visual{
+  order:1;
+}
+
+.um-ai-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 18px;
+  border-radius:999px;
+  color:var(--primary);
+  background:rgba(255,255,255,.76);
+  border:1px solid rgba(255,255,255,.92);
+  box-shadow:0 14px 35px rgba(18,60,122,.08);
+  font-size:12px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
+
+.um-ai-content h2{
+  margin:24px 0 16px;
+  color:var(--dark);
+  font-size:58px;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:-1.5px;
+}
+
+.um-ai-content p{
+  max-width:610px;
+  color:var(--muted);
+  font-size:17px;
+  line-height:1.85;
+  font-weight:550;
+}
+
+.um-ai-points{
+  display:grid;
+  gap:14px;
+  margin-top:30px;
+}
+
+.um-ai-points div{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:15px 17px;
+  border-radius:20px;
+  color:var(--text);
+  background:rgba(255,255,255,.76);
+  border:1px solid rgba(255,255,255,.92);
+  box-shadow:0 14px 35px rgba(18,60,122,.07);
+  font-size:14px;
+  font-weight:850;
+}
+
+.um-ai-points i{
+  color:var(--secondary);
+}
+
+.um-ai-visual{
+  min-height:430px;
+  border-radius:42px;
+  padding:32px;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(145deg,#071527,#123c7a);
+  box-shadow:0 40px 95px rgba(18,60,122,.2);
+  position:relative;
+  overflow:hidden;
+}
+
+.um-ai-visual::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
+  background-size:42px 42px;
+}
+
+.um-ai-card-ui,
+.um-ai-conflict-box,
+.um-ai-load-row,
+.um-ai-score-circle,
+.um-ai-quality-list{
+  position:relative;
+  z-index:2;
+}
+
+.um-ai-card-ui{
+  width:min(430px,100%);
+  padding:24px;
+  border-radius:30px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.14);
+}
+
+.um-ai-card-head{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:24px;
+}
+
+.um-ai-card-head strong{
+  color:#fff;
+  font-size:20px;
+}
+
+.um-ai-card-head span{
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:950;
+}
+
+.um-ai-loader{
+  height:10px;
+  border-radius:999px;
+  background:linear-gradient(90deg,var(--accent),#18d8ff,var(--secondary));
+  margin-bottom:24px;
+  animation:umAiPulse 2s ease-in-out infinite;
+}
+
+@keyframes umAiPulse{
+  50%{opacity:.55;transform:scaleX(.85)}
+}
+
+.um-ai-mini-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.um-ai-mini-grid span{
+  height:58px;
+  border-radius:16px;
+  background:rgba(255,255,255,.14);
+}
+
+.um-ai-mini-grid .blue{background:linear-gradient(135deg,var(--primary),#18d8ff)}
+.um-ai-mini-grid .gold{background:linear-gradient(135deg,#ffe59a,var(--accent))}
+.um-ai-mini-grid .cyan{background:linear-gradient(135deg,#18d8ff,#00ffd0)}
+
+.conflict-visual{
+  gap:18px;
+}
+
+.um-ai-conflict-box{
+  width:min(420px,100%);
+  padding:20px;
+  border-radius:24px;
+  display:grid;
+  gap:6px;
+}
+
+.um-ai-conflict-box i{
+  font-size:28px;
+}
+
+.um-ai-conflict-box strong{
+  font-size:20px;
+  font-weight:950;
+}
+
+.um-ai-conflict-box span{
+  font-size:13px;
+  font-weight:700;
+}
+
+.um-ai-conflict-box.safe{
+  color:#00d084;
+  background:rgba(0,208,132,.12);
+  border:1px solid rgba(0,208,132,.22);
+}
+
+.um-ai-conflict-box.danger{
+  color:#ff7070;
+  background:rgba(255,70,70,.13);
+  border:1px solid rgba(255,70,70,.22);
+}
+
+.um-ai-fix-arrow{
+  position:relative;
+  z-index:2;
+  color:#071527;
+  background:linear-gradient(135deg,#ffe59a,var(--accent));
+  padding:13px 18px;
+  border-radius:999px;
+  font-weight:950;
+}
+
+.workload-visual{
+  gap:18px;
+}
+
+.um-ai-load-row{
+  width:min(460px,100%);
+  display:grid;
+  grid-template-columns:120px 1fr 60px;
+  align-items:center;
+  gap:14px;
+  padding:17px;
+  border-radius:22px;
+  background:rgba(255,255,255,.11);
+  border:1px solid rgba(255,255,255,.12);
+}
+
+.um-ai-load-row span,
+.um-ai-load-row small{
+  color:#fff;
+  font-weight:850;
+}
+
+.um-ai-load-row div{
+  height:10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.18);
+  overflow:hidden;
+}
+
+.um-ai-load-row b{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#00ffd0,#18d8ff);
+}
+
+.um-ai-load-row.warning b{
+  background:linear-gradient(90deg,#ffe59a,#ff6b6b);
+}
+
+.quality-visual{
+  grid-template-columns:220px 1fr;
+  gap:24px;
+}
+
+.um-ai-score-circle{
+  width:190px;
+  height:190px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  background:
+    radial-gradient(circle at center,#071527 58%,transparent 59%),
+    conic-gradient(#00ffd0 0 94%,rgba(255,255,255,.16) 94% 100%);
+}
+
+.um-ai-score-circle strong{
+  color:#fff;
+  font-size:44px;
+  font-weight:950;
+}
+
+.um-ai-score-circle span{
+  color:#b9cce2;
+  font-size:12px;
+  font-weight:800;
+}
+
+.um-ai-quality-list{
+  display:grid;
+  gap:14px;
+}
+
+.um-ai-quality-list div{
+  color:#fff;
+  background:rgba(255,255,255,.1);
+  padding:15px;
+  border-radius:18px;
+  font-weight:850;
+}
+
+.um-ai-quality-list i{
+  color:#00ffd0;
+  margin-right:8px;
+}
+
+@media(max-width:991px){
+  .um-ai-page-section{
+    padding:80px 18px;
+  }
+
+  .um-ai-block,
+  .um-ai-block.reverse{
+    grid-template-columns:1fr;
+    gap:40px;
+  }
+
+  .um-ai-block.reverse .um-ai-content,
+  .um-ai-block.reverse .um-ai-visual{
+    order:initial;
+  }
+
+  .um-ai-content{
+    text-align:center;
+  }
+
+  .um-ai-content h2{
+    font-size:42px;
+  }
+
+  .um-ai-content p{
+    margin:auto;
+  }
+
+  .quality-visual{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:575px){
+  .um-ai-page-section{
+    padding:65px 14px;
+  }
+
+  .um-ai-content h2{
+    font-size:34px;
+  }
+
+  .um-ai-visual{
+    min-height:auto;
+    padding:22px;
+    border-radius:30px;
+  }
+
+  .um-ai-load-row{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+
+<!-- AI ENGINE SECTIONS END -->
+{% endblock content %}
