@@ -1,234 +1,435 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Signup</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body {
-            min-height: 100vh;
-            margin: 0;
-            font-family: "Segoe UI", sans-serif;
-            background: linear-gradient(135deg, #f6f9ff 0%, #eef6ff 52%, #ffffff 100%);
-            color: #14213d;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>School Signup | UltraMatrix</title>
 
-        .signup-shell {
-            min-height: 100vh;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(420px, 560px);
-        }
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-        .signup-story {
-            padding: 56px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: linear-gradient(135deg, #123c7a, #2563eb);
-            color: #fff;
-        }
+  <style>
+    :root {
+      --primary: #123c7a;
+      --secondary: #1d65c1;
+      --accent: #f4b942;
+      --dark: #071527;
+      --text: #1b2b45;
+      --muted: #6b7a90;
+      --white: #ffffff;
+      --glass: rgba(255,255,255,.78);
+      --shadow: 0 24px 70px rgba(7,21,39,.18);
+    }
 
-        .brand-mark {
-            width: 56px;
-            height: 56px;
-            border-radius: 14px;
-            display: grid;
-            place-items: center;
-            background: rgba(255, 255, 255, .16);
-            margin-bottom: 28px;
-            font-size: 26px;
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        .signup-story h1 {
-            max-width: 680px;
-            font-size: 44px;
-            font-weight: 800;
-            line-height: 1.05;
-            margin-bottom: 18px;
-        }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 12%, rgba(244,185,66,.24), transparent 28%),
+        radial-gradient(circle at 88% 15%, rgba(29,101,193,.24), transparent 35%),
+        linear-gradient(135deg, #eef6ff 0%, #f8fbff 48%, #ffffff 100%);
+      overflow-x: hidden;
+    }
 
-        .signup-story p {
-            max-width: 620px;
-            color: rgba(255, 255, 255, .82);
-            font-size: 18px;
-        }
+    .signup-wrapper {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+      position: relative;
+    }
 
-        .trial-strip {
-            display: flex;
-            gap: 14px;
-            flex-wrap: wrap;
-            margin-top: 34px;
-        }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: float 7s ease-in-out infinite;
+    }
 
-        .trial-pill {
-            border: 1px solid rgba(255, 255, 255, .22);
-            background: rgba(255, 255, 255, .12);
-            border-radius: 8px;
-            padding: 12px 14px;
-            font-weight: 700;
-        }
+    .orb-1 {
+      width: 180px;
+      height: 180px;
+      top: 10%;
+      left: 6%;
+      background: rgba(244,185,66,.26);
+    }
 
-        .signup-panel {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 34px;
-        }
+    .orb-2 {
+      width: 240px;
+      height: 240px;
+      right: 6%;
+      bottom: 8%;
+      background: rgba(29,101,193,.18);
+      animation-delay: 1.2s;
+    }
 
-        .signup-card {
-            width: 100%;
-            max-width: 460px;
-            background: #fff;
-            border: 1px solid #e5edf8;
-            border-radius: 8px;
-            box-shadow: 0 24px 70px rgba(18, 60, 122, .13);
-            padding: 28px;
-        }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
 
-        .signup-card h2 {
-            font-weight: 800;
-            margin-bottom: 6px;
-        }
+    .signup-shell {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: .95fr 1.05fr;
+      border-radius: 34px;
+      overflow: hidden;
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.75);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+      position: relative;
+      z-index: 2;
+    }
 
-        .form-label {
-            font-weight: 700;
-            color: #334155;
-            margin-bottom: 6px;
-        }
+    .signup-story {
+      padding: 54px;
+      color: white;
+      background:
+        linear-gradient(135deg, rgba(7,21,39,.96), rgba(18,60,122,.94)),
+        radial-gradient(circle at top right, rgba(244,185,66,.25), transparent 36%);
+      position: relative;
+      overflow: hidden;
+    }
 
-        .form-control {
-            min-height: 44px;
-            border-color: #d9e4f2;
-            border-radius: 8px;
-        }
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.22);
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 34px;
+    }
 
-        .form-control:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 .2rem rgba(37, 99, 235, .12);
-        }
+    .signup-story h1 {
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.04;
+      font-weight: 900;
+      letter-spacing: -1.4px;
+      margin-bottom: 20px;
+    }
 
-        .field-error {
-            color: #dc2626;
-            font-size: 13px;
-            margin-top: 5px;
-        }
+    .signup-story p {
+      color: rgba(255,255,255,.78);
+      font-size: 17px;
+      line-height: 1.7;
+      max-width: 500px;
+    }
 
-        .btn-primary {
-            min-height: 46px;
-            border: 0;
-            border-radius: 8px;
-            background: #123c7a;
-            font-weight: 800;
-        }
+    .trial-strip {
+      display: grid;
+      gap: 15px;
+      margin-top: 38px;
+      position: relative;
+      z-index: 2;
+    }
 
-        .btn-primary:hover {
-            background: #0f3264;
-        }
+    .trial-pill {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 15px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+      font-weight: 800;
+    }
 
-        .login-link {
-            color: #123c7a;
-            font-weight: 700;
-            text-decoration: none;
-        }
+    .trial-pill i {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(244,185,66,.18);
+      color: var(--accent);
+      font-size: 20px;
+    }
 
-        @media (max-width: 980px) {
-            .signup-shell {
-                grid-template-columns: 1fr;
-            }
+    .signup-panel {
+      padding: 44px;
+      background: rgba(255,255,255,.72);
+    }
 
-            .signup-story {
-                padding: 34px;
-            }
+    .signup-card {
+      width: 100%;
+      max-width: 560px;
+      margin: auto;
+    }
 
-            .signup-story h1 {
-                font-size: 34px;
-            }
-        }
-    </style>
+    .logo-box {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      font-size: 26px;
+      box-shadow: 0 14px 34px rgba(18,60,122,.28);
+      margin-bottom: 22px;
+    }
+
+    .signup-card h2 {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 26px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .form-label {
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 52px;
+      border: 1px solid #dbe7f6 !important;
+      border-radius: 16px !important;
+      padding: 12px 15px !important;
+      outline: none !important;
+      background: white !important;
+      font-weight: 600;
+      transition: .25s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--secondary) !important;
+      box-shadow: 0 0 0 4px rgba(29,101,193,.12) !important;
+    }
+
+    .field-error {
+      color: #dc2626;
+      font-size: 13px;
+      margin-top: 6px;
+      font-weight: 700;
+    }
+
+    .btn-signup {
+      min-height: 54px;
+      border: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      font-weight: 900;
+      box-shadow: 0 18px 40px rgba(18,60,122,.28);
+      transition: .25s ease;
+    }
+
+    .btn-signup:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 24px 52px rgba(18,60,122,.34);
+      color: white;
+    }
+
+    .login-box {
+      margin-top: 22px;
+      padding: 16px;
+      text-align: center;
+      border-radius: 18px;
+      background: #f5f9ff;
+      border: 1px dashed #cfe0f5;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .login-link {
+      color: var(--primary);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .alert {
+      border-radius: 16px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 992px) {
+      .signup-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .signup-story,
+      .signup-panel {
+        padding: 36px 28px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .signup-wrapper {
+        padding: 16px 12px;
+      }
+
+      .signup-shell {
+        border-radius: 24px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .signup-story,
+      .signup-panel {
+        padding: 30px 22px;
+      }
+
+      .signup-card h2 {
+        font-size: 27px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <main class="signup-shell">
-        <section class="signup-story">
-            <div class="brand-mark"><i class="bi bi-calendar2-week"></i></div>
-            <h1>Start your school timetable workspace.</h1>
-            <p>Create your owner account, add your school details, and begin with a 14-day free trial.</p>
-            <div class="trial-strip">
-                <div class="trial-pill">14 days free</div>
-                <div class="trial-pill">Username and password</div>
-                <div class="trial-pill">Social login ready next</div>
+  <main class="signup-wrapper">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+
+    <section class="signup-shell">
+
+      <aside class="signup-story">
+        <div class="brand-badge">
+          <i class="bi bi-stars"></i>
+          Smart Timetable SaaS
+        </div>
+
+        <h1>Start your school timetable workspace.</h1>
+
+        <p>
+          Create your institute account, activate your free trial, and manage your complete academic schedule from one premium dashboard.
+        </p>
+
+        <div class="trial-strip">
+          <div class="trial-pill">
+            <i class="bi bi-gift"></i>
+            <span>14 days free trial</span>
+          </div>
+
+          <div class="trial-pill">
+            <i class="bi bi-person-lock"></i>
+            <span>Secure owner account</span>
+          </div>
+
+          <div class="trial-pill">
+            <i class="bi bi-calendar2-check"></i>
+            <span>AI timetable ready</span>
+          </div>
+        </div>
+      </aside>
+
+      <section class="signup-panel">
+        <form class="signup-card" method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="logo-box">
+            <i class="bi bi-mortarboard-fill"></i>
+          </div>
+
+          <h2>Create school account</h2>
+          <p class="subtitle">The first user becomes the school owner.</p>
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              {{ form.non_field_errors }}
             </div>
-        </section>
+          {% endif %}
 
-        <section class="signup-panel">
-            <form class="signup-card" method="post" novalidate>
-                {% csrf_token %}
-                <h2>Create school account</h2>
-                <p class="text-muted mb-4">The first user becomes the school owner.</p>
+          <div class="form-grid">
+            <div class="full">
+              <label class="form-label" for="{{ form.school_name.id_for_label }}">School name</label>
+              {{ form.school_name }}
+              {% for error in form.school_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-                {% if form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
+            <div>
+              <label class="form-label" for="{{ form.school_code.id_for_label }}">School code</label>
+              {{ form.school_code }}
+              {% for error in form.school_code.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.school_name.id_for_label }}">School name</label>
-                    {{ form.school_name }}
-                    {% for error in form.school_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
+            <div>
+              <label class="form-label" for="{{ form.contact_number.id_for_label }}">Contact number</label>
+              {{ form.contact_number }}
+              {% for error in form.contact_number.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.school_code.id_for_label }}">School code</label>
-                    {{ form.school_code }}
-                    {% for error in form.school_code.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
+            <div>
+              <label class="form-label" for="{{ form.contact_name.id_for_label }}">Owner name</label>
+              {{ form.contact_name }}
+              {% for error in form.contact_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.contact_name.id_for_label }}">Owner name</label>
-                    {{ form.contact_name }}
-                    {% for error in form.contact_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
+            <div>
+              <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+              {{ form.email }}
+              {% for error in form.email.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.contact_number.id_for_label }}">Contact number</label>
-                    {{ form.contact_number }}
-                    {% for error in form.contact_number.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
+            <div>
+              <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+              {{ form.username }}
+              {% for error in form.username.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
-                    {{ form.email }}
-                    {% for error in form.email.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
+            <div>
+              <label class="form-label" for="{{ form.password1.id_for_label }}">Password</label>
+              {{ form.password1 }}
+              {% for error in form.password1.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
-                    {{ form.username }}
-                    {% for error in form.username.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
+            <div>
+              <label class="form-label" for="{{ form.password2.id_for_label }}">Confirm password</label>
+              {{ form.password2 }}
+              {% for error in form.password2.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="{{ form.password1.id_for_label }}">Password</label>
-                    {{ form.password1 }}
-                    {% for error in form.password1.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
+          <button class="btn btn-signup w-100 mt-4" type="submit">
+            Start free trial
+            <i class="bi bi-arrow-right ms-2"></i>
+          </button>
 
-                <div class="mb-4">
-                    <label class="form-label" for="{{ form.password2.id_for_label }}">Confirm password</label>
-                    {{ form.password2 }}
-                    {% for error in form.password2.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
-                </div>
+          <div class="login-box">
+            Already have an account?
+            <a class="login-link" href="{% url 'login' %}">Log in</a>
+          </div>
+        </form>
+      </section>
 
-                <button class="btn btn-primary w-100" type="submit">Start free trial</button>
-
-                <p class="text-center text-muted mt-4 mb-0">
-                    Already have an account?
-                    <a class="login-link" href="{% url 'login' %}">Log in</a>
-                </p>
-            </form>
-        </section>
-    </main>
+    </section>
+  </main>
 </body>
 </html>

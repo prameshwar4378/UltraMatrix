@@ -1,76 +1,422 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            min-height: 100vh;
-            display: grid;
-            place-items: center;
-            background: linear-gradient(135deg, #f6f9ff, #eef6ff 60%, #fff);
-            font-family: "Segoe UI", sans-serif;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | UltraMatrix</title>
 
-        .login-card {
-            width: min(420px, calc(100vw - 32px));
-            background: #fff;
-            border: 1px solid #e5edf8;
-            border-radius: 8px;
-            box-shadow: 0 24px 70px rgba(18, 60, 122, .13);
-            padding: 28px;
-        }
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-        .login-card h1 {
-            font-size: 28px;
-            font-weight: 800;
-        }
+  <style>
+    :root {
+      --primary: #123c7a;
+      --secondary: #1d65c1;
+      --accent: #f4b942;
+      --dark: #071527;
+      --text: #1b2b45;
+      --muted: #6b7a90;
+      --white: #ffffff;
+      --glass: rgba(255, 255, 255, .78);
+      --shadow: 0 24px 70px rgba(7, 21, 39, .18);
+    }
 
-        .form-control {
-            min-height: 44px;
-            border-radius: 8px;
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        .btn-primary {
-            min-height: 46px;
-            border: 0;
-            border-radius: 8px;
-            background: #123c7a;
-            font-weight: 800;
-        }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 12% 15%, rgba(244, 185, 66, .22), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(29, 101, 193, .25), transparent 34%),
+        linear-gradient(135deg, #eef6ff 0%, #f8fbff 48%, #ffffff 100%);
+    }
 
-    </style>
+    .login-wrapper {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 28px 16px;
+      position: relative;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(2px);
+      opacity: .8;
+      animation: float 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .orb-1 {
+      width: 170px;
+      height: 170px;
+      left: 7%;
+      top: 12%;
+      background: linear-gradient(135deg, rgba(244,185,66,.38), rgba(255,255,255,.1));
+    }
+
+    .orb-2 {
+      width: 220px;
+      height: 220px;
+      right: 8%;
+      bottom: 10%;
+      background: linear-gradient(135deg, rgba(29,101,193,.22), rgba(18,60,122,.08));
+      animation-delay: 1.2s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
+
+    .login-shell {
+      width: min(1050px, 100%);
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      border-radius: 34px;
+      overflow: hidden;
+      background: var(--glass);
+      border: 1px solid rgba(255,255,255,.78);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+      position: relative;
+      z-index: 2;
+    }
+
+    .login-brand {
+      padding: 54px;
+      background:
+        linear-gradient(135deg, rgba(7,21,39,.96), rgba(18,60,122,.94)),
+        radial-gradient(circle at top right, rgba(244,185,66,.25), transparent 35%);
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-brand::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -100px auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: rgba(244,185,66,.15);
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.22);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 34px;
+    }
+
+    .login-brand h1 {
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.04;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+    }
+
+    .login-brand p {
+      color: rgba(255,255,255,.78);
+      font-size: 17px;
+      line-height: 1.7;
+      max-width: 480px;
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 16px;
+      margin-top: 38px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 15px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
+    .feature-item i {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(244,185,66,.18);
+      color: var(--accent);
+      font-size: 20px;
+    }
+
+    .login-panel {
+      padding: 54px 48px;
+      background: rgba(255,255,255,.72);
+    }
+
+    .logo-box {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      font-size: 26px;
+      box-shadow: 0 14px 34px rgba(18,60,122,.28);
+      margin-bottom: 26px;
+    }
+
+    .login-panel h2 {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      color: var(--dark);
+    }
+
+    .login-panel .subtitle {
+      color: var(--muted);
+      margin-bottom: 30px;
+    }
+
+    .form-label {
+      font-weight: 800;
+      font-size: 14px;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .input-group {
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid #dbe7f6;
+      background: #fff;
+      transition: .25s ease;
+    }
+
+    .input-group:focus-within {
+      border-color: var(--secondary);
+      box-shadow: 0 0 0 4px rgba(29,101,193,.12);
+    }
+
+    .input-group-text {
+      border: 0;
+      background: #fff;
+      color: var(--secondary);
+      padding-left: 16px;
+    }
+
+    .form-control {
+      min-height: 52px;
+      border: 0;
+      box-shadow: none !important;
+      font-weight: 600;
+    }
+
+    .btn-login {
+      min-height: 54px;
+      border: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      font-weight: 900;
+      letter-spacing: .2px;
+      box-shadow: 0 18px 40px rgba(18,60,122,.28);
+      transition: .25s ease;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 24px 52px rgba(18,60,122,.34);
+      color: white;
+    }
+
+    .signup-box {
+      margin-top: 24px;
+      padding: 16px;
+      text-align: center;
+      border-radius: 18px;
+      background: #f5f9ff;
+      border: 1px dashed #cfe0f5;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .signup-box a {
+      color: var(--primary);
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .alert {
+      border-radius: 16px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 900px) {
+      .login-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .login-brand {
+        padding: 36px 28px;
+      }
+
+      .login-panel {
+        padding: 36px 28px;
+      }
+
+      .feature-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .login-wrapper {
+        padding: 16px 12px;
+      }
+
+      .login-shell {
+        border-radius: 24px;
+      }
+
+      .login-brand {
+        padding: 30px 22px;
+      }
+
+      .login-panel {
+        padding: 30px 22px;
+      }
+
+      .login-panel h2 {
+        font-size: 27px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="login-card">
-        <h1>Log in</h1>
-        <p class="text-muted mb-4">Use your school account credentials.</p>
+  <main class="login-wrapper">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+
+    <section class="login-shell">
+
+      <div class="login-brand">
+        <div class="brand-badge">
+          <i class="bi bi-stars"></i>
+          Smart School Timetable System
+        </div>
+
+        <h1>Welcome back to your school control center.</h1>
+
+        <p>
+          Manage timetable planning, teacher allocation, rooms, periods and academic scheduling from one clean dashboard.
+        </p>
+
+        <div class="feature-list">
+          <div class="feature-item">
+            <i class="bi bi-calendar2-week"></i>
+            <div>
+              <strong>AI Timetable Planning</strong><br>
+              <small>Fast, clean and conflict-aware scheduling.</small>
+            </div>
+          </div>
+
+          <div class="feature-item">
+            <i class="bi bi-shield-check"></i>
+            <div>
+              <strong>Secure School Access</strong><br>
+              <small>Protected login for institute accounts.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="login-panel">
+        <div class="logo-box">
+          <i class="bi bi-mortarboard-fill"></i>
+        </div>
+
+        <h2>Log in</h2>
+        <p class="subtitle">Use your school account credentials to continue.</p>
 
         {% if form.errors %}
-            <div class="alert alert-danger">Invalid username or password.</div>
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            Invalid username or password.
+          </div>
         {% endif %}
 
         <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
-                <input class="form-control" type="text" name="{{ form.username.html_name }}" id="{{ form.username.id_for_label }}" autofocus required>
-            </div>
+          {% csrf_token %}
 
-            <div class="mb-4">
-                <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
-                <input class="form-control" type="password" name="{{ form.password.html_name }}" id="{{ form.password.id_for_label }}" required>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.username.id_for_label }}">Username</label>
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-person"></i>
+              </span>
+              <input
+                class="form-control"
+                type="text"
+                name="{{ form.username.html_name }}"
+                id="{{ form.username.id_for_label }}"
+                placeholder="Enter username"
+                autofocus
+                required
+              >
             </div>
+          </div>
 
-            <button class="btn btn-primary w-100" type="submit">Log in</button>
+          <div class="mb-4">
+            <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-lock"></i>
+              </span>
+              <input
+                class="form-control"
+                type="password"
+                name="{{ form.password.html_name }}"
+                id="{{ form.password.id_for_label }}"
+                placeholder="Enter password"
+                required
+              >
+            </div>
+          </div>
+
+          <button class="btn btn-login w-100" type="submit">
+            Log in
+            <i class="bi bi-arrow-right ms-2"></i>
+          </button>
         </form>
 
-        <p class="text-center text-muted mt-4 mb-0">
-            New school?
-            <a href="{% url 'school_signup' %}">Start free trial</a>
-        </p>
-    </div>
+        <div class="signup-box">
+          New school?
+          <a href="{% url 'school_signup' %}">Start free trial</a>
+        </div>
+      </div>
+
+    </section>
+  </main>
 </body>
 </html>
