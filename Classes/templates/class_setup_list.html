@@ -13,9 +13,11 @@
         --border: #e5e7eb;
         --text: #111827;
         --muted: #6b7280;
+        --success: #16a34a;
+        --success-dark: #075021;
     }
 
-    .page-toolbar, .filter-panel, .table-card, .stat-card {
+    .page-toolbar, .setup-flow-panel, .filter-panel, .quick-panel, .table-card, .stat-card {
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 18px;
@@ -53,6 +55,237 @@
         color: #fff;
         transform: translateY(-1px);
     }
+
+    
+    .btn-gradient-ai {
+        background: linear-gradient(135deg, var(--success), var(--success-dark));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        box-shadow: 0 10px 22px rgba(79, 70, 229, 0.25);
+    }
+    
+    .btn-gradient-ai:hover {
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .info-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+    }
+
+    .setup-flow-panel {
+        padding: 22px;
+        margin-bottom: 24px;
+        background:
+            linear-gradient(135deg, rgba(248, 250, 252, .98), rgba(239, 246, 255, .98)),
+            var(--surface);
+        border-color: #bfdbfe;
+        box-shadow: 0 16px 40px rgba(37, 99, 235, 0.10);
+    }
+
+    .setup-flow-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+    }
+
+    .setup-flow-title h5 {
+        margin: 0;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .setup-steps-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .setup-flow-accordion {
+        display: grid;
+        gap: 12px;
+    }
+
+    .setup-flow-item {
+        border: 1px solid #c7d2fe;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+        overflow: hidden;
+    }
+
+    .setup-flow-item:nth-child(2) {
+        border-color: #bbf7d0;
+    }
+
+    .setup-flow-item:nth-child(3) {
+        border-color: #fed7aa;
+    }
+
+    .setup-flow-item:nth-child(4) {
+        border-color: #ddd6fe;
+    }
+
+    .setup-flow-toggle {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        text-align: left;
+    }
+
+    .setup-flow-toggle-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .setup-step-number {
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        background: #2563eb;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        flex: 0 0 auto;
+    }
+
+    .setup-flow-item:nth-child(2) .setup-step-number {
+        background: #16a34a;
+    }
+
+    .setup-flow-item:nth-child(3) .setup-step-number {
+        background: #ea580c;
+    }
+
+    .setup-flow-item:nth-child(4) .setup-step-number {
+        background: #7c3aed;
+    }
+
+    .setup-flow-heading h6 {
+        margin: 0 0 6px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .setup-flow-heading p {
+        margin: 0;
+        color: var(--muted);
+        font-size: .9rem;
+    }
+
+    .setup-flow-chevron {
+        color: var(--muted);
+        transition: transform .2s ease;
+    }
+
+    .setup-status {
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: .75rem;
+        font-weight: 800;
+        white-space: nowrap;
+        flex: 0 0 auto;
+    }
+
+    .setup-status-done {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    .setup-status-warning {
+        background: #ffedd5;
+        color: #9a3412;
+        border: 1px solid #fdba74;
+    }
+
+    .setup-status-todo {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+    }
+
+    .setup-flow-toggle[aria-expanded="true"] .setup-flow-chevron {
+        transform: rotate(180deg);
+    }
+
+    .setup-flow-body {
+        border-top: 1px solid #e5e7eb;
+        padding: 0 16px 16px 62px;
+    }
+
+    .setup-flow-body p {
+        color: var(--muted);
+        margin-bottom: 12px;
+    }
+
+    .setup-flow-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .setup-mini-table {
+        margin-top: 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .setup-mini-table table {
+        margin: 0;
+    }
+
+    .setup-mini-table th {
+        background: #f9fafb;
+        color: #374151;
+        font-size: .76rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        padding: 10px 12px;
+    }
+
+    .setup-mini-table td {
+        padding: 10px 12px;
+        vertical-align: middle;
+    }
+
+    .feature-info-list {
+        margin: 0;
+        padding-left: 1.15rem;
+        color: var(--muted);
+    }
+
+    .feature-info-list li {
+        margin-bottom: 8px;
+    }
+
+    .feature-info-list li:last-child {
+        margin-bottom: 0;
+    }
+
 
     .stat-grid {
         display: grid;
@@ -97,6 +330,27 @@
     .filter-panel {
         padding: 22px;
         margin-bottom: 24px;
+    }
+
+    .quick-panel {
+        background: #f8fafc;
+        padding: 20px 22px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .quick-panel h5 {
+        margin: 0 0 6px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .quick-panel p {
+        margin: 0;
+        color: var(--muted);
     }
 
     .filter-title {
@@ -196,6 +450,11 @@
         justify-content: center;
     }
 
+    .selection-cell {
+        width: 42px;
+        text-align: center;
+    }
+
     .summary-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -237,6 +496,10 @@
         .stat-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+
+        .setup-steps-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
 
     @media(max-width: 576px) {
@@ -244,7 +507,15 @@
             grid-template-columns: 1fr;
         }
 
-        .page-toolbar, .table-header {
+        .setup-steps-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .setup-flow-body {
+            padding-left: 16px;
+        }
+
+        .page-toolbar, .table-header, .quick-panel {
             flex-direction: column;
             align-items: flex-start !important;
             gap: 14px;
@@ -270,20 +541,245 @@
             <p class="page-subtitle">Manage Nursery to Class 10 sections with primary and secondary grouping.</p>
         </div>
 
-        <div class="d-flex gap-2 flex-wrap">
-            <a href="javascript:void(0);" data-url="{% url 'class_level_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
-                <i class="bi bi-plus-circle"></i> Class Level
-            </a>
-
+        <div class="d-flex gap-2 flex-wrap"> 
+            <button type="button"
+                    class="btn btn-light border info-btn"
+                    title="About Classes, Divisions & Sections"
+                    data-info-key="overview"
+                    onclick="openFeatureInfoModal(this)">
+                <i class="bi bi-info-circle"></i>
+            </button>
+            
             <a href="javascript:void(0);" data-url="{% url 'division_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> Division
             </a>
 
-            <a href="javascript:void(0);" data-url="{% url 'class_section_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
-                <i class="bi bi-plus-circle"></i> Class Section
+            <a href="javascript:void(0);" data-url="{% url 'class_level_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                <i class="bi bi-plus-circle"></i> Class Level
             </a>
+
+
+
+            <a href="javascript:void(0);" data-url="{% url 'class_section_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
+                <i class="bi bi-plus-circle"></i> Class Section Manual
+            </a>
+            
+            <button type="button" class="btn btn-gradient-ai" data-bs-toggle="modal" data-bs-target="#quickCreateClassesModal">
+                <i class="bi bi-magic"></i> AI Auto Class Setup
+            </button>
+
         </div>
     </div>
+
+    <div class="setup-flow-panel">
+        <div class="setup-flow-title">
+            <div>
+                <h5><i class="bi bi-signpost-split me-1"></i> Recommended Setup Flow</h5>
+                <p class="text-muted mb-0">Follow these steps so class sections are generated cleanly.</p>
+            </div>
+            <button type="button"
+                    class="btn btn-light border info-btn"
+                    title="Why this order matters"
+                    data-info-key="flow"
+                    onclick="openFeatureInfoModal(this)">
+                <i class="bi bi-info-circle"></i>
+            </button>
+        </div>
+
+        <div class="setup-flow-accordion" id="classSetupFlowAccordion">
+            <div class="setup-flow-item">
+                <button class="setup-flow-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#setupStepDivision" aria-expanded="true" aria-controls="setupStepDivision">
+                    <span class="setup-flow-toggle-main">
+                        <span class="setup-step-number">1</span>
+                        <span class="setup-flow-heading">
+                            <h6>Create Divisions</h6>
+                            <p>Add section labels like A, B, C or D.</p>
+                        </span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2">
+                        {% if divisions_setup_done %}
+                            <span class="setup-status setup-status-done">Done</span>
+                        {% else %}
+                            <span class="setup-status setup-status-warning">Needed</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down setup-flow-chevron"></i>
+                    </span>
+                </button>
+                <div id="setupStepDivision" class="collapse show" data-bs-parent="#classSetupFlowAccordion">
+                    <div class="setup-flow-body">
+                        <p>Divisions are the reusable labels used to create final sections. Example: division A and division B can be used with every class level.</p>
+                        <div class="setup-flow-actions">
+                            <a href="javascript:void(0);" data-url="{% url 'division_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                                <i class="bi bi-plus-circle"></i> Add Division
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-flow-item">
+                <button class="setup-flow-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#setupStepClass" aria-expanded="false" aria-controls="setupStepClass">
+                    <span class="setup-flow-toggle-main">
+                        <span class="setup-step-number">2</span>
+                        <span class="setup-flow-heading">
+                            <h6>Create Classes</h6>
+                            <p>Add class levels such as Nursery, Class 1 or Class 10.</p>
+                        </span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2">
+                        {% if class_levels_setup_done %}
+                            <span class="setup-status setup-status-done">Done</span>
+                        {% else %}
+                            <span class="setup-status setup-status-warning">Needed</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down setup-flow-chevron"></i>
+                    </span>
+                </button>
+                <div id="setupStepClass" class="collapse" data-bs-parent="#classSetupFlowAccordion">
+                    <div class="setup-flow-body">
+                        <p>Class levels define the grade and grouping. Set primary or secondary correctly so filters, reports and timetable setup stay organized.</p>
+                        <div class="setup-flow-actions">
+                            <a href="javascript:void(0);" data-url="{% url 'class_level_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                                <i class="bi bi-plus-circle"></i> Add Class Level
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-flow-item">
+                <button class="setup-flow-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#setupStepSections" aria-expanded="false" aria-controls="setupStepSections">
+                    <span class="setup-flow-toggle-main">
+                        <span class="setup-step-number">3</span>
+                        <span class="setup-flow-heading">
+                            <h6>Create Sections</h6>
+                            <p>Use manual section setup or AI Auto Class Setup.</p>
+                        </span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2">
+                        {% if sections_setup_done %}
+                            <span class="setup-status setup-status-done">Done</span>
+                        {% elif auto_expected_sections %}
+                            <span class="setup-status setup-status-warning">{{ auto_missing_sections }} Missing</span>
+                        {% else %}
+                            <span class="setup-status setup-status-todo">Waiting</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down setup-flow-chevron"></i>
+                    </span>
+                </button>
+                <div id="setupStepSections" class="collapse" data-bs-parent="#classSetupFlowAccordion">
+                    <div class="setup-flow-body">
+                        <p>Sections are the final teaching groups. For quick setup, use AI Auto Class Setup after divisions and class levels are ready.</p>
+                        <div class="setup-flow-actions">
+                            <a href="javascript:void(0);" data-url="{% url 'class_section_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                                <i class="bi bi-plus-circle"></i> Class Section Manual
+                            </a>
+                            <button type="button" class="btn btn-gradient-ai" data-bs-toggle="modal" data-bs-target="#quickCreateClassesModal">
+                                <i class="bi bi-magic"></i> AI Auto Class Setup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-flow-item">
+                <button class="setup-flow-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#setupStepRooms" aria-expanded="false" aria-controls="setupStepRooms">
+                    <span class="setup-flow-toggle-main">
+                        <span class="setup-step-number">4</span>
+                        <span class="setup-flow-heading">
+                            <h6>Rooms</h6>
+                            <p>Review or add classrooms, labs and facilities.</p>
+                        </span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2">
+                        {% if rooms_setup_done and not sections_without_rooms %}
+                            <span class="setup-status setup-status-done">Done</span>
+                        {% elif rooms_setup_done %}
+                            <span class="setup-status setup-status-warning">Review</span>
+                        {% else %}
+                            <span class="setup-status setup-status-todo">Needed</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down setup-flow-chevron"></i>
+                    </span>
+                </button>
+                <div id="setupStepRooms" class="collapse" data-bs-parent="#classSetupFlowAccordion">
+                    <div class="setup-flow-body">
+                        <p>Rooms are assigned to sections and timetable slots. AI Auto Class Setup creates classroom rooms where possible, but labs and special rooms can be added from Room Setup.</p>
+                        <div class="setup-flow-actions">
+                            <button type="button"
+                                    class="btn btn-light border"
+                                    data-info-key="rooms"
+                                    onclick="openFeatureInfoModal(this)">
+                                <i class="bi bi-info-circle"></i> Room Guide
+                            </button>
+                            <a href="{% url 'room_list' %}" class="btn btn-light border">
+                                <i class="bi bi-door-open"></i> Open Room Setup
+                            </a>
+                            <form method="post" action="{% url 'room_auto_create_classrooms' %}" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="btn btn-gradient-ai"
+                                        onclick="return confirm('AI Auto Create Classroom rooms from active classes and divisions?');">
+                                    <i class="bi bi-magic"></i> AI Auto Create Classroom
+                                </button>
+                            </form>
+                            <a href="javascript:void(0);" data-url="{% url 'room_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                                <i class="bi bi-plus-circle"></i> Add Room
+                            </a>
+                        </div>
+
+                        <div class="setup-mini-table">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Room</th>
+                                        <th>Type</th>
+                                        <th>Capacity</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for room in rooms %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ room.name }}</strong>
+                                            <small class="text-muted d-block">{{ room.short_name|default:"No short name" }}</small>
+                                        </td>
+                                        <td>{{ room.get_room_type_display }}</td>
+                                        <td>{{ room.capacity }}</td>
+                                        <td>
+                                            {% if room.is_active %}
+                                                <span class="setup-status setup-status-done">Active</span>
+                                            {% else %}
+                                                <span class="setup-status setup-status-todo">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4">
+                                            <span class="text-muted">No rooms found yet. Add rooms or run AI Auto Class Setup to create classroom rooms.</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="text-muted small mt-2">
+                            Showing {{ rooms|length }} of {{ total_rooms }} room(s). Active rooms: {{ active_rooms }}.
+                            {% if sections_without_rooms %}
+                                {{ sections_without_rooms }} section(s) still need a default room.
+                            {% else %}
+                                All class sections have default rooms.
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
 
     {% if messages %}
         {% for message in messages %}
@@ -323,6 +819,13 @@
     <div class="filter-panel">
         <div class="filter-title">
             <i class="bi bi-funnel me-1"></i> Filter Class Sections
+            <button type="button"
+                    class="btn btn-sm btn-light border info-btn ms-1"
+                    title="About filters"
+                    data-info-key="filters"
+                    onclick="openFeatureInfoModal(this)">
+                <i class="bi bi-info-circle"></i>
+            </button>
         </div>
 
         <form method="get" class="row g-3">
@@ -362,48 +865,19 @@
     </div>
 
     <div class="summary-grid">
-        <div class="table-card">
-            <div class="table-header">
-                <h5><i class="bi bi-layers me-1"></i> Class Levels</h5>
-                <span class="text-muted small">{{ class_levels|length }} records</span>
-            </div>
-            <div class="mini-list">
-                {% for level in class_levels|slice:":8" %}
-                <div class="mini-row">
-                    <div>
-                        <strong>{{ level.name }}</strong>
-                        <small class="text-muted d-block">{{ level.school.name }} | {{ level.section_type }}</small>
-                    </div>
-                    <div class="d-flex gap-1">
-                        <button type="button"
-                                class="btn btn-sm btn-outline-warning action-btn"
-                                data-url="{% url 'class_level_update' level.pk %}"
-                                onclick="openCreateModal(this)"
-                                title="Edit Class Level">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger action-btn"
-                                data-delete-url="{% url 'class_level_delete' level.pk %}"
-                                data-delete-title="Delete Class Level"
-                                data-delete-name="{{ level.name }}"
-                                data-delete-detail="{{ level.school.name }}"
-                                data-delete-warning="Deleting a class level may also remove related class sections."
-                                onclick="openDeleteClassModal(this)"
-                                title="Delete Class Level">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                {% empty %}
-                <div class="text-muted small">No class levels yet.</div>
-                {% endfor %}
-            </div>
-        </div>
 
-        <div class="table-card">
+<div class="table-card">
             <div class="table-header">
-                <h5><i class="bi bi-grid me-1"></i> Divisions</h5>
+                <h5>
+                    <i class="bi bi-grid me-1"></i> Divisions
+                    <button type="button"
+                            class="btn btn-sm btn-light border info-btn ms-1"
+                            title="About divisions"
+                            data-info-key="divisions"
+                            onclick="openFeatureInfoModal(this)">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                </h5>
                 <span class="text-muted small">{{ divisions|length }} records</span>
             </div>
             <div class="mini-list">
@@ -439,18 +913,127 @@
                 {% endfor %}
             </div>
         </div>
+        
+        
+        
+        <div class="table-card">
+            <div class="table-header">
+                <h5>
+                    <i class="bi bi-layers me-1"></i> Class Levels
+                    <button type="button"
+                            class="btn btn-sm btn-light border info-btn ms-1"
+                            title="About class levels"
+                            data-info-key="levels"
+                            onclick="openFeatureInfoModal(this)">
+                        <i class="bi bi-info-circle"></i>
+                    </button>
+                </h5>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="text-muted small">{{ class_levels|length }} records</span>
+                    <button type="submit"
+                            class="btn btn-sm btn-outline-danger"
+                            form="classLevelBulkDeleteForm"
+                            id="classLevelBulkDeleteBtn"
+                            disabled
+                            onclick="return confirmBulkDelete('selected class level(s)? Related class sections may also be removed.');">
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                </div>
+            </div>
+
+            <form method="post" action="{% url 'class_level_bulk_delete' %}" id="classLevelBulkDeleteForm">
+                {% csrf_token %}
+                <div class="mini-list">
+                    {% if class_levels %}
+                    <label class="mini-row mb-0">
+                        <span class="d-flex align-items-center gap-2">
+                            <input type="checkbox" class="form-check-input m-0" id="selectAllClassLevels">
+                            <strong>Select all class levels</strong>
+                        </span>
+                        <small class="text-muted">Bulk action</small>
+                    </label>
+                    {% endif %}
+
+                    {% for level in class_levels %}
+                <div class="mini-row">
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="checkbox"
+                               class="form-check-input class-level-select m-0"
+                               name="class_level_ids"
+                               value="{{ level.pk }}"
+                               data-sections="{{ level.impact_sections|default:0 }}"
+                               data-allocations="{{ level.impact_allocations|default:0 }}"
+                               data-entries="{{ level.impact_entries|default:0 }}">
+                        <div>
+                            <strong>{{ level.name }}</strong>
+                            <small class="text-muted d-block">{{ level.school.name }} | {{ level.section_type }}</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <button type="button"
+                                class="btn btn-sm btn-outline-warning action-btn"
+                                data-url="{% url 'class_level_update' level.pk %}"
+                                onclick="openCreateModal(this)"
+                                title="Edit Class Level">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger action-btn"
+                                data-delete-url="{% url 'class_level_delete' level.pk %}"
+                                data-delete-title="Delete Class Level"
+                                data-delete-name="{{ level.name }}"
+                                data-delete-detail="{{ level.school.name }}"
+                                data-delete-warning="Deleting a class level may also remove related class sections."
+                                onclick="openDeleteClassModal(this)"
+                                title="Delete Class Level">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-muted small">No class levels yet.</div>
+                {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        
     </div>
 
     <div class="table-card">
         <div class="table-header">
-            <h5><i class="bi bi-list-ul me-1"></i> Class Section Records</h5>
-            <span class="text-muted small">Showing class sections</span>
+            <h5>
+                <i class="bi bi-list-ul me-1"></i> Class Section Records
+                <button type="button"
+                        class="btn btn-sm btn-light border info-btn ms-1"
+                        title="About class sections"
+                        data-info-key="sections"
+                        onclick="openFeatureInfoModal(this)">
+                    <i class="bi bi-info-circle"></i>
+                </button>
+            </h5>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small">Showing class sections</span>
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        form="classSectionBulkDeleteForm"
+                        id="classSectionBulkDeleteBtn"
+                        disabled
+                        onclick="return confirmBulkDelete('selected class section(s)? Related lesson allocations and timetable entries may also be removed.');">
+                    <i class="bi bi-trash"></i> Delete Selected
+                </button>
+            </div>
         </div>
 
-        <div class="table-responsive">
+        <form method="post" action="{% url 'class_section_bulk_delete' %}" id="classSectionBulkDeleteForm">
+            {% csrf_token %}
+            <div class="table-responsive">
             <table class="table table-modern align-middle">
                 <thead>
                     <tr>
+                        <th class="selection-cell">
+                            <input type="checkbox" class="form-check-input" id="selectAllClassSections" title="Select all">
+                        </th>
                         <th>Class Section</th>
                         <th>School</th>
                         <th>Type</th>
@@ -465,6 +1048,14 @@
                 <tbody>
                     {% for section in class_sections %}
                     <tr>
+                        <td class="selection-cell">
+                            <input type="checkbox"
+                                   class="form-check-input class-section-select"
+                                   name="class_section_ids"
+                                   value="{{ section.pk }}"
+                                   data-allocations="{{ section.impact_allocations|default:0 }}"
+                                   data-entries="{{ section.impact_entries|default:0 }}">
+                        </td>
                         <td>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="class-avatar">
@@ -494,7 +1085,7 @@
                             {% if section.class_teacher %}
                                 {{ section.class_teacher.name }}
                             {% else %}
-                                <span class="text-muted">Not assigned</span>
+                                <span class="text-muted">---</span>
                             {% endif %}
                         </td>
 
@@ -553,7 +1144,7 @@
 
                     {% empty %}
                     <tr>
-                        <td colspan="8">
+                        <td colspan="9">
                             <div class="empty-state">
                                 <i class="bi bi-grid-3x3-gap"></i>
                                 <h5>No Class Sections Found</h5>
@@ -565,10 +1156,78 @@
                 </tbody>
 
             </table>
-        </div>
+            </div>
+        </form>
     </div>
 
 </main>
+
+<div class="modal fade" id="quickCreateClassesModal" tabindex="-1" aria-labelledby="quickCreateClassesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="quickCreateClassesModalLabel">
+                    <i class="bi bi-magic me-2"></i> Quick Create Classes
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="post" action="{% url 'class_sections_quick_create' %}">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-3">
+                        This creates missing class sections from active class levels and active divisions.
+                        It also creates matching classroom rooms like 1st-A and assigns them as default rooms.
+                        Existing sections and rooms are skipped, so it is safe to run again.
+                    </p>
+
+                    {% if auto_expected_sections %}
+                        <div class="alert alert-info small mb-0">
+                            Expected sections from current setup: <strong>{{ auto_expected_sections }}</strong><br>
+                            Sections still missing: <strong>{{ auto_missing_sections }}</strong>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning small mb-0">
+                            Add class levels and divisions first, then use Quick Classes.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Create Missing Sections
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="featureInfoModal" tabindex="-1" aria-labelledby="featureInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="featureInfoModalLabel">
+                    <i class="bi bi-info-circle text-primary me-2"></i> Feature Guide
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="closeFeatureInfoModal()"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div id="featureInfoModalBody"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal" onclick="closeFeatureInfoModal()">
+                    <i class="bi bi-check-circle"></i> Got it
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="deleteClassModal" tabindex="-1" aria-labelledby="deleteClassModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -659,6 +1318,174 @@
         const modal = new bootstrap.Modal(document.getElementById("deleteClassModal"));
         modal.show();
     }
+
+    const featureGuides = {
+        overview: {
+            title: "Classes, Divisions & Sections",
+            points: [
+                "Use this page to build the school class structure before lesson allocation or timetable generation.",
+                "A division is a section label such as A, B, C or D.",
+                "A class level is a grade such as Nursery, Class 1, Class 6 or Class 10.",
+                "A class section is the final classroom group created by combining a class level and a division, for example Class 10-A.",
+                "After sections are ready, other modules can assign class teachers, rooms, subjects and timetables."
+            ]
+        },
+        flow: {
+            title: "Recommended Setup Flow",
+            points: [
+                "Step 1: Create divisions first, such as A, B, C or D.",
+                "Step 2: Create class levels next, such as Nursery, Class 1 or Class 10.",
+                "Step 3: Create sections. Use Class Section Manual for one section, or AI Auto Class Setup to generate all missing sections.",
+                "Step 4: Review rooms. Auto setup creates classroom rooms where possible, and Room Setup is used for labs, library, playground and special rooms.",
+                "This flow keeps setup quick for new users and avoids manual repetition."
+            ]
+        },
+        auto: {
+            title: "AI Auto Class Setup",
+            points: [
+                "This tool creates one class section for every active class level and active division combination.",
+                "Example: Class 10 with divisions A and B creates Class 10-A and Class 10-B.",
+                "It also creates matching classroom rooms and assigns them as default rooms where possible.",
+                "Existing sections and rooms are skipped, so it is safe to run again after adding new divisions or classes.",
+                "Use it after divisions and class levels are complete."
+            ]
+        },
+        filters: {
+            title: "Filter Class Sections",
+            points: [
+                "Use Section Type to view only primary or secondary class sections.",
+                "Use Status to find active or inactive sections.",
+                "Use Search to find a class, division or school quickly.",
+                "Filters only change what is displayed on the page. They do not edit or delete records."
+            ]
+        },
+        divisions: {
+            title: "Divisions",
+            points: [
+                "Divisions are reusable section labels such as A, B, C or D.",
+                "Create divisions before AI Auto Class Setup so the system can generate all class-section combinations.",
+                "Sort order controls how divisions appear in lists.",
+                "Deleting a division can affect class sections connected to it, so review linked sections first."
+            ]
+        },
+        levels: {
+            title: "Class Levels",
+            points: [
+                "Class levels are grades or standards such as Nursery, Class 1, Class 5 or Class 10.",
+                "Section type groups class levels as primary or secondary for setup, reporting and filtering.",
+                "Sort order controls the display order, which helps keep classes arranged from lower to higher grades.",
+                "Create or update class levels before generating class sections."
+            ]
+        },
+        sections: {
+            title: "Class Sections",
+            points: [
+                "Class sections are the actual teaching groups used throughout the timetable system.",
+                "Each section combines one class level and one division, such as Class 8-A.",
+                "Use Class Section Manual when you need to create or adjust one section.",
+                "Use AI Auto Class Setup when you want the system to create all missing class-level and division combinations.",
+                "Sections can have a class teacher, default room, capacity and active status.",
+                "Lesson allocation and timetable generation depend on these sections, so verify them before moving ahead."
+            ]
+        },
+        rooms: {
+            title: "Rooms",
+            points: [
+                "Rooms are physical spaces such as classrooms, labs, library, playground and activity rooms.",
+                "Class sections can use a default room, which helps timetable slots pick the right classroom automatically.",
+                "AI Auto Class Setup can create matching classroom rooms for sections.",
+                "Use Room Setup to add special rooms such as Computer Lab, Science Lab or Library."
+            ]
+        }
+    };
+
+    function openFeatureInfoModal(button) {
+        const guide = featureGuides[button.dataset.infoKey] || {
+            title: "Feature Guide",
+            points: ["This guide explains how to use this part of the page."]
+        };
+
+        document.getElementById("featureInfoModalLabel").innerHTML = `<i class="bi bi-info-circle text-primary me-2"></i>${guide.title}`;
+        document.getElementById("featureInfoModalBody").innerHTML = `<ul class="feature-info-list">${guide.points.map(point => `<li>${point}</li>`).join("")}</ul>`;
+
+        const modal = new bootstrap.Modal(document.getElementById("featureInfoModal"));
+        modal.show();
+    }
+
+    function closeFeatureInfoModal() {
+        const modalElement = document.getElementById("featureInfoModal");
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+            return;
+        }
+
+        modalElement.classList.remove("show");
+        modalElement.style.display = "none";
+        modalElement.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
+        document.querySelectorAll(".modal-backdrop").forEach(backdrop => backdrop.remove());
+    }
+
+    function confirmBulkDelete(label) {
+        const checked = Array.from(document.querySelectorAll("input[type='checkbox'][name$='_ids']:checked"));
+        const totals = checked.reduce((acc, item) => {
+            acc.sections += Number(item.dataset.sections || 0);
+            acc.allocations += Number(item.dataset.allocations || 0);
+            acc.entries += Number(item.dataset.entries || 0);
+            return acc;
+        }, {sections: 0, allocations: 0, entries: 0});
+
+        const lines = [
+            `Delete ${label}`,
+            "",
+            "Affected records:",
+            `Class sections: ${totals.sections}`,
+            `Lesson allocations: ${totals.allocations}`,
+            `Timetable entries: ${totals.entries}`,
+            "",
+            "Continue?"
+        ];
+        return window.confirm(lines.join("\n"));
+    }
+
+    function setupBulkSelection(selectAllId, checkboxClass, buttonId) {
+        const selectAll = document.getElementById(selectAllId);
+        const button = document.getElementById(buttonId);
+        const checkboxes = Array.from(document.querySelectorAll(`.${checkboxClass}`));
+
+        function refreshState() {
+            const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+            if (button) {
+                button.disabled = selectedCount === 0;
+            }
+
+            if (selectAll) {
+                selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+                selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener("change", function () {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAll.checked;
+                });
+                refreshState();
+            });
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", refreshState);
+        });
+
+        refreshState();
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        setupBulkSelection("selectAllClassLevels", "class-level-select", "classLevelBulkDeleteBtn");
+        setupBulkSelection("selectAllClassSections", "class-section-select", "classSectionBulkDeleteBtn");
+    });
 </script>
 
 {% endblock content %}

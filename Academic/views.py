@@ -11,12 +11,15 @@ from Schools.models import School
 from .models import AcademicYear, Day, BellSchedule, Period
 from django.db.models import Q
 from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
+@log_exceptions
 def _time_value(value):
     return value.strftime("%H:%M") if value else ""
 
 
+@log_exceptions
 def _default_days():
     return [
         {"name": "Monday", "short_name": "Mon", "sort_order": 1, "day_type": "WEEKDAY", "is_working": True},
@@ -28,6 +31,7 @@ def _default_days():
     ]
 
 
+@log_exceptions
 def _default_weekday_periods():
     return [
         {"period_number": 1, "name": "Assembly", "start_time": "08:30", "end_time": "08:45", "period_type": "ASSEMBLY"},
@@ -42,6 +46,7 @@ def _default_weekday_periods():
     ]
 
 
+@log_exceptions
 def _default_saturday_periods():
     return [
         {"period_number": 1, "name": "Assembly", "start_time": "08:30", "end_time": "08:40", "period_type": "ASSEMBLY"},
@@ -53,6 +58,7 @@ def _default_saturday_periods():
     ]
 
 
+@log_exceptions
 def _days_for_school(school):
     days = Day.objects.filter(school=school).order_by("sort_order", "id")
 
@@ -68,6 +74,7 @@ def _days_for_school(school):
     } for day in days]
 
 
+@log_exceptions
 def _periods_for_schedule(bell_schedule, day_type, defaults):
     if not bell_schedule:
         return defaults()
@@ -89,6 +96,7 @@ def _periods_for_schedule(bell_schedule, day_type, defaults):
     } for period in periods]
 
 
+@log_exceptions
 def _save_academic_setup(request, academic_year=None):
     current_school = get_current_school(request)
     school = current_school or get_object_or_404(School, id=request.POST.get("school"))
@@ -166,6 +174,7 @@ def _save_academic_setup(request, academic_year=None):
     return academic_year
 
 @login_required
+@log_exceptions
 def academic_setup_list(request):
     current_school = get_current_school(request)
     academic_years = school_queryset(
@@ -213,6 +222,7 @@ def academic_setup_list(request):
 
 
 @login_required
+@log_exceptions
 def academic_setup(request):
     no_school_response = redirect_if_no_current_school(request)
     if no_school_response:
@@ -248,6 +258,7 @@ def academic_setup(request):
 
 
 @login_required
+@log_exceptions
 def academic_setup_update(request, pk):
     current_school = get_current_school(request)
     academic_year = get_school_object_or_404(
@@ -285,6 +296,7 @@ def academic_setup_update(request, pk):
 
 @login_required
 @require_POST
+@log_exceptions
 def academic_setup_delete(request, pk):
     academic_year = get_school_object_or_404(request, AcademicYear.objects.all(), pk=pk)
     name = academic_year.name

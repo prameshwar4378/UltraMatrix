@@ -160,6 +160,47 @@
             border: 2px solid var(--border-color);
         }
 
+        .allocation-table th {
+            color: var(--text-primary);
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            white-space: nowrap;
+        }
+
+        .allocation-table td {
+            vertical-align: middle;
+        }
+
+        .step-chip {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+
+        .room-pill {
+            background: #eef2ff;
+            color: #3730a3;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: .78rem;
+            font-weight: 700;
+            display: inline-flex;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            justify-content: center;
+        }
+
         @media(max-width:768px) {
             body {
                 padding: 10px;
@@ -198,6 +239,9 @@
 
     <form method="POST" class="form-body">
         {% csrf_token %}
+        {% if bulk_create %}
+            <input type="hidden" name="allocation_rows_json" id="allocationRowsJson">
+        {% endif %}
 
         <div class="form-section">
 
@@ -207,11 +251,82 @@
                 </div>
 
                 <div>
-                    <h3>Lesson Allocation Details</h3>
-                    <p>Connect class section with subject, teacher and default room.</p>
+                    {% if bulk_create %}
+                        <h3>Teacher First Allocation Plan</h3>
+                        <p>Select teacher first. Rows are filled from Subject & Teacher Capabilities.</p>
+                    {% else %}
+                        <h3>Lesson Allocation Details</h3>
+                        <p>Connect class section with subject, teacher and default room.</p>
+                    {% endif %}
                 </div>
             </div>
 
+            {% if bulk_create %}
+            <div class="form-grid mb-4">
+                <div>
+                    <label class="form-label">
+                        <i class="bi bi-building"></i> School
+                    </label>
+                    {{ form.school }}
+                    {{ form.school.errors }}
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        <i class="bi bi-calendar2-week"></i> Step 1: Academic Year
+                    </label>
+                    {{ form.academic_year }}
+                    {{ form.academic_year.errors }}
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        <i class="bi bi-person-workspace"></i> Step 2: Teacher
+                    </label>
+                    {{ form.teacher }}
+                    {{ form.teacher.errors }}
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        <i class="bi bi-diagram-3"></i> Step 3: Capability Rows
+                    </label>
+                    <div class="form-control bg-white d-flex align-items-center" id="capabilityRowsSummary">
+                        Select teacher to load mapped divisions and class sections.
+                    </div>
+                    <div class="form-text">Uses Subject & Teacher Capabilities: exact class sections first, otherwise mapped class levels.</div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-3">
+                <div class="text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Default room comes from Class Setup. Duplicate class-subject rows will update the existing allocation.
+                </div>
+
+                <button type="button" class="btn btn-primary btn-sm" onclick="addAllocationRow()">
+                    <i class="bi bi-plus-circle"></i> Add New Record
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered allocation-table align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Step</th>
+                        <th>Division / Section</th>
+                        <th>Subject</th>
+                        <th>Weekly Periods</th>
+                        <th>Room</th>
+                        <th>Double</th>
+                        <th>Active</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="allocationRowsBody"></tbody>
+                </table>
+            </div>
+            {% else %}
             <div class="form-grid">
 
                 <div>
@@ -274,6 +389,9 @@
                     </label>
 
                     {{ form.weekly_periods }}
+                    <div class="form-text">
+                        This is the subject requirement for this class. Teacher weekly limits are checked automatically from Teacher Management.
+                    </div>
                     {{ form.weekly_periods.errors }}
                 </div>
 
@@ -302,6 +420,7 @@
                 </div>
 
             </div>
+            {% endif %}
 
         </div>
 
@@ -334,7 +453,205 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+{% if bulk_create %}
+{{ class_sections_json|json_script:"classSectionsData" }}
+{{ subjects_json|json_script:"subjectsData" }}
+{{ capabilities_json|json_script:"capabilitiesData" }}
+{{ initial_allocation_rows_json|json_script:"initialAllocationRowsData" }}
+{% endif %}
 <script>
+{% if bulk_create %}
+const classSections = JSON.parse(document.getElementById("classSectionsData").textContent);
+const subjects = JSON.parse(document.getElementById("subjectsData").textContent);
+const capabilities = JSON.parse(document.getElementById("capabilitiesData").textContent);
+let allocationRows = JSON.parse(document.getElementById("initialAllocationRowsData").textContent);
+
+function subjectOptions(selectedId, allowedSubjectIds = []) {
+    const allowed = new Set((allowedSubjectIds || []).map(id => String(id)));
+    const availableSubjects = allowed.size
+        ? subjects.filter(subject => allowed.has(String(subject.id)))
+        : subjects;
+
+    return [
+        '<option value="">Select subject</option>',
+        ...availableSubjects.map(subject => {
+            const label = subject.short_name ? `${subject.name} (${subject.short_name})` : subject.name;
+            return `<option value="${subject.id}" ${String(selectedId || "") === String(subject.id) ? "selected" : ""}>${label}</option>`;
+        })
+    ].join("");
+}
+
+function sectionOptions(selectedId) {
+    return [
+        '<option value="">Select section</option>',
+        ...classSections.map(section => {
+            return `<option value="${section.id}" ${String(selectedId || "") === String(section.id) ? "selected" : ""}>${section.name}</option>`;
+        })
+    ].join("");
+}
+
+function getSection(sectionId) {
+    return classSections.find(section => String(section.id) === String(sectionId));
+}
+
+function renderAllocationRows() {
+    const body = document.getElementById("allocationRowsBody");
+    body.innerHTML = "";
+
+    allocationRows.forEach((row, index) => {
+        const section = getSection(row.class_section_id);
+        const fixedSection = Boolean(row.locked);
+        body.innerHTML += `
+            <tr>
+                <td><span class="step-chip">${index + 1}</span></td>
+                <td>
+                    ${fixedSection
+                        ? `<strong>${section?.division_name || "Division"}</strong><br><small class="text-muted">${section?.name || ""}</small>`
+                        : `<select class="form-select" onchange="updateAllocationRow(${index}, 'class_section_id', this.value)">${sectionOptions(row.class_section_id)}</select>`
+                    }
+                </td>
+                <td>
+                    <select class="form-select" onchange="updateAllocationRow(${index}, 'subject_id', this.value)">
+                        ${subjectOptions(row.subject_id, row.subject_ids || [])}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control" min="1" value="${row.weekly_periods || 5}" onchange="updateAllocationRow(${index}, 'weekly_periods', this.value)">
+                </td>
+                <td>
+                    <span class="room-pill">${section?.room_name || "No room"}</span>
+                </td>
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input" ${row.requires_double_period ? "checked" : ""} onchange="updateAllocationRow(${index}, 'requires_double_period', this.checked)">
+                </td>
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input" ${row.is_active === false ? "" : "checked"} onchange="updateAllocationRow(${index}, 'is_active', this.checked)">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger icon-btn" onclick="removeAllocationRow(${index})" title="Remove">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    if (!allocationRows.length) {
+        body.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    Select a teacher to auto-create rows from capabilities, or click Add New Record.
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function updateAllocationRow(index, field, value) {
+    if (field === "weekly_periods") {
+        allocationRows[index][field] = Number(value || 1);
+        return;
+    }
+    allocationRows[index][field] = value;
+    if (field === "subject_id") {
+        const subject = subjects.find(item => String(item.id) === String(value));
+        allocationRows[index].requires_double_period = Boolean(subject?.requires_double_period);
+        renderAllocationRows();
+        return;
+    }
+    if (field === "class_section_id") {
+        renderAllocationRows();
+    }
+}
+
+function removeAllocationRow(index) {
+    allocationRows.splice(index, 1);
+    renderAllocationRows();
+}
+
+function addAllocationRow() {
+    allocationRows.push({
+        class_section_id: "",
+        subject_id: "",
+        subject_ids: [],
+        weekly_periods: 5,
+        requires_double_period: false,
+        is_active: true,
+        locked: false
+    });
+    renderAllocationRows();
+}
+
+function getTeacherCapabilityRows(teacherId) {
+    const selectedCapabilities = capabilities
+        .filter(capability => String(capability.teacher_id) === String(teacherId))
+        .sort((a, b) => {
+            const rankDiff = Number(a.priority_rank || 99) - Number(b.priority_rank || 99);
+            if (rankDiff) return rankDiff;
+            return String(a.subject_id).localeCompare(String(b.subject_id));
+        });
+
+    const rowsBySection = new Map();
+
+    selectedCapabilities.forEach(capability => {
+        (capability.section_ids || []).forEach(sectionId => {
+            const key = String(sectionId);
+            if (!rowsBySection.has(key)) {
+                rowsBySection.set(key, {
+                    class_section_id: sectionId,
+                    subject_id: "",
+                    subject_ids: [],
+                    weekly_periods: 5,
+                    requires_double_period: false,
+                    is_active: true,
+                    locked: true
+                });
+            }
+
+            const row = rowsBySection.get(key);
+            if (!row.subject_ids.map(id => String(id)).includes(String(capability.subject_id))) {
+                row.subject_ids.push(capability.subject_id);
+            }
+        });
+    });
+
+    return Array.from(rowsBySection.values()).map(row => {
+        if (row.subject_ids.length === 1) {
+            row.subject_id = row.subject_ids[0];
+            const subject = subjects.find(item => String(item.id) === String(row.subject_id));
+            row.requires_double_period = Boolean(subject?.requires_double_period);
+        }
+        return row;
+    });
+}
+
+function refreshCapabilityRowsFromTeacher() {
+    const teacherSelect = document.querySelector("select[name='teacher']");
+    const summary = document.getElementById("capabilityRowsSummary");
+    allocationRows = getTeacherCapabilityRows(teacherSelect?.value || "");
+    if (summary) {
+        summary.textContent = allocationRows.length
+            ? `${allocationRows.length} row(s) prepared from this teacher's subject capabilities.`
+            : "No mapped capability rows found for this teacher.";
+    }
+    renderAllocationRows();
+}
+
+document.querySelector("select[name='teacher']").addEventListener("change", refreshCapabilityRowsFromTeacher);
+
+document.querySelector("form").addEventListener("submit", function () {
+    document.getElementById("allocationRowsJson").value = JSON.stringify(allocationRows);
+});
+
+if (allocationRows.length) {
+    const summary = document.getElementById("capabilityRowsSummary");
+    if (summary) {
+        summary.textContent = `${allocationRows.length} existing row(s) loaded for update.`;
+    }
+}
+renderAllocationRows();
+{% endif %}
+
 document.addEventListener("DOMContentLoaded", function(){
     if(typeof Choices === "undefined") return;
     document.querySelectorAll("select").forEach(function(select){

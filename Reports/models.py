@@ -3,6 +3,7 @@ from django.conf import settings
 
 from Schools.models import School
 from Timetables.models import Timetable
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class ExportLog(models.Model):
@@ -35,5 +36,6 @@ class ExportLog(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @log_exceptions
     def __str__(self):
         return f"{self.timetable} - {self.export_type}"

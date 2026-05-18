@@ -2,11 +2,13 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management import BaseCommand, call_command
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class Command(BaseCommand):
     help = "Run migrations for every configured school tenant database."
 
+    @log_exceptions
     def add_arguments(self, parser):
         parser.add_argument(
             "--database",
@@ -15,6 +17,7 @@ class Command(BaseCommand):
             help="Run migrations for a specific tenant database alias. Can be used more than once.",
         )
 
+    @log_exceptions
     def handle(self, *args, **options):
         tenant_databases = tuple(options["databases"] or settings.SCHOOL_TENANT_DATABASES)
 

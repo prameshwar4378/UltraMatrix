@@ -15,8 +15,10 @@ from Subscriptions.models import SchoolSubscription, SubscriptionPlan
 from .forms import SchoolSignupForm
 from .models import SchoolUser
 from .utils import school_context_for_request
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
+@log_exceptions
 def _school_user_for_user(user):
     if not user.is_authenticated:
         return None
@@ -27,6 +29,7 @@ def _school_user_for_user(user):
     ).first()
 
 
+@log_exceptions
 def _next_page_for_user(user):
     school_user = _school_user_for_user(user)
     if school_user and not school_user.has_completed_onboarding:
@@ -38,12 +41,14 @@ def _next_page_for_user(user):
 class SchoolLoginView(LoginView):
     template_name = "accounts/login.html"
 
+    @log_exceptions
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return redirect("school_dashboard")
 
         return super().dispatch(request, *args, **kwargs)
 
+    @log_exceptions
     def get_success_url(self):
         redirect_url = self.get_redirect_url()
         if redirect_url:
@@ -51,6 +56,7 @@ class SchoolLoginView(LoginView):
 
         return reverse(_next_page_for_user(self.request.user))
 
+    @log_exceptions
     def form_valid(self, form):
         response = super().form_valid(form)
         school_context = school_context_for_request(self.request)
@@ -64,6 +70,7 @@ class SchoolLoginView(LoginView):
         return response
 
 
+@log_exceptions
 def _trial_plan():
     plan, _ = SubscriptionPlan.objects.db_manager("default").get_or_create(
         name="14 Day Free Trial",
@@ -81,6 +88,7 @@ def _trial_plan():
 
 
 @login_required
+@log_exceptions
 def feature_onboarding(request):
     school_user = _school_user_for_user(request.user)
 
@@ -147,6 +155,7 @@ def feature_onboarding(request):
     )
 
 
+@log_exceptions
 def school_signup(request):
     if request.user.is_authenticated:
         return redirect(_next_page_for_user(request.user))

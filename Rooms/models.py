@@ -1,5 +1,6 @@
 from django.db import models
 from Schools.models import School
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class Room(models.Model):
@@ -35,5 +36,6 @@ class Room(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name

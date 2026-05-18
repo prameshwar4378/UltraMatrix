@@ -118,6 +118,20 @@
             padding: 13px 15px;
         }
 
+        .mapping-table th {
+            color: var(--text-primary);
+            font-size: .82rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            justify-content: center;
+        }
+
         .form-help {
             color: var(--text-secondary);
             font-size: .9rem;
@@ -173,7 +187,11 @@
 
     <form method="POST" class="form-body">
         {% csrf_token %}
+        {% if bulk_create %}
+            <input type="hidden" name="mappings_json" id="mappingsJson">
+        {% endif %}
 
+        {% if bulk_create %}
         <div class="form-section">
             <div class="section-title">
                 <div class="section-title-icon">
@@ -181,50 +199,74 @@
                 </div>
                 <div>
                     <h3>Teacher Subject Mapping</h3>
-                    <p>Select teacher, subject and applicable class levels.</p>
+                    <p>Add multiple teacher, subject and class-section mappings.</p>
                 </div>
             </div>
 
-            <div class="form-grid">
-                <div>
-                    <label class="form-label"><i class="bi bi-building"></i> School</label>
-                    {{ form.school }}
-                    {{ form.school.errors }}
+            <button type="button" class="btn btn-primary btn-sm mb-3" onclick="addMappingRow()">
+                <i class="bi bi-plus-circle"></i> Add Mapping Row
+            </button>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mapping-table">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Teacher</th>
+                        <th>Subject</th>
+                        <th>Class Sections</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="mappingRowsBody"></tbody>
+                </table>
+            </div>
+
+            <div class="alert alert-info small mb-0">
+                Priority is assigned automatically: primary first, then secondary, then backup when another teacher already owns that subject and class section.
+            </div>
+        </div>
+        {% else %}
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-title-icon">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <div>
+                        <h3>Teacher Subject Mapping</h3>
+                        <p>Select teacher, subject and exact class sections.</p>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-person"></i> Teacher</label>
-                    {{ form.teacher }}
-                    {{ form.teacher.errors }}
-                </div>
+                <div class="form-grid">
+                    <div><label class="form-label"><i class="bi bi-building"></i> School</label>{{ form.school }}{{ form.school.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-person"></i> Teacher</label>{{ form.teacher }}{{ form.teacher.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-book"></i> Subject</label>{{ form.subject }}{{ form.subject.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-star"></i> Priority</label>{{ form.priority }}{{ form.priority.errors }}</div>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-book"></i> Subject</label>
-                    {{ form.subject }}
-                    {{ form.subject.errors }}
-                </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label class="form-label"><i class="bi bi-grid-3x3-gap"></i> Class Sections</label>
+                        {{ form.class_sections }}
+                        {{ form.class_sections.errors }}
+                        <div class="form-help">Select exact divisions like 10-A or 10-B when different teachers handle different divisions.</div>
+                    </div>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-star"></i> Priority</label>
-                    {{ form.priority }}
-                    {{ form.priority.errors }}
-                </div>
-
-                <div style="grid-column: 1 / -1;">
-                    <label class="form-label"><i class="bi bi-layers"></i> Class Levels</label>
-                    {{ form.class_levels }}
-                    {{ form.class_levels.errors }}
-                    <div class="form-help">
-                        Hold CTRL to select multiple classes. Example: Class 6, Class 7, Class 8.
+                    <div style="grid-column: 1 / -1;">
+                        <label class="form-label"><i class="bi bi-layers"></i> Class Levels</label>
+                        {{ form.class_levels }}
+                        {{ form.class_levels.errors }}
+                        <div class="form-help">Optional broad shortcut. Use this only when the same teacher handles all divisions in a class level.</div>
+                        <button type="button" class="btn btn-primary btn-sm mt-3" onclick="selectSectionsFromClassLevels()">
+                            <i class="bi bi-magic"></i> Select Sections From Class Levels
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
+        {% endif %}
 
         <div class="form-actions">
             <div class="text-muted">
                 <i class="bi bi-info-circle me-1"></i>
-                This mapping helps while assigning lessons and timetable slots.
+                Quick lesson allocation uses class sections first, then class levels only as a fallback.
             </div>
 
             <div class="d-flex gap-3">
@@ -240,12 +282,82 @@
     </form>
 </div>
 
+{{ class_sections_json|json_script:"classSectionsData" }}
+{% if bulk_create %}
+{{ teachers_json|json_script:"teachersData" }}
+{{ subjects_json|json_script:"subjectsData" }}
+{{ initial_mappings_json|json_script:"initialMappingsData" }}
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
+const classSectionsData = JSON.parse(document.getElementById("classSectionsData").textContent);
+
+function optionList(items, selected, placeholder) {
+    const selectedText = String(selected || "");
+    return [`<option value="">${placeholder}</option>`].concat(items.map(item => {
+        return `<option value="${item.id}" ${String(item.id) === selectedText ? "selected" : ""}>${item.name}</option>`;
+    })).join("");
+}
+
+{% if bulk_create %}
+const teachersData = JSON.parse(document.getElementById("teachersData").textContent);
+const subjectsData = JSON.parse(document.getElementById("subjectsData").textContent);
+let mappingRows = JSON.parse(document.getElementById("initialMappingsData").textContent);
+
+function renderMappingRows() {
+    const body = document.getElementById("mappingRowsBody");
+    body.innerHTML = "";
+    mappingRows.forEach((row, index) => {
+        const selectedSectionIds = (row.class_section_ids || []).map(String);
+        const sectionOptions = classSectionsData.map(section => `<option value="${section.id}" ${selectedSectionIds.includes(String(section.id)) ? "selected" : ""}>${section.name}</option>`).join("");
+        body.innerHTML += `
+            <tr>
+                <td><select class="form-select" onchange="updateMappingRow(${index}, 'teacher_id', this.value)">${optionList(teachersData, row.teacher_id, 'Teacher')}</select></td>
+                <td><select class="form-select" onchange="updateMappingRow(${index}, 'subject_id', this.value)">${optionList(subjectsData, row.subject_id, 'Subject')}</select></td>
+                <td><select class="form-select" multiple size="6" onchange="updateMappingSections(${index}, this)">${sectionOptions}</select></td>
+                <td><button type="button" class="btn btn-outline-danger icon-btn" onclick="removeMappingRow(${index})"><i class="bi bi-trash"></i></button></td>
+            </tr>
+        `;
+    });
+}
+
+function updateMappingRow(index, field, value) { mappingRows[index][field] = value; }
+function updateMappingSections(index, select) { mappingRows[index].class_section_ids = Array.from(select.selectedOptions).map(option => option.value); }
+function removeMappingRow(index) { mappingRows.splice(index, 1); renderMappingRows(); }
+function addMappingRow() { mappingRows.push({teacher_id:"", subject_id:"", class_section_ids:[]}); renderMappingRows(); }
+document.querySelector("form").addEventListener("submit", function(){
+    document.getElementById("mappingsJson").value = JSON.stringify(mappingRows);
+});
+renderMappingRows();
+{% else %}
+function selectSectionsFromClassLevels() {
+    const levelSelect = document.querySelector("select[name='class_levels']");
+    const sectionSelect = document.querySelector("select[name='class_sections']");
+    if (!levelSelect || !sectionSelect) return;
+
+    const selectedLevelValues = levelSelect.choicesInstance
+        ? levelSelect.choicesInstance.getValue(true)
+        : Array.from(levelSelect.selectedOptions).map(option => option.value);
+    const selectedLevels = selectedLevelValues.map(value => Number(value));
+    const sectionIds = classSectionsData.filter(section => selectedLevels.includes(Number(section.class_level_id))).map(section => String(section.id));
+
+    if (sectionSelect.choicesInstance) {
+        sectionSelect.choicesInstance.removeActiveItems();
+        sectionIds.forEach(sectionId => sectionSelect.choicesInstance.setChoiceByValue(sectionId));
+    } else {
+        Array.from(sectionSelect.options).forEach(option => {
+            option.selected = sectionIds.includes(option.value);
+        });
+    }
+    sectionSelect.dispatchEvent(new Event("change", { bubbles: true }));
+}
+{% endif %}
+
 document.addEventListener("DOMContentLoaded", function(){
     if(typeof Choices === "undefined") return;
     document.querySelectorAll("select").forEach(function(select){
-        new Choices(select, {searchEnabled:true, shouldSort:false, itemSelectText:"", allowHTML:false, searchPlaceholderValue:"Search..."});
+        select.choicesInstance = new Choices(select, {searchEnabled:true, shouldSort:false, itemSelectText:"", allowHTML:false, searchPlaceholderValue:"Search..."});
     });
 });
 </script>

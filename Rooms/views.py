@@ -7,10 +7,12 @@ from .models import Room
 from .forms import RoomForm
 from Classes.models import ClassLevel, Division
 from Schools.models import School
-from Timetables.models import ClassSection
+from Timetables.models import ClassSection, LessonAllocation, TimetableEntry
 from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 @login_required
+@log_exceptions
 def room_list(request):
     current_school = get_current_school(request)
 
@@ -58,6 +60,11 @@ def room_list(request):
                 "expected_count": expected_count,
             })
 
+    for room in rooms:
+        room.impact_sections = ClassSection.objects.filter(default_room=room).count()
+        room.impact_allocations = LessonAllocation.objects.filter(default_room=room).count()
+        room.impact_entries = TimetableEntry.objects.filter(room=room).count()
+
     context = {
         "rooms": rooms,
         "total_rooms": rooms.count(),
@@ -81,6 +88,7 @@ from django.contrib import messages
 from django.http import HttpResponse
 
 @login_required
+@log_exceptions
 def room_create(request):
     no_school_response = redirect_if_no_current_school(request)
     if no_school_response:
@@ -110,6 +118,7 @@ def room_create(request):
 
 
 @login_required
+@log_exceptions
 def room_update(request, pk):
     room = get_school_object_or_404(request, Room.objects.all(), pk=pk)
     current_school = get_current_school(request)
@@ -138,6 +147,7 @@ def room_update(request, pk):
 
 @login_required
 @require_POST
+@log_exceptions
 def room_delete(request, pk):
     room = get_school_object_or_404(request, Room.objects.all(), pk=pk)
     room_name = room.name
@@ -148,6 +158,31 @@ def room_delete(request, pk):
 
 @login_required
 @require_POST
+@log_exceptions
+def room_bulk_delete(request):
+    selected_ids = request.POST.getlist("room_ids")
+    if not selected_ids:
+        messages.warning(request, "Select at least one room to delete.")
+        return redirect("room_list")
+
+    rooms = school_queryset(
+        request,
+        Room.objects.filter(id__in=selected_ids),
+    )
+    deleted_count = rooms.count()
+    rooms.delete()
+
+    if deleted_count:
+        messages.success(request, f"Deleted {deleted_count} selected room(s).")
+    else:
+        messages.info(request, "No rooms were deleted.")
+
+    return redirect("room_list")
+
+
+@login_required
+@require_POST
+@log_exceptions
 def room_auto_create_classrooms(request):
     current_school = get_current_school(request)
     if not current_school:

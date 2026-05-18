@@ -5,8 +5,10 @@ from django.shortcuts import get_object_or_404, redirect
 from Subscriptions.models import SchoolSubscription
 
 from .models import SchoolUser
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
+@log_exceptions
 def get_current_school(request):
     if not request.user.is_authenticated:
         return None
@@ -35,6 +37,7 @@ def get_current_school(request):
     return None
 
 
+@log_exceptions
 def get_current_school_user(request):
     school = get_current_school(request)
     if not school:
@@ -48,6 +51,7 @@ def get_current_school_user(request):
     ).first()
 
 
+@log_exceptions
 def require_current_school(request):
     school = get_current_school(request)
     if school:
@@ -57,6 +61,7 @@ def require_current_school(request):
     return None
 
 
+@log_exceptions
 def redirect_if_no_current_school(request, redirect_to="login"):
     if require_current_school(request):
         return None
@@ -64,6 +69,7 @@ def redirect_if_no_current_school(request, redirect_to="login"):
     return redirect(redirect_to)
 
 
+@log_exceptions
 def school_queryset(request, queryset):
     school = get_current_school(request)
     if not school:
@@ -72,10 +78,12 @@ def school_queryset(request, queryset):
     return queryset.filter(school=school)
 
 
+@log_exceptions
 def get_school_object_or_404(request, queryset, **lookup):
     return get_object_or_404(school_queryset(request, queryset), **lookup)
 
 
+@log_exceptions
 def get_current_subscription(school):
     if not school:
         return None
@@ -86,6 +94,7 @@ def get_current_subscription(school):
     ).order_by("-end_date", "-id").first()
 
 
+@log_exceptions
 def subscription_context_for_school(school):
     today = timezone.localdate()
     subscription = get_current_subscription(school)
@@ -110,6 +119,7 @@ def subscription_context_for_school(school):
     }
 
 
+@log_exceptions
 def sync_school_session_context(request, school, subscription_context):
     if not school:
         return
@@ -125,6 +135,7 @@ def sync_school_session_context(request, school, subscription_context):
         request.session.pop("trial_days_remaining", None)
 
 
+@log_exceptions
 def school_context_for_request(request):
     school = get_current_school(request)
     school_user = get_current_school_user(request) if school else None

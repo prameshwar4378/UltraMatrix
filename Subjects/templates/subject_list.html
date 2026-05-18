@@ -14,7 +14,7 @@
         --muted: #6b7280;
     }
 
-    .page-toolbar, .filter-panel, .table-card, .stat-card {
+    .page-toolbar, .setup-flow-panel, .filter-panel, .table-card, .stat-card {
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: 18px;
@@ -51,6 +51,163 @@
     .btn-gradient:hover {
         color: #fff;
         transform: translateY(-1px);
+    }
+
+    .setup-flow-panel {
+        padding: 22px;
+        margin-bottom: 24px;
+        background:
+            linear-gradient(135deg, rgba(248, 250, 252, .98), rgba(239, 246, 255, .98)),
+            var(--surface);
+        border-color: #bfdbfe;
+        box-shadow: 0 16px 40px rgba(37, 99, 235, 0.10);
+    }
+
+    .setup-flow-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 16px;
+    }
+
+    .setup-flow-title h5 {
+        margin: 0;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .setup-flow-accordion {
+        display: grid;
+        gap: 12px;
+    }
+
+    .setup-flow-item {
+        border: 1px solid #c7d2fe;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+        overflow: hidden;
+    }
+
+    .setup-flow-item:nth-child(2) {
+        border-color: #bbf7d0;
+    }
+
+    .setup-flow-item:nth-child(3) {
+        border-color: #fed7aa;
+    }
+
+    .setup-flow-item:nth-child(4) {
+        border-color: #ddd6fe;
+    }
+
+    .setup-flow-toggle {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        text-align: left;
+    }
+
+    .setup-flow-toggle-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .setup-step-number {
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+        background: #2563eb;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        flex: 0 0 auto;
+    }
+
+    .setup-flow-item:nth-child(2) .setup-step-number {
+        background: #16a34a;
+    }
+
+    .setup-flow-item:nth-child(3) .setup-step-number {
+        background: #ea580c;
+    }
+
+    .setup-flow-item:nth-child(4) .setup-step-number {
+        background: #7c3aed;
+    }
+
+    .setup-flow-heading h6 {
+        margin: 0 0 6px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .setup-flow-heading p {
+        margin: 0;
+        color: var(--muted);
+        font-size: .9rem;
+    }
+
+    .setup-flow-chevron {
+        color: var(--muted);
+        transition: transform .2s ease;
+    }
+
+    .setup-status {
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: .75rem;
+        font-weight: 800;
+        white-space: nowrap;
+        flex: 0 0 auto;
+    }
+
+    .setup-status-done {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+
+    .setup-status-warning {
+        background: #ffedd5;
+        color: #9a3412;
+        border: 1px solid #fdba74;
+    }
+
+    .setup-status-todo {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+    }
+
+    .setup-flow-toggle[aria-expanded="true"] .setup-flow-chevron {
+        transform: rotate(180deg);
+    }
+
+    .setup-flow-body {
+        border-top: 1px solid #e5e7eb;
+        padding: 0 16px 16px 62px;
+    }
+
+    .setup-flow-body p {
+        color: var(--muted);
+        margin-bottom: 12px;
+    }
+
+    .setup-flow-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     .stat-grid {
@@ -151,17 +308,6 @@
         background: #f8fafc;
     }
 
-    .subject-avatar {
-        width: 42px;
-        height: 42px;
-        border-radius: 14px;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-    }
-
     .badge-soft {
         padding: 7px 12px;
         border-radius: 999px;
@@ -187,6 +333,71 @@
         display: inline-block;
     }
 
+    .local-table-tools {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .local-search {
+        min-width: 260px;
+        max-width: 340px;
+    }
+
+    .pagination-panel {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 14px 18px;
+        border-top: 1px solid var(--border);
+        background: #f8fafc;
+    }
+
+    .pagination-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .audit-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .audit-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .audit-card h5 {
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    .audit-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .audit-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 9px 10px;
+        background: #f8fafc;
+    }
+
     .empty-state {
         padding: 55px 20px;
         text-align: center;
@@ -201,6 +412,7 @@
 
     @media(max-width: 1200px) {
         .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .audit-grid { grid-template-columns: 1fr; }
     }
 
     @media(max-width: 768px) {
@@ -209,6 +421,9 @@
 
     @media(max-width: 576px) {
         .stat-grid { grid-template-columns: 1fr; }
+        .setup-flow-body {
+            padding-left: 16px;
+        }
         .page-toolbar, .table-header {
             flex-direction: column;
             align-items: flex-start !important;
@@ -232,10 +447,18 @@
     <div class="page-toolbar d-flex justify-content-between align-items-center">
         <div>
             <h2 class="page-title">Subjects & Teacher Capabilities</h2>
-            <p class="page-subtitle">Manage subjects and map which teacher can teach which subject/class level.</p>
+            <p class="page-subtitle">Manage subjects and map which teacher can teach each subject and class section.</p>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
+            <a href="javascript:void(0);" data-url="{% url 'subject_quick_create' %}" class="btn btn-light border" onclick="openCreateModal(this, 1250, 780)">
+                <i class="bi bi-lightning-charge"></i> Quick Subjects
+            </a>
+
+            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_quick_create' %}" class="btn btn-light border" onclick="openCreateModal(this, 1300, 780)">
+                <i class="bi bi-magic"></i> Quick Mapping
+            </a>
+
             <a href="{% url 'subject_export_csv' %}?{{ request.GET.urlencode }}" class="btn btn-light border">
                 <i class="bi bi-download"></i> Export CSV
             </a>
@@ -247,6 +470,145 @@
             <a href="javascript:void(0);" data-url="{% url 'subject_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> New Subject
             </a>
+        </div>
+    </div>
+
+    <div class="setup-flow-panel">
+        <div class="setup-flow-title">
+            <div>
+                <h5><i class="bi bi-signpost-split me-1"></i> Recommended Setup Flow</h5>
+                <p class="text-muted mb-0">Follow this order so subjects and teacher capabilities are ready for lesson allocation.</p>
+            </div>
+        </div>
+
+        <div class="setup-flow-accordion" id="subjectSetupFlowAccordion">
+            <div class="setup-flow-item">
+                <button class="setup-flow-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#subjectSetupStepSubjects" aria-expanded="true" aria-controls="subjectSetupStepSubjects">
+                    <span class="setup-flow-toggle-main">
+                        <span class="setup-step-number">1</span>
+                        <span class="setup-flow-heading">
+                            <h6>Create Subjects</h6>
+                            <p>Add all theory, practical and activity subjects first.</p>
+                        </span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2">
+                        {% if subjects_setup_done %}
+                            <span class="setup-status setup-status-done">Done</span>
+                        {% else %}
+                            <span class="setup-status setup-status-warning">Needed</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down setup-flow-chevron"></i>
+                    </span>
+                </button>
+                <div id="subjectSetupStepSubjects" class="collapse show" data-bs-parent="#subjectSetupFlowAccordion">
+                    <div class="setup-flow-body">
+                        <p>Subjects define what can be allocated in the timetable. Use Quick Subjects for the standard starter list, or add a subject manually for custom school-specific entries.</p>
+                        <div class="setup-flow-actions">
+                            <a href="javascript:void(0);" data-url="{% url 'subject_quick_create' %}" class="btn btn-light border" onclick="openCreateModal(this, 1250, 780)">
+                                <i class="bi bi-lightning-charge"></i> Quick Subjects
+                            </a>
+                            <a href="javascript:void(0);" data-url="{% url 'subject_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
+                                <i class="bi bi-plus-circle"></i> New Subject
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-flow-item">
+                <button class="setup-flow-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#subjectSetupStepSections" aria-expanded="false" aria-controls="subjectSetupStepSections">
+                    <span class="setup-flow-toggle-main">
+                        <span class="setup-step-number">2</span>
+                        <span class="setup-flow-heading">
+                            <h6>Confirm Class Sections</h6>
+                            <p>Make sure class sections exist before mapping subjects to teachers.</p>
+                        </span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2">
+                        {% if sections_setup_done %}
+                            <span class="setup-status setup-status-done">{{ active_sections_count }} Ready</span>
+                        {% else %}
+                            <span class="setup-status setup-status-todo">Waiting</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down setup-flow-chevron"></i>
+                    </span>
+                </button>
+                <div id="subjectSetupStepSections" class="collapse" data-bs-parent="#subjectSetupFlowAccordion">
+                    <div class="setup-flow-body">
+                        <p>Teacher capabilities work best when exact class sections are available. If sections are missing, complete Classes, Divisions & Sections first.</p>
+                        <div class="setup-flow-actions">
+                            <a href="{% url 'class_setup_list' %}" class="btn btn-light border">
+                                <i class="bi bi-grid"></i> Open Class Setup
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-flow-item">
+                <button class="setup-flow-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#subjectSetupStepTeachers" aria-expanded="false" aria-controls="subjectSetupStepTeachers">
+                    <span class="setup-flow-toggle-main">
+                        <span class="setup-step-number">3</span>
+                        <span class="setup-flow-heading">
+                            <h6>Add Teachers</h6>
+                            <p>Active teachers are required before capabilities can be assigned.</p>
+                        </span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2">
+                        {% if teachers_setup_done %}
+                            <span class="setup-status setup-status-done">{{ active_teachers_count }} Ready</span>
+                        {% else %}
+                            <span class="setup-status setup-status-warning">Needed</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down setup-flow-chevron"></i>
+                    </span>
+                </button>
+                <div id="subjectSetupStepTeachers" class="collapse" data-bs-parent="#subjectSetupFlowAccordion">
+                    <div class="setup-flow-body">
+                        <p>Add teacher records and keep active status enabled for staff who should appear in subject capability mapping and timetable allocation.</p>
+                        <div class="setup-flow-actions">
+                            <a href="{% url 'teacher_list' %}" class="btn btn-light border">
+                                <i class="bi bi-people"></i> Open Teacher Setup
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-flow-item">
+                <button class="setup-flow-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#subjectSetupStepCapabilities" aria-expanded="false" aria-controls="subjectSetupStepCapabilities">
+                    <span class="setup-flow-toggle-main">
+                        <span class="setup-step-number">4</span>
+                        <span class="setup-flow-heading">
+                            <h6>Map Teacher Capabilities</h6>
+                            <p>Connect teachers with subjects and class sections.</p>
+                        </span>
+                    </span>
+                    <span class="d-flex align-items-center gap-2">
+                        {% if capabilities_setup_done and not missing_mapping_count %}
+                            <span class="setup-status setup-status-done">Done</span>
+                        {% elif capabilities_setup_done %}
+                            <span class="setup-status setup-status-warning">{{ missing_mapping_count }} Gap{{ missing_mapping_count|pluralize }}</span>
+                        {% else %}
+                            <span class="setup-status setup-status-todo">Waiting</span>
+                        {% endif %}
+                        <i class="bi bi-chevron-down setup-flow-chevron"></i>
+                    </span>
+                </button>
+                <div id="subjectSetupStepCapabilities" class="collapse" data-bs-parent="#subjectSetupFlowAccordion">
+                    <div class="setup-flow-body">
+                        <p>Use Quick Mapping to assign many teacher-subject combinations at once, or use Teacher Mapping for one capability entry at a time.</p>
+                        <div class="setup-flow-actions">
+                            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_quick_create' %}" class="btn btn-light border" onclick="openCreateModal(this, 1300, 780)">
+                                <i class="bi bi-magic"></i> Quick Mapping
+                            </a>
+                            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
+                                <i class="bi bi-person-check"></i> Teacher Mapping
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -339,15 +701,30 @@
     <div class="table-card">
         <div class="table-header">
             <h5><i class="bi bi-list-ul me-1"></i> Subject Records</h5>
-            <span class="text-muted small">Subjects used for lesson allocation</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small">Subjects used for lesson allocation</span>
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        form="subjectBulkDeleteForm"
+                        id="subjectBulkDeleteBtn"
+                        disabled
+                        onclick="return confirmBulkDelete('selected subject(s)? Related teacher-subject mappings may also be removed.');">
+                    <i class="bi bi-trash"></i> Delete Selected
+                </button>
+            </div>
         </div>
 
+        <form method="post" action="{% url 'subject_bulk_delete' %}" id="subjectBulkDeleteForm">
+            {% csrf_token %}
+        </form>
         <div class="table-responsive">
             <table class="table table-modern align-middle">
                 <thead>
                     <tr>
+                        <th>
+                            <input type="checkbox" class="form-check-input" id="selectAllSubjects" title="Select all">
+                        </th>
                         <th>Subject</th>
-                        <th>School</th>
                         <th>Code</th>
                         <th>Section</th>
                         <th>Type</th>
@@ -360,22 +737,19 @@
                     {% for subject in subjects %}
                     <tr>
                         <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="subject-avatar" style="background: {{ subject.color_code }};">
-                                    {{ subject.short_name|default:subject.name|slice:":2" }}
-                                </div>
-                                <div>
-                                    <strong>{{ subject.name }}</strong>
-                                    <br>
-                                    <small class="text-muted">{{ subject.short_name|default:"No short name" }}</small>
-                                </div>
-                            </div>
+                            <input type="checkbox"
+                                   class="form-check-input subject-select"
+                                   form="subjectBulkDeleteForm"
+                                   name="subject_ids"
+                                   value="{{ subject.pk }}"
+                                   data-capabilities="{{ subject.impact_capabilities|default:0 }}"
+                                   data-allocations="{{ subject.impact_allocations|default:0 }}"
+                                   data-entries="{{ subject.impact_entries|default:0 }}">
                         </td>
-
                         <td>
-                            <strong>{{ subject.school.name }}</strong>
+                            <strong>{{ subject.name }}</strong>
                             <br>
-                            <small class="text-muted">{{ subject.school.school_code|default:"No Code" }}</small>
+                            <small class="text-muted">{{ subject.short_name|default:"No short name" }}</small>
                         </td>
 
                         <td>{{ subject.code|default:"-" }}</td>
@@ -464,34 +838,64 @@
 
     <div class="table-card">
         <div class="table-header">
-            <h5><i class="bi bi-person-check me-1"></i> Recent Teacher Subject Mappings</h5>
-            <span class="text-muted small">Latest 8 mappings</span>
+            <h5><i class="bi bi-person-check me-1"></i> Teacher Subject Mappings</h5>
+            <div class="local-table-tools">
+                <input type="search"
+                       class="form-control local-search"
+                       id="teacherSubjectSearch"
+                       placeholder="Search teacher, subject, class, priority...">
+                <span class="text-muted small" id="teacherSubjectResultCount">{{ total_capabilities }} mapping{{ total_capabilities|pluralize }}</span>
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        form="teacherSubjectBulkDeleteForm"
+                        id="teacherSubjectBulkDeleteBtn"
+                        disabled
+                        onclick="return confirmBulkDelete('selected teacher mapping(s)?');">
+                    <i class="bi bi-trash"></i> Delete Selected
+                </button>
+            </div>
         </div>
 
+        <form method="post" action="{% url 'teacher_subject_bulk_delete' %}" id="teacherSubjectBulkDeleteForm">
+            {% csrf_token %}
+        </form>
         <div class="table-responsive">
             <table class="table table-modern align-middle">
                 <thead>
                     <tr>
+                        <th>
+                            <input type="checkbox" class="form-check-input" id="selectAllTeacherSubjects" title="Select all">
+                        </th>
                         <th>Teacher</th>
                         <th>Subject</th>
-                        <th>School</th>
-                        <th>Class Levels</th>
+                        <th>Class Sections / Levels</th>
                         <th>Priority</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
 
-                <tbody>
+                <tbody id="teacherSubjectTableBody">
                     {% for cap in capabilities %}
-                    <tr>
+                    <tr class="teacher-subject-row"
+                        data-search="{{ cap.teacher.name|lower }} {{ cap.subject.name|lower }} {{ cap.priority|lower }} {% for section in cap.class_sections.all %}{{ section.class_level.name|lower }} {{ section.division.name|lower }} {{ section.class_level.name|lower }}-{{ section.division.name|lower }} {% endfor %}{% for level in cap.class_levels.all %}{{ level.name|lower }} {% endfor %}">
+                        <td>
+                            <input type="checkbox"
+                                   class="form-check-input teacher-subject-select"
+                                   form="teacherSubjectBulkDeleteForm"
+                                   name="teacher_subject_ids"
+                                   value="{{ cap.pk }}">
+                        </td>
                         <td><strong>{{ cap.teacher.name }}</strong></td>
                         <td>{{ cap.subject.name }}</td>
-                        <td>{{ cap.school.name }}</td>
                         <td>
-                            {% for level in cap.class_levels.all %}
-                                <span class="badge bg-light text-dark border">{{ level.name }}</span>
+                            {% for section in cap.class_sections.all %}
+                                <span class="badge bg-light text-dark border">{{ section.class_level.name }}-{{ section.division.name }}</span>
                             {% empty %}
-                                <span class="text-muted">All / Not selected</span>
+                                {% for level in cap.class_levels.all %}
+                                    <span class="badge bg-light text-dark border">{{ level.name }}</span>
+                                {% empty %}
+                                    <span class="text-muted">All / Not selected</span>
+                                {% endfor %}
                             {% endfor %}
                         </td>
                         <td>
@@ -521,19 +925,40 @@
                     </tr>
 
                     {% empty %}
-                    <tr>
+                    <tr class="teacher-subject-empty-row">
                         <td colspan="6">
                             <div class="empty-state">
                                 <i class="bi bi-person-check"></i>
                                 <h5>No Teacher Subject Mapping Found</h5>
-                                <p>Map teachers with subjects and class levels.</p>
+                                <p>Map teachers with subjects and exact class sections.</p>
                             </div>
                         </td>
                     </tr>
                     {% endfor %}
+                    <tr id="teacherSubjectNoResultsRow" style="display:none;">
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <i class="bi bi-search"></i>
+                                <h5>No Matching Teacher Mapping</h5>
+                                <p>Try another teacher, subject, class section or priority.</p>
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
 
             </table>
+        </div>
+        <div class="pagination-panel" id="teacherSubjectPaginationPanel">
+            <div class="text-muted small" id="teacherSubjectPageInfo">Showing mappings</div>
+            <div class="pagination-actions">
+                <button type="button" class="btn btn-sm btn-light border" id="teacherSubjectPrevPage">
+                    <i class="bi bi-chevron-left"></i> Prev
+                </button>
+                <span class="badge-soft badge-primary-soft" id="teacherSubjectPageBadge">Page 1</span>
+                <button type="button" class="btn btn-sm btn-light border" id="teacherSubjectNextPage">
+                    Next <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -579,6 +1004,51 @@
                         <i class="bi bi-trash"></i> Delete
                     </button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="audit-grid">
+        <div class="audit-card">
+            <h5><i class="bi bi-exclamation-circle me-1"></i> Missing Mappings</h5>
+            <p class="text-muted small mb-2">{{ missing_mapping_count }} subject/class-section mapping gap(s)</p>
+            <div class="audit-list">
+                {% for item in missing_mappings %}
+                    <div class="audit-row">
+                        <span>{{ item.subject.name }}</span>
+                        <strong>{{ item.section.class_level.name }}-{{ item.section.division.name }}</strong>
+                    </div>
+                {% empty %}
+                    <div class="text-muted small">No missing mapping gaps found.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="audit-card">
+            <h5><i class="bi bi-person-lines-fill me-1"></i> Teacher Wise</h5>
+            <div class="audit-list">
+                {% for item in teacher_mapping_summary %}
+                    <div class="audit-row">
+                        <span>{{ item.teacher.name }}</span>
+                        <strong>{{ item.count }}</strong>
+                    </div>
+                {% empty %}
+                    <div class="text-muted small">No active teachers found.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="audit-card">
+            <h5><i class="bi bi-journal-check me-1"></i> Subject Wise</h5>
+            <div class="audit-list">
+                {% for item in subject_mapping_summary %}
+                    <div class="audit-row">
+                        <span>{{ item.subject.name }}</span>
+                        <strong>{{ item.count }}</strong>
+                    </div>
+                {% empty %}
+                    <div class="text-muted small">No active subjects found.</div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -628,6 +1098,200 @@ function openDeleteSubjectModal(button) {
     const modal = new bootstrap.Modal(document.getElementById("deleteSubjectModal"));
     modal.show();
 }
+
+function confirmBulkDelete(label) {
+    const checked = Array.from(document.querySelectorAll("input[type='checkbox'][name$='_ids']:checked"));
+    const totals = checked.reduce((acc, item) => {
+        acc.capabilities += Number(item.dataset.capabilities || 0);
+        acc.allocations += Number(item.dataset.allocations || 0);
+        acc.entries += Number(item.dataset.entries || 0);
+        return acc;
+    }, {capabilities: 0, allocations: 0, entries: 0});
+
+    const lines = [
+        `Delete ${label}`,
+        "",
+        "Affected records:",
+        `Teacher mappings: ${totals.capabilities}`,
+        `Lesson allocations: ${totals.allocations}`,
+        `Timetable entries: ${totals.entries}`,
+        "",
+        "Continue?"
+    ];
+    return window.confirm(lines.join("\n"));
+}
+
+function setupBulkSelection(selectAllId, checkboxClass, buttonId) {
+    const selectAll = document.getElementById(selectAllId);
+    const button = document.getElementById(buttonId);
+    const checkboxes = Array.from(document.querySelectorAll(`.${checkboxClass}`));
+
+    function refreshState() {
+        const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+        if (button) {
+            button.disabled = selectedCount === 0;
+        }
+
+        if (selectAll) {
+            selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            refreshState();
+        });
+    }
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", refreshState);
+    });
+
+    refreshState();
+}
+
+function setupTeacherSubjectLocalTable() {
+    const rows = Array.from(document.querySelectorAll(".teacher-subject-row"));
+    const searchInput = document.getElementById("teacherSubjectSearch");
+    const resultCount = document.getElementById("teacherSubjectResultCount");
+    const pageInfo = document.getElementById("teacherSubjectPageInfo");
+    const pageBadge = document.getElementById("teacherSubjectPageBadge");
+    const prevButton = document.getElementById("teacherSubjectPrevPage");
+    const nextButton = document.getElementById("teacherSubjectNextPage");
+    const selectAll = document.getElementById("selectAllTeacherSubjects");
+    const bulkButton = document.getElementById("teacherSubjectBulkDeleteBtn");
+    const paginationPanel = document.getElementById("teacherSubjectPaginationPanel");
+    const noResultsRow = document.getElementById("teacherSubjectNoResultsRow");
+    const pageSize = 10;
+    let currentPage = 1;
+
+    if (!rows.length) {
+        if (paginationPanel) paginationPanel.style.display = "none";
+        return;
+    }
+
+    function filteredRows() {
+        const query = (searchInput?.value || "").trim().toLowerCase();
+        if (!query) return rows;
+        return rows.filter(row => row.dataset.search.includes(query));
+    }
+
+    function visibleRows() {
+        const filtered = filteredRows();
+        const start = (currentPage - 1) * pageSize;
+        return filtered.slice(start, start + pageSize);
+    }
+
+    function refreshBulkState() {
+        const visible = visibleRows();
+        const visibleCheckboxes = visible.map(row => row.querySelector(".teacher-subject-select")).filter(Boolean);
+        const allCheckboxes = rows.map(row => row.querySelector(".teacher-subject-select")).filter(Boolean);
+        const selectedCount = allCheckboxes.filter(checkbox => checkbox.checked).length;
+        const visibleSelected = visibleCheckboxes.filter(checkbox => checkbox.checked).length;
+
+        if (bulkButton) {
+            bulkButton.disabled = selectedCount === 0;
+        }
+
+        if (selectAll) {
+            selectAll.checked = visibleCheckboxes.length > 0 && visibleSelected === visibleCheckboxes.length;
+            selectAll.indeterminate = visibleSelected > 0 && visibleSelected < visibleCheckboxes.length;
+        }
+    }
+
+    function render() {
+        const filtered = filteredRows();
+        const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+        currentPage = Math.min(currentPage, totalPages);
+
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const visibleSet = new Set(filtered.slice(start, end));
+
+        rows.forEach(row => {
+            row.style.display = visibleSet.has(row) ? "" : "none";
+        });
+
+        if (noResultsRow) {
+            noResultsRow.style.display = filtered.length ? "none" : "";
+        }
+
+        if (resultCount) {
+            resultCount.textContent = `${filtered.length} mapping${filtered.length === 1 ? "" : "s"} found`;
+        }
+
+        if (pageInfo) {
+            pageInfo.textContent = filtered.length
+                ? `Showing ${start + 1}-${Math.min(end, filtered.length)} of ${filtered.length}`
+                : "No mappings match your search";
+        }
+
+        if (pageBadge) {
+            pageBadge.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        if (prevButton) {
+            prevButton.disabled = currentPage <= 1;
+        }
+
+        if (nextButton) {
+            nextButton.disabled = currentPage >= totalPages;
+        }
+
+        if (paginationPanel) {
+            paginationPanel.style.display = filtered.length ? "" : "flex";
+        }
+
+        refreshBulkState();
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function () {
+            currentPage = 1;
+            render();
+        });
+    }
+
+    if (prevButton) {
+        prevButton.addEventListener("click", function () {
+            currentPage = Math.max(1, currentPage - 1);
+            render();
+        });
+    }
+
+    if (nextButton) {
+        nextButton.addEventListener("click", function () {
+            currentPage += 1;
+            render();
+        });
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            visibleRows().forEach(row => {
+                const checkbox = row.querySelector(".teacher-subject-select");
+                if (checkbox) checkbox.checked = selectAll.checked;
+            });
+            refreshBulkState();
+        });
+    }
+
+    rows.forEach(row => {
+        const checkbox = row.querySelector(".teacher-subject-select");
+        if (checkbox) checkbox.addEventListener("change", refreshBulkState);
+    });
+
+    render();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    setupBulkSelection("selectAllSubjects", "subject-select", "subjectBulkDeleteBtn");
+    setupTeacherSubjectLocalTable();
+});
 </script>
 
 {% endblock content %}

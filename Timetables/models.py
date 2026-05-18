@@ -6,6 +6,7 @@ from Classes.models import ClassLevel, Division
 from Teachers.models import Teacher
 from Subjects.models import Subject
 from Rooms.models import Room
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class ClassSection(models.Model):
@@ -44,8 +45,17 @@ class ClassSection(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return f"{self.class_level} {self.division}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["school", "class_level", "division"],
+                name="unique_class_section_per_school_level_division",
+            ),
+        ]
 
 
 class LessonAllocation(models.Model):
@@ -88,8 +98,17 @@ class LessonAllocation(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return f"{self.class_section} - {self.subject}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["school", "academic_year", "class_section", "subject"],
+                name="unique_lesson_allocation_per_class_subject_year",
+            ),
+        ]
 
 
 class Timetable(models.Model):
@@ -122,6 +141,7 @@ class Timetable(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name
     
@@ -145,6 +165,7 @@ class TimetableVersion(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @log_exceptions
     def __str__(self):
         return f"{self.timetable} - v{self.version_number}"
 
@@ -215,6 +236,7 @@ class TimetableSlot(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @log_exceptions
     def __str__(self):
         return f"{self.class_section} - {self.day} - {self.period}"
     
@@ -275,7 +297,20 @@ class TimetableEntry(models.Model):
             "day_id_value",
             "period_id_value",
         )
+        constraints = [
+            models.UniqueConstraint(
+                fields=["timetable", "teacher", "day_id_value", "period_id_value"],
+                condition=models.Q(teacher__isnull=False),
+                name="unique_teacher_per_timetable_period",
+            ),
+            models.UniqueConstraint(
+                fields=["timetable", "room", "day_id_value", "period_id_value"],
+                condition=models.Q(room__isnull=False),
+                name="unique_room_per_timetable_period",
+            ),
+        ]
 
+    @log_exceptions
     def __str__(self):
         return f"{self.timetable} - {self.class_section} - {self.day_name} {self.period_name}"
 
@@ -328,9 +363,11 @@ class TeacherDailyStatus(models.Model):
         unique_together = ("teacher", "date")
         ordering = ("-date", "teacher__name")
 
+    @log_exceptions
     def __str__(self):
         return f"{self.teacher} - {self.date} - {self.get_status_type_display()}"
 
+    @log_exceptions
     def covers_period(self, period_id):
         if self.full_day:
             return True
@@ -432,5 +469,6 @@ class LectureAdjustment(models.Model):
         unique_together = ("date", "original_entry")
         ordering = ("date", "day_name", "period_id_value", "class_section__class_level__sort_order")
 
+    @log_exceptions
     def __str__(self):
         return f"{self.date} - {self.original_entry} - {self.status}"

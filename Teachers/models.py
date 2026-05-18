@@ -1,6 +1,7 @@
 from django.db import models
 from Schools.models import School
 from Academic.models import Day, Period
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class Teacher(models.Model):
@@ -50,6 +51,7 @@ class Teacher(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name
 
@@ -78,5 +80,6 @@ class TeacherAvailability(models.Model):
         blank=True
     )
 
+    @log_exceptions
     def __str__(self):
         return f"{self.teacher} - {self.day}"

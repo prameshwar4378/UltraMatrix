@@ -2,6 +2,7 @@ from django.db import models
 from Schools.models import School
 from Teachers.models import Teacher
 from Classes.models import ClassLevel
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class Subject(models.Model):
@@ -10,7 +11,7 @@ class Subject(models.Model):
         ("Pre-Primary", "Pre-Primary"),
         ("PRIMARY", "Primary"),
         ("SECONDARY", "Secondary"),
-        ("Senior-Secondary", " Senior-Secondary"),
+        ("Senior-Secondary", "Senior-Secondary"),
         ("BOTH", "Both"),
     )
 
@@ -56,6 +57,7 @@ class Subject(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name
 
@@ -88,11 +90,17 @@ class TeacherSubjectCapability(models.Model):
         blank=True
     )
 
+    class_sections = models.ManyToManyField(
+        "Timetables.ClassSection",
+        blank=True
+    )
+
     priority = models.CharField(
         max_length=20,
         choices=PRIORITY_CHOICES,
         default="PRIMARY"
     )
 
+    @log_exceptions
     def __str__(self):
         return f"{self.teacher} - {self.subject}"

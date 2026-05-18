@@ -1,0 +1,6 @@
+Home => Class Setup  # in this section need to add auto division asignments
+
+
+Need to work on subject allocation that part should be done while creating teacher record instead of individual Subject and Capabilities
+
+

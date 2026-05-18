@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from Schools.models import School
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class Notification(models.Model):
@@ -25,5 +26,6 @@ class Notification(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @log_exceptions
     def __str__(self):
         return self.title

@@ -229,6 +229,11 @@
         display: inline-block;
     }
 
+    .selection-cell {
+        width: 42px;
+        text-align: center;
+    }
+
     .empty-state {
         padding: 55px 20px;
         text-align: center;
@@ -404,120 +409,123 @@
     <div class="table-card">
         <div class="table-header">
             <h5><i class="bi bi-list-ul me-1"></i> Lesson Allocation Records</h5>
-            <span class="text-muted small">Used later while building timetable slots</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small">Used later while building timetable slots</span>
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        form="allocationBulkDeleteForm"
+                        id="allocationBulkDeleteBtn"
+                        disabled
+                        onclick="return confirmAllocationBulkDelete();">
+                    <i class="bi bi-trash"></i> Delete Selected
+                </button>
+            </div>
         </div>
 
-        <div class="table-responsive">
+        <form method="post" action="{% url 'lesson_allocation_bulk_delete' %}" id="allocationBulkDeleteForm">
+            {% csrf_token %}
+            <div class="table-responsive">
             <table class="table table-modern align-middle">
                 <thead>
                     <tr>
-                        <th>Class Section</th>
-                        <th>Subject</th>
+                        <th class="selection-cell">
+                            <input type="checkbox" class="form-check-input" id="selectAllAllocations" title="Select all">
+                        </th>
                         <th>Teacher</th>
-                        <th>Room</th>
-                        <th>Weekly Periods</th>
-                        <th>Double Period</th>
+                        <th>Academic Year</th>
+                        <th>Sections</th>
+                        <th>Subjects</th>
+                        <th>Weekly Load</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    {% for allocation in allocations %}
+                    {% for group in teacher_allocation_groups %}
                     <tr>
+                        <td class="selection-cell">
+                            <input type="checkbox"
+                                   class="form-check-input allocation-select"
+                                   name="allocation_ids"
+                                   value="{{ group.allocation_ids_csv }}">
+                        </td>
                         <td>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="lesson-avatar">
-                                    {{ allocation.class_section.class_level.short_name|default:allocation.class_section.class_level.name|slice:":2" }}
+                                    {{ group.teacher.name|slice:":2" }}
                                 </div>
 
                                 <div>
-                                    <strong>{{ allocation.class_section }}</strong>
+                                    <strong>{{ group.teacher.name }}</strong>
                                     <br>
-                                    <small class="text-muted">{{ allocation.school.name }}</small>
+                                    <small class="text-muted">{{ group.teacher.employee_id|default:"No employee ID" }}</small>
                                 </div>
                             </div>
                         </td>
 
                         <td>
-                            <strong>{{ allocation.subject.name }}</strong>
+                            <strong>{{ group.academic_year.name }}</strong>
                             <br>
-                            <small class="text-muted">{{ allocation.subject.code|default:"No code" }}</small>
+                            <small class="text-muted">{{ group.school.name }}</small>
                         </td>
 
                         <td>
-                            <strong>{{ allocation.teacher.name }}</strong>
-                            <br>
-                            <small class="text-muted">{{ allocation.teacher.employee_id|default:"No employee ID" }}</small>
+                            <strong>{{ group.allocation_count }}</strong> allocation{{ group.allocation_count|pluralize }}
+                            <div class="text-muted small">
+                                {% for section in group.sections|slice:":3" %}
+                                    {{ section }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                                {% if group.sections|length > 3 %} +{{ group.sections|length|add:"-3" }} more{% endif %}
+                            </div>
                         </td>
 
                         <td>
-                            {% if allocation.default_room %}
-                                {{ allocation.default_room.name }}
-                            {% else %}
-                                <span class="text-muted">No room</span>
+                            {% for subject in group.subjects|slice:":4" %}
+                                <span class="badge-soft badge-primary-soft d-inline-flex mb-1">{{ subject }}</span>
+                            {% endfor %}
+                            {% if group.subjects|length > 4 %}
+                                <span class="text-muted small">+{{ group.subjects|length|add:"-4" }} more</span>
                             {% endif %}
                         </td>
 
                         <td>
                             <span class="badge-soft badge-primary-soft">
-                                {{ allocation.weekly_periods }} / week
+                                {{ group.weekly_periods }} / week
                             </span>
+                            <br>
+                            <small class="text-muted">{{ group.double_count }} double-period allocation{{ group.double_count|pluralize }}</small>
                         </td>
 
                         <td>
-                            {% if allocation.requires_double_period %}
-                                <span class="badge-soft badge-warning-soft">
-                                    Required
-                                </span>
-                            {% else %}
-                                <span class="text-muted">No</span>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if allocation.is_active %}
+                            {% if group.active_count %}
                                 <span class="badge-soft badge-success-soft">
-                                    <i class="bi bi-check-circle me-1"></i> Active
+                                    <i class="bi bi-check-circle me-1"></i> {{ group.active_count }} Active
                                 </span>
-                            {% else %}
+                            {% endif %}
+                            {% if group.inactive_count %}
                                 <span class="badge-soft badge-danger-soft">
-                                    <i class="bi bi-x-circle me-1"></i> Inactive
+                                    <i class="bi bi-x-circle me-1"></i> {{ group.inactive_count }} Inactive
                                 </span>
                             {% endif %}
                         </td>
 
                         <td class="text-end">
                             <a href="javascript:void(0);"
-                               data-url="{% url 'lesson_allocation_update' allocation.pk %}"
-                               onclick="openCreateModal(this)"
+                               data-url="{% url 'lesson_allocation_teacher_update' group.teacher.pk %}?academic_year_id={{ group.academic_year.pk }}"
+                               onclick="openCreateModal(this, 1280, 820)"
                                class="btn btn-sm btn-outline-warning action-btn"
-                               title="Edit">
+                               title="Bulk Update">
                                 <i class="bi bi-pencil-square"></i>
                             </a>
 
-                            <form method="post" action="{% url 'lesson_allocation_toggle_status' allocation.pk %}" class="action-form">
+                            <form method="post" action="{% url 'lesson_allocation_bulk_delete' %}" class="action-form">
                                 {% csrf_token %}
-                                <button type="submit"
-                                        class="btn btn-sm {% if allocation.is_active %}btn-outline-secondary{% else %}btn-outline-success{% endif %} action-btn"
-                                        title="{% if allocation.is_active %}Deactivate{% else %}Activate{% endif %}">
-                                    {% if allocation.is_active %}
-                                        <i class="bi bi-pause-circle"></i>
-                                    {% else %}
-                                        <i class="bi bi-play-circle"></i>
-                                    {% endif %}
+                                <input type="hidden" name="allocation_ids" value="{{ group.allocation_ids_csv }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger action-btn" title="Delete group" onclick="return confirmAllocationBulkDelete();">
+                                    <i class="bi bi-trash"></i>
                                 </button>
                             </form>
-
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-danger action-btn"
-                                    title="Delete"
-                                    data-delete-url="{% url 'lesson_allocation_delete' allocation.pk %}"
-                                    data-delete-name="{{ allocation.class_section }} - {{ allocation.subject.name }}"
-                                    data-delete-detail="{{ allocation.teacher.name }}"
-                                    onclick="openDeleteAllocationModal(this)">
-                                <i class="bi bi-trash"></i>
-                            </button>
                         </td>
                     </tr>
 
@@ -543,7 +551,8 @@
                 </tbody>
 
             </table>
-        </div>
+            </div>
+        </form>
     </div>
 
 </main>
@@ -700,6 +709,45 @@ function openDeleteAllocationModal(button) {
     const modal = new bootstrap.Modal(document.getElementById("deleteAllocationModal"));
     modal.show();
 }
+
+function confirmAllocationBulkDelete() {
+    return window.confirm("Delete selected lesson allocation(s)? Timetable entries using these allocations may no longer show an allocation reference.");
+}
+
+function setupAllocationBulkSelection() {
+    const selectAll = document.getElementById("selectAllAllocations");
+    const deleteButton = document.getElementById("allocationBulkDeleteBtn");
+    const checkboxes = Array.from(document.querySelectorAll(".allocation-select"));
+
+    function refreshState() {
+        const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+        if (deleteButton) {
+            deleteButton.disabled = selectedCount === 0;
+        }
+
+        if (selectAll) {
+            selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            refreshState();
+        });
+    }
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", refreshState);
+    });
+
+    refreshState();
+}
+
+document.addEventListener("DOMContentLoaded", setupAllocationBulkSelection);
 </script>
 
 {% endblock content %}

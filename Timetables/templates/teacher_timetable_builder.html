@@ -800,19 +800,52 @@ function saveTeacherTimetable(){
         };
     });
 
+    const payload = {
+        timetable_id: timetableId,
+        teacher_id: teacher.id,
+        entries: entries,
+    };
+
     fetch("/api/save-teacher-timetable/", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-            timetable_id: timetableId,
-            teacher_id: teacher.id,
-            entries: entries,
-        })
+        body: JSON.stringify({...payload, preview_only: true})
     })
     .then(response => response.json())
     .then(data => {
+        if(!data.success){
+            alert(data.message);
+            return;
+        }
+
+        const impact = data.impact || {};
+        const warningLines = [
+            `This will replace ${impact.total_replaced || 0} existing master timetable slot(s).`,
+            `Teacher's current slots: ${impact.teacher_entries || 0}`,
+            `Class overlaps: ${impact.class_overlaps || 0}`,
+            `Room overlaps: ${impact.room_overlaps || 0}`,
+            `Locked slots affected: ${impact.locked_entries || 0}`,
+            "",
+            "Save these changes?"
+        ];
+
+        if((impact.total_replaced || 0) && !confirm(warningLines.join("\n"))){
+            return;
+        }
+
+        return fetch("/api/save-teacher-timetable/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({...payload, confirmed_impact: true})
+        });
+    })
+    .then(response => response ? response.json() : null)
+    .then(data => {
+        if(!data) return;
         alert(data.message);
         if(data.success && window.opener){
             window.opener.location.reload();

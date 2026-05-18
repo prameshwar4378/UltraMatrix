@@ -118,6 +118,20 @@
             padding: 13px 15px;
         }
 
+        .subject-table th {
+            color: var(--text-primary);
+            font-size: .82rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            justify-content: center;
+        }
+
         .form-actions {
             background: #fff;
             padding-top: 25px;
@@ -167,69 +181,68 @@
 
     <form method="POST" class="form-body">
         {% csrf_token %}
+        {% if bulk_create %}
+            <input type="hidden" name="subjects_json" id="subjectsJson">
+        {% endif %}
 
+        {% if bulk_create %}
         <div class="form-section">
             <div class="section-title">
                 <div class="section-title-icon">
                     <i class="bi bi-journal-bookmark"></i>
                 </div>
                 <div>
-                    <h3>Subject Information</h3>
-                    <p>Add subject name, type, section and display color.</p>
+                    <h3>Quick Subject Rows</h3>
+                    <p>Edit starter subjects, remove rows you do not need, then save.</p>
                 </div>
             </div>
 
-            <div class="form-grid">
-                <div>
-                    <label class="form-label"><i class="bi bi-building"></i> School</label>
-                    {{ form.school }}
-                    {{ form.school.errors }}
-                </div>
+            <button type="button" class="btn btn-primary btn-sm mb-3" onclick="addSubjectRow()">
+                <i class="bi bi-plus-circle"></i> Add Subject Row
+            </button>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-book"></i> Subject Name</label>
-                    {{ form.name }}
-                    {{ form.name.errors }}
-                </div>
-
-                <div>
-                    <label class="form-label"><i class="bi bi-type"></i> Short Name</label>
-                    {{ form.short_name }}
-                    {{ form.short_name.errors }}
-                </div>
-
-                <div>
-                    <label class="form-label"><i class="bi bi-upc-scan"></i> Subject Code</label>
-                    {{ form.code }}
-                    {{ form.code.errors }}
-                </div>
-
-                <div>
-                    <label class="form-label"><i class="bi bi-diagram-3"></i> Section Type</label>
-                    {{ form.section_type }}
-                    {{ form.section_type.errors }}
-                </div>
-
-                <div>
-                    <label class="form-label"><i class="bi bi-ui-checks-grid"></i> Subject Type</label>
-                    {{ form.subject_type }}
-                    {{ form.subject_type.errors }}
-                </div>
-
-                <div>
-                    <label class="form-label"><i class="bi bi-palette"></i> Timetable Color</label>
-                    {{ form.color_code }}
-                    {{ form.color_code.errors }}
-                </div>
-
-                <div class="d-flex align-items-center pt-4">
-                    <div class="form-check">
-                        {{ form.is_active }}
-                        <label class="form-check-label fw-semibold">Active</label>
-                    </div>
-                </div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle subject-table">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Short</th>
+                        <th>Code</th>
+                        <th>Section</th>
+                        <th>Type</th>
+                        <th>Color</th>
+                        <th>Active</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="subjectRowsBody"></tbody>
+                </table>
             </div>
         </div>
+        {% else %}
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-title-icon">
+                        <i class="bi bi-journal-bookmark"></i>
+                    </div>
+                    <div>
+                        <h3>Subject Information</h3>
+                        <p>Add subject name, type, section and display color.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div><label class="form-label"><i class="bi bi-building"></i> School</label>{{ form.school }}{{ form.school.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-book"></i> Subject Name</label>{{ form.name }}{{ form.name.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-type"></i> Short Name</label>{{ form.short_name }}{{ form.short_name.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-upc-scan"></i> Subject Code</label>{{ form.code }}{{ form.code.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-diagram-3"></i> Section Type</label>{{ form.section_type }}{{ form.section_type.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-ui-checks-grid"></i> Subject Type</label>{{ form.subject_type }}{{ form.subject_type.errors }}</div>
+                    <div><label class="form-label"><i class="bi bi-palette"></i> Timetable Color</label>{{ form.color_code }}{{ form.color_code.errors }}</div>
+                    <div class="d-flex align-items-center pt-4"><div class="form-check">{{ form.is_active }}<label class="form-check-label fw-semibold">Active</label></div></div>
+                </div>
+            </div>
+        {% endif %}
 
         <div class="form-actions">
             <div class="text-muted">
@@ -250,8 +263,54 @@
     </form>
 </div>
 
+{% if bulk_create %}
+{{ initial_subjects_json|json_script:"initialSubjectsData" }}
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
+{% if bulk_create %}
+let subjectRows = JSON.parse(document.getElementById("initialSubjectsData").textContent);
+
+function escapeAttr(value) {
+    return String(value || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function options(values, selected) {
+    return values.map(([value, label]) => `<option value="${value}" ${selected === value ? "selected" : ""}>${label}</option>`).join("");
+}
+
+function renderSubjectRows() {
+    const body = document.getElementById("subjectRowsBody");
+    body.innerHTML = "";
+    subjectRows.forEach((subject, index) => {
+        body.innerHTML += `
+            <tr>
+                <td><input type="text" class="form-control" value="${escapeAttr(subject.name)}" onchange="updateSubjectRow(${index}, 'name', this.value)"></td>
+                <td><input type="text" class="form-control" value="${escapeAttr(subject.short_name)}" onchange="updateSubjectRow(${index}, 'short_name', this.value)"></td>
+                <td><input type="text" class="form-control" value="${escapeAttr(subject.code)}" onchange="updateSubjectRow(${index}, 'code', this.value)"></td>
+                <td><select class="form-select" onchange="updateSubjectRow(${index}, 'section_type', this.value)">${options([["Pre-Primary","Pre-Primary"],["PRIMARY","Primary"],["SECONDARY","Secondary"],["Senior-Secondary","Senior Secondary"],["BOTH","Both"]], subject.section_type)}</select></td>
+                <td><select class="form-select" onchange="updateSubjectRow(${index}, 'subject_type', this.value)">${options([["THEORY","Theory"],["PRACTICAL","Practical"],["ACTIVITY","Activity"]], subject.subject_type)}</select></td>
+                <td><input type="color" class="form-control" value="${escapeAttr(subject.color_code || '#0d6efd')}" onchange="updateSubjectRow(${index}, 'color_code', this.value)"></td>
+                <td class="text-center"><input type="checkbox" class="form-check-input" ${subject.is_active === false ? "" : "checked"} onchange="updateSubjectRow(${index}, 'is_active', this.checked)"></td>
+                <td><button type="button" class="btn btn-outline-danger icon-btn" onclick="removeSubjectRow(${index})"><i class="bi bi-trash"></i></button></td>
+            </tr>
+        `;
+    });
+}
+
+function updateSubjectRow(index, field, value) { subjectRows[index][field] = value; }
+function removeSubjectRow(index) { subjectRows.splice(index, 1); renderSubjectRows(); }
+function addSubjectRow() {
+    subjectRows.push({name:"", short_name:"", code:"", section_type:"BOTH", subject_type:"THEORY", color_code:"#0d6efd", is_active:true});
+    renderSubjectRows();
+}
+document.querySelector("form").addEventListener("submit", function(){
+    document.getElementById("subjectsJson").value = JSON.stringify(subjectRows);
+});
+renderSubjectRows();
+{% endif %}
+
 document.addEventListener("DOMContentLoaded", function(){
     if(typeof Choices === "undefined") return;
     document.querySelectorAll("select").forEach(function(select){

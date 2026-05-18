@@ -20,10 +20,10 @@ from Timetables.models import (
 )
 from Accounts.utils import school_context_for_request
 from .models import School
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
-
-
+@log_exceptions
 def _setup_completion_items(school):
     if not school:
         return []
@@ -95,6 +95,7 @@ def _setup_completion_items(school):
 
 
 @login_required
+@log_exceptions
 def setup_completion_status(request):
     school_context = school_context_for_request(request)
     active_school = school_context["current_school"]
@@ -120,6 +121,7 @@ def setup_completion_status(request):
 
 # Create your views here.
 @login_required
+@log_exceptions
 def school_dashboard(request):
     today = timezone.localdate()
     school_context = school_context_for_request(request)

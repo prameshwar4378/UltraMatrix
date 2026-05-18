@@ -1,17 +1,17 @@
 import json
 import re
+from collections import defaultdict
 from io import BytesIO
 from datetime import datetime
 
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 
 from Academic.models import AcademicYear, BellSchedule, Day, Period
-from Classes.models import ClassLevel, Division
 from Timetables.models import (
     LectureAdjustment,
     TeacherDailyStatus,
@@ -20,35 +20,15 @@ from Timetables.models import (
     ClassSection,
 )
 from Teachers.models import Teacher, TeacherAvailability
-from Subjects.models import Subject
+from Subjects.models import Subject, TeacherSubjectCapability
 from Rooms.models import Room
 from Accounts.utils import get_current_school, get_school_object_or_404
 import json
 from django.views.decorators.csrf import csrf_exempt
-
-def auto_create_class_sections(school=None):
-    class_levels = ClassLevel.objects.filter(is_active=True).select_related("school")
-    divisions = Division.objects.filter(is_active=True).select_related("school")
-    if school:
-        class_levels = class_levels.filter(school=school)
-        divisions = divisions.filter(school=school)
-
-    for class_level in class_levels:
-        matching_divisions = divisions.filter(school=class_level.school)
-
-        for division in matching_divisions:
-            ClassSection.objects.get_or_create(
-                school=class_level.school,
-                class_level=class_level,
-                division=division,
-                defaults={
-                    "capacity": 0,
-                    "is_active": True,
-                }
-            )
-
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 @login_required
+@log_exceptions
 def timetable_builder(request, template_name="timetable_builder.html"):
     current_school = get_current_school(request)
     if not current_school:
@@ -65,8 +45,6 @@ def timetable_builder(request, template_name="timetable_builder.html"):
             "lesson_allocations_json": [],
             "teacher_availability_json": [],
         })
-
-    auto_create_class_sections(current_school)
 
     academic_years = AcademicYear.objects.select_related("school").filter(school=current_school).order_by("-id")
     selected_academic_year_id = request.GET.get("academic_year_id")
@@ -238,11 +216,13 @@ def timetable_builder(request, template_name="timetable_builder.html"):
 
 
 @login_required
+@log_exceptions
 def timetable_builder_template_2(request):
     return timetable_builder(request, "timetable_builder_template_2.html")
 
 
 @login_required
+@log_exceptions
 def timetable_builder_template_3(request):
     return timetable_builder(request, "timetable_builder_template_3.html")
 
@@ -256,6 +236,7 @@ def timetable_builder_template_3(request):
 from .models import  TimetableEntry
 
 
+@log_exceptions
 def _dedupe_by(items, key_func):
     deduped = []
     seen = set()
@@ -272,10 +253,12 @@ def _dedupe_by(items, key_func):
     return deduped
 
 
+@log_exceptions
 def _format_period_time(value):
     return value.strftime("%H:%M") if value else ""
 
 
+@log_exceptions
 def _builder_bell_schedule(timetable=None, school=None):
     if timetable:
         bell_schedule = BellSchedule.objects.filter(
@@ -294,6 +277,7 @@ def _builder_bell_schedule(timetable=None, school=None):
     return bell_schedules.order_by("-id").first()
 
 
+@log_exceptions
 def _builder_periods_data(timetable=None, school=None):
     bell_schedule = _builder_bell_schedule(timetable, school)
     school = timetable.school if timetable else school or bell_schedule.school if bell_schedule else None
@@ -363,6 +347,7 @@ def _builder_periods_data(timetable=None, school=None):
     return periods_data
 
 
+@log_exceptions
 def _builder_class_sections_data(school):
     class_sections = ClassSection.objects.select_related(
         "school",
@@ -394,6 +379,7 @@ def _builder_class_sections_data(school):
     } for section in class_sections]
 
 
+@log_exceptions
 def _builder_subjects_data(school):
     subjects = Subject.objects.select_related("school").filter(school=school, is_active=True).order_by("name")
 
@@ -408,6 +394,7 @@ def _builder_subjects_data(school):
     } for subject in subjects]
 
 
+@log_exceptions
 def _builder_rooms_data(school):
     rooms = Room.objects.select_related("school").filter(school=school, is_active=True).order_by("name")
 
@@ -419,6 +406,7 @@ def _builder_rooms_data(school):
     } for room in rooms]
 
 
+@log_exceptions
 def _entry_data_for_teacher(timetable, teacher):
     data = {}
     occupied = {}
@@ -458,12 +446,11 @@ def _entry_data_for_teacher(timetable, teacher):
 
 
 @login_required
+@log_exceptions
 def teacher_timetable_builder(request, teacher_id):
     current_school = get_current_school(request)
     if not current_school:
         return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
-
-    auto_create_class_sections(current_school)
 
     teacher = get_object_or_404(Teacher, id=teacher_id, school=current_school, is_active=True)
     timetable_id = request.GET.get("timetable_id")
@@ -498,6 +485,369 @@ def teacher_timetable_builder(request, teacher_id):
 
 @csrf_exempt
 @login_required
+@log_exceptions
+def validate_timetable_entries(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request"})
+
+    data = json.loads(request.body)
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
+
+    timetable_id = data.get("timetable_id")
+    entries = data.get("entries", [])
+
+    if not timetable_id:
+        return JsonResponse({"success": False, "message": "Timetable is required"})
+
+    timetable = get_object_or_404(Timetable, id=timetable_id, school=current_school)
+    validation = _validate_timetable_payload(current_school, timetable, entries)
+
+    return JsonResponse({
+        "success": not validation["errors"],
+        "message": _validation_message(validation, saving=False),
+        "validation": validation,
+    })
+
+
+@log_exceptions
+def _validation_message(validation, saving=False):
+    error_count = len(validation["errors"])
+    warning_count = len(validation["warnings"])
+
+    if error_count:
+        return f"Timetable has {error_count} critical issue(s). Fix them before saving."
+
+    if warning_count:
+        action = "saved" if saving else "valid"
+        return f"Timetable is {action} with {warning_count} warning(s). Review the audit details."
+
+    return "Timetable validation passed." if not saving else "Timetable saved successfully."
+
+
+@log_exceptions
+def _room_type_warning(subject, room):
+    if not subject or not room:
+        return ""
+
+    if subject.subject_type == "PRACTICAL" and room.room_type == "CLASSROOM":
+        return (
+            f"{subject.name} is a practical subject, so it should use a lab or activity room "
+            f"instead of classroom '{room.name}'."
+        )
+
+    return ""
+
+
+@log_exceptions
+def _validate_timetable_payload(current_school, timetable, entries):
+    errors = []
+    warnings = []
+    summary = {
+        "entries": len(entries),
+        "teacher_conflicts": 0,
+        "room_conflicts": 0,
+        "missing_allocations": 0,
+        "extra_allocations": 0,
+        "teacher_unavailable": 0,
+        "teacher_overloads": 0,
+        "class_without_room": 0,
+        "capability_mismatches": 0,
+        "class_teacher_issues": 0,
+    }
+
+    periods_by_key = {
+        (str(item["day_id"]), str(item["period_id"])): item
+        for item in _builder_periods_data(timetable=timetable)
+    }
+    class_sections = {
+        str(section.id): section
+        for section in ClassSection.objects.select_related("class_level", "division", "class_teacher").filter(school=current_school, is_active=True)
+    }
+    teachers = {
+        str(teacher.id): teacher
+        for teacher in Teacher.objects.filter(school=current_school, is_active=True)
+    }
+    subjects = {
+        str(subject.id): subject
+        for subject in Subject.objects.filter(school=current_school, is_active=True)
+    }
+    rooms = {
+        str(room.id): room
+        for room in Room.objects.filter(school=current_school, is_active=True)
+    }
+    capability_exact_sections = set()
+    capability_class_levels = set()
+    capability_broad = set()
+    capabilities = TeacherSubjectCapability.objects.filter(
+        school=current_school,
+    ).prefetch_related("class_sections", "class_levels")
+
+    for capability in capabilities:
+        pair = (str(capability.teacher_id), str(capability.subject_id))
+        section_ids = {str(section_id) for section_id in capability.class_sections.values_list("id", flat=True)}
+        level_ids = {str(level_id) for level_id in capability.class_levels.values_list("id", flat=True)}
+
+        if not section_ids and not level_ids:
+            capability_broad.add(pair)
+
+        for section_id in section_ids:
+            capability_exact_sections.add((*pair, section_id))
+
+        for level_id in level_ids:
+            capability_class_levels.add((*pair, level_id))
+
+    teacher_slots = defaultdict(list)
+    room_slots = defaultdict(list)
+    class_slots = defaultdict(list)
+    teacher_day_load = defaultdict(int)
+    teacher_week_load = defaultdict(int)
+    allocation_load = defaultdict(int)
+
+    for index, entry in enumerate(entries, start=1):
+        class_id = str(entry.get("class_section_id") or "")
+        day_id = str(entry.get("day_id") or "")
+        period_id = str(entry.get("period_id") or "")
+        teacher_id = str(entry.get("teacher_id") or "")
+        subject_id = str(entry.get("subject_id") or "")
+        room_id = str(entry.get("room_id") or "")
+        label = f"Row {index}: {entry.get('day_name', '')} {entry.get('period_name', '')}".strip()
+
+        if class_id not in class_sections:
+            errors.append(f"{label}: invalid or inactive class section.")
+            continue
+
+        period = periods_by_key.get((day_id, period_id))
+        if not period:
+            errors.append(f"{label}: invalid period for this timetable bell schedule.")
+            continue
+
+        if not period.get("is_teaching_period"):
+            errors.append(f"{label}: lecture assigned in non-teaching period '{period.get('period_name')}'.")
+
+        class_slot_key = (class_id, day_id, period_id)
+        class_slots[class_slot_key].append(label)
+
+        if subject_id and subject_id not in subjects:
+            errors.append(f"{label}: invalid or inactive subject.")
+
+        if teacher_id and teacher_id not in teachers:
+            errors.append(f"{label}: invalid or inactive teacher.")
+
+        if room_id and room_id not in rooms:
+            errors.append(f"{label}: invalid or inactive room.")
+
+        if not room_id:
+            summary["class_without_room"] += 1
+            class_name = str(class_sections.get(class_id, "Class"))
+            subject_name = subjects.get(subject_id).name if subject_id in subjects else "Subject"
+            warnings.append(f"No room assigned: {class_name} - {entry.get('day_name', '')} {entry.get('period_name', '')} - {subject_name}.")
+
+        if teacher_id and teacher_id in teachers:
+            teacher_slots[(teacher_id, day_id, period_id)].append(label)
+            teacher_day_load[(teacher_id, day_id)] += 1
+            teacher_week_load[teacher_id] += 1
+
+            unavailable = TeacherAvailability.objects.filter(
+                teacher_id=teacher_id,
+                day_id=day_id,
+                period_id=period_id,
+                is_available=False,
+            ).exists()
+            if unavailable:
+                summary["teacher_unavailable"] += 1
+                errors.append(f"{label}: {teachers[teacher_id].name} is unavailable in this period.")
+
+        if class_id in class_sections and teacher_id in teachers and subject_id in subjects:
+            class_section = class_sections[class_id]
+            pair = (teacher_id, subject_id)
+            has_capability = (
+                pair in capability_broad or
+                (*pair, class_id) in capability_exact_sections or
+                (*pair, str(class_section.class_level_id)) in capability_class_levels
+            )
+            if not has_capability:
+                summary["capability_mismatches"] += 1
+                errors.append(
+                    f"{label}: {teachers[teacher_id].name} does not have Teacher Subject Capability for {class_section} - {subjects[subject_id].name}."
+                )
+
+        if room_id and room_id in rooms:
+            if subject_id in subjects:
+                room_type_warning = _room_type_warning(subjects[subject_id], rooms[room_id])
+                if room_type_warning:
+                    warnings.append(f"{label}: {room_type_warning}")
+            room_slots[(room_id, day_id, period_id)].append(label)
+
+        if class_id and subject_id and teacher_id:
+            allocation_load[(class_id, subject_id, teacher_id)] += 1
+
+    for labels in class_slots.values():
+        if len(labels) > 1:
+            errors.append(f"Class slot duplicate: {', '.join(labels)}.")
+
+    for (teacher_id, day_id, period_id), labels in teacher_slots.items():
+        if len(labels) > 1:
+            summary["teacher_conflicts"] += 1
+            teacher_name = teachers.get(teacher_id).name if teacher_id in teachers else "Teacher"
+            errors.append(f"{teacher_name} is double-booked in the same period: {', '.join(labels)}.")
+
+    for (room_id, day_id, period_id), labels in room_slots.items():
+        if len(labels) > 1:
+            summary["room_conflicts"] += 1
+            room_name = rooms.get(room_id).name if room_id in rooms else "Room"
+            errors.append(f"{room_name} is double-booked in the same period: {', '.join(labels)}.")
+
+    teacher_required_week = defaultdict(int)
+    class_teacher_allocation_load = defaultdict(int)
+    allocations = LessonAllocation.objects.select_related("class_section", "subject", "teacher").filter(
+        school=current_school,
+        academic_year=timetable.academic_year,
+        is_active=True,
+    )
+    allocation_keys = set()
+    for allocation in allocations:
+        key = (str(allocation.class_section_id), str(allocation.subject_id), str(allocation.teacher_id))
+        allocation_keys.add(key)
+        teacher_required_week[str(allocation.teacher_id)] += allocation.weekly_periods
+        class_teacher_allocation_load[(str(allocation.class_section_id), str(allocation.teacher_id))] += allocation.weekly_periods
+        placed = allocation_load.get(key, 0)
+        if placed < allocation.weekly_periods:
+            summary["missing_allocations"] += allocation.weekly_periods - placed
+            warnings.append(
+                f"Missing {allocation.weekly_periods - placed} period(s): {allocation.teacher.name} - {allocation.class_section} - {allocation.subject.name}."
+            )
+        elif placed > allocation.weekly_periods:
+            summary["extra_allocations"] += placed - allocation.weekly_periods
+            warnings.append(
+                f"Extra {placed - allocation.weekly_periods} period(s): {allocation.teacher.name} - {allocation.class_section} - {allocation.subject.name}."
+            )
+
+    for key, placed in allocation_load.items():
+        if key not in allocation_keys:
+            class_id, subject_id, teacher_id = key
+            warnings.append(
+                f"No active lesson allocation found for {teachers.get(teacher_id, 'Teacher')} - {class_sections.get(class_id, 'Class')} - {subjects.get(subject_id, 'Subject')}."
+            )
+
+    first_teaching_periods_by_day = {}
+    for period in periods_by_key.values():
+        if not period.get("is_teaching_period"):
+            continue
+        day_id = str(period["day_id"])
+        existing = first_teaching_periods_by_day.get(day_id)
+        if not existing or period.get("period_number", 0) < existing.get("period_number", 0):
+            first_teaching_periods_by_day[day_id] = period
+
+    first_lecture_required_count = len(first_teaching_periods_by_day)
+    if first_lecture_required_count:
+        for class_section in class_sections.values():
+            if not class_section.class_teacher_id:
+                continue
+
+            class_teacher_id = str(class_section.class_teacher_id)
+            allocated_count = class_teacher_allocation_load.get((str(class_section.id), class_teacher_id), 0)
+            teacher_name = class_section.class_teacher.name if class_section.class_teacher else "Class teacher"
+
+            if not allocated_count:
+                summary["class_teacher_issues"] += 1
+                warnings.append(
+                    f"Class teacher priority not ready: {teacher_name} is class teacher for {class_section}, but has no active lesson allocation for this class."
+                )
+            elif allocated_count < first_lecture_required_count:
+                summary["class_teacher_issues"] += 1
+                warnings.append(
+                    f"Class teacher priority partial: {teacher_name} has {allocated_count} allocated period(s) for {class_section}, but {first_lecture_required_count} first-lecture slot(s) are needed for all working days."
+                )
+
+    for teacher_id, load in teacher_week_load.items():
+        teacher = teachers.get(teacher_id)
+        if not teacher:
+            continue
+        effective_week_limit = max(teacher.max_periods_per_week or 0, teacher_required_week.get(teacher_id, 0))
+        if effective_week_limit and load > effective_week_limit:
+            summary["teacher_overloads"] += 1
+            errors.append(f"{teacher.name} has {load} periods/week, above allowed {effective_week_limit}.")
+
+    teaching_day_count = len({item["day_id"] for item in periods_by_key.values() if item.get("is_teaching_period")}) or 1
+    for (teacher_id, day_id), load in teacher_day_load.items():
+        teacher = teachers.get(teacher_id)
+        if not teacher:
+            continue
+        effective_day_limit = max(
+            teacher.max_periods_per_day or 0,
+            (teacher_required_week.get(teacher_id, 0) + teaching_day_count - 1) // teaching_day_count,
+        )
+        if effective_day_limit and load > effective_day_limit:
+            summary["teacher_overloads"] += 1
+            errors.append(f"{teacher.name} has {load} periods on one day, above allowed {effective_day_limit}.")
+
+    return {
+        "errors": errors,
+        "warnings": warnings,
+        "summary": summary,
+    }
+
+
+@log_exceptions
+def _teacher_timetable_impact(timetable, teacher, entries):
+    target_keys = [
+        (
+            str(entry["class_section_id"]),
+            str(entry["day_id"]),
+            str(entry["period_id"]),
+        )
+        for entry in entries
+    ]
+    target_rooms = [
+        (
+            str(entry.get("room_id")),
+            str(entry["day_id"]),
+            str(entry["period_id"]),
+        )
+        for entry in entries
+        if entry.get("room_id")
+    ]
+
+    teacher_entries = TimetableEntry.objects.filter(timetable=timetable, teacher=teacher)
+    class_overlaps = TimetableEntry.objects.none()
+    room_overlaps = TimetableEntry.objects.none()
+
+    for class_section_id, day_id, period_id in target_keys:
+        class_overlaps = class_overlaps | TimetableEntry.objects.filter(
+            timetable=timetable,
+            class_section_id=class_section_id,
+            day_id_value=day_id,
+            period_id_value=period_id,
+        ).exclude(teacher=teacher)
+
+    for room_id, day_id, period_id in target_rooms:
+        room_overlaps = room_overlaps | TimetableEntry.objects.filter(
+            timetable=timetable,
+            room_id=room_id,
+            day_id_value=day_id,
+            period_id_value=period_id,
+        ).exclude(teacher=teacher)
+
+    impacted_ids = set(teacher_entries.values_list("id", flat=True))
+    impacted_ids.update(class_overlaps.values_list("id", flat=True))
+    impacted_ids.update(room_overlaps.values_list("id", flat=True))
+
+    locked_count = TimetableEntry.objects.filter(id__in=impacted_ids, is_locked=True).count()
+
+    return {
+        "teacher_entries": teacher_entries.count(),
+        "class_overlaps": class_overlaps.distinct().count(),
+        "room_overlaps": room_overlaps.distinct().count(),
+        "total_replaced": len(impacted_ids),
+        "locked_entries": locked_count,
+    }
+
+
+@csrf_exempt
+@login_required
+@log_exceptions
 def save_timetable_entries(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request"})
@@ -514,37 +864,54 @@ def save_timetable_entries(request):
         return JsonResponse({"success": False, "message": "Timetable is required"})
 
     timetable = get_object_or_404(Timetable, id=timetable_id, school=current_school)
+    validation = _validate_timetable_payload(current_school, timetable, entries)
+    if validation["errors"]:
+        return JsonResponse({
+            "success": False,
+            "message": _validation_message(validation, saving=True),
+            "validation": validation,
+        })
 
-    TimetableEntry.objects.filter(timetable=timetable).delete()
+    try:
+        with transaction.atomic():
+            TimetableEntry.objects.filter(timetable=timetable).delete()
 
-    for entry in entries:
-        class_section = get_object_or_404(ClassSection, id=entry["class_section_id"], school=current_school)
+            for entry in entries:
+                class_section = get_object_or_404(ClassSection, id=entry["class_section_id"], school=current_school)
 
-        subject = Subject.objects.filter(id=entry.get("subject_id"), school=current_school).first()
-        teacher = Teacher.objects.filter(id=entry.get("teacher_id"), school=current_school).first()
-        room = Room.objects.filter(id=entry.get("room_id"), school=current_school).first()
+                subject = Subject.objects.filter(id=entry.get("subject_id"), school=current_school).first()
+                teacher = Teacher.objects.filter(id=entry.get("teacher_id"), school=current_school).first()
+                room = Room.objects.filter(id=entry.get("room_id"), school=current_school).first()
 
-        TimetableEntry.objects.create(
-            timetable=timetable,
-            class_section=class_section,
-            day_id_value=entry["day_id"],
-            day_name=entry["day_name"],
-            period_id_value=entry["period_id"],
-            period_name=entry["period_name"],
-            subject=subject,
-            teacher=teacher,
-            room=room,
-            is_locked=entry.get("is_locked", False),
-        )
+                TimetableEntry.objects.create(
+                    timetable=timetable,
+                    class_section=class_section,
+                    day_id_value=entry["day_id"],
+                    day_name=entry["day_name"],
+                    period_id_value=entry["period_id"],
+                    period_name=entry["period_name"],
+                    subject=subject,
+                    teacher=teacher,
+                    room=room,
+                    is_locked=entry.get("is_locked", False),
+                )
+    except IntegrityError:
+        return JsonResponse({
+            "success": False,
+            "message": "Timetable could not be saved because a duplicate teacher, room, or class slot was detected. Please run Validate and fix the highlighted issue.",
+            "validation": validation,
+        })
 
     return JsonResponse({
         "success": True,
-        "message": "Timetable saved successfully"
+        "message": _validation_message(validation, saving=True),
+        "validation": validation,
     })
 
 
 @csrf_exempt
 @login_required
+@log_exceptions
 def save_teacher_timetable_entries(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request"})
@@ -578,6 +945,42 @@ def save_teacher_timetable_entries(request):
         return JsonResponse({
             "success": False,
             "message": "This teacher cannot be assigned to more than one class in the same period."
+        })
+
+    impact = _teacher_timetable_impact(timetable, teacher, entries)
+
+    validation_entries = []
+    for entry in entries:
+        validation_entries.append({
+            **entry,
+            "teacher_id": teacher.id,
+            "teacher_name": teacher.name,
+        })
+
+    validation = _validate_timetable_payload(current_school, timetable, validation_entries)
+    if validation["errors"]:
+        return JsonResponse({
+            "success": False,
+            "message": _validation_message(validation, saving=True),
+            "validation": validation,
+            "impact": impact,
+        })
+
+    if data.get("preview_only"):
+        return JsonResponse({
+            "success": True,
+            "message": "Teacher timetable impact preview ready.",
+            "impact": impact,
+            "validation": validation,
+        })
+
+    if impact["total_replaced"] and not data.get("confirmed_impact"):
+        return JsonResponse({
+            "success": False,
+            "requires_confirmation": True,
+            "message": "This save will replace existing master timetable entries. Please confirm the impact preview first.",
+            "impact": impact,
+            "validation": validation,
         })
 
     with transaction.atomic():
@@ -625,7 +1028,9 @@ def save_teacher_timetable_entries(request):
 
     return JsonResponse({
         "success": True,
-        "message": f"{teacher.name}'s timetable saved successfully"
+        "message": f"{teacher.name}'s timetable saved successfully",
+        "impact": impact,
+        "validation": validation,
     })
 
 
@@ -643,6 +1048,7 @@ from Timetables.models import Timetable
 
 @csrf_exempt
 @login_required
+@log_exceptions
 def create_timetable_api(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request"})
@@ -694,6 +1100,7 @@ def create_timetable_api(request):
 
 @csrf_exempt
 @login_required
+@log_exceptions
 def load_timetable_entries(request):
     timetable_id = request.GET.get("timetable_id")
 
@@ -730,6 +1137,7 @@ def load_timetable_entries(request):
     })
 
 
+@log_exceptions
 def _parse_adjustment_date(value):
     if not value:
         return timezone.localdate()
@@ -740,6 +1148,7 @@ def _parse_adjustment_date(value):
         return timezone.localdate()
 
 
+@log_exceptions
 def _status_data(status):
     return {
         "id": status.id,
@@ -754,6 +1163,7 @@ def _status_data(status):
     }
 
 
+@log_exceptions
 def _adjustment_data(adjustment):
     return {
         "id": adjustment.id,
@@ -767,6 +1177,7 @@ def _adjustment_data(adjustment):
     }
 
 
+@log_exceptions
 def _period_is_status_covered(status, period_id):
     if status.full_day:
         return True
@@ -774,6 +1185,7 @@ def _period_is_status_covered(status, period_id):
     return str(period_id) in {str(item) for item in status.unavailable_periods.values_list("id", flat=True)}
 
 
+@log_exceptions
 def _teacher_unavailable_status(statuses, teacher_id, period_id):
     for status in statuses:
         if status.teacher_id == teacher_id and _period_is_status_covered(status, period_id):
@@ -782,10 +1194,12 @@ def _teacher_unavailable_status(statuses, teacher_id, period_id):
     return None
 
 
+@log_exceptions
 def _date_day_name(adjustment_date):
     return adjustment_date.strftime("%A")
 
 
+@log_exceptions
 def _teacher_day_load(timetable, adjustment_date, teacher_id):
     day_name = _date_day_name(adjustment_date)
     master_count = TimetableEntry.objects.filter(
@@ -802,6 +1216,7 @@ def _teacher_day_load(timetable, adjustment_date, teacher_id):
     return master_count + proxy_count
 
 
+@log_exceptions
 def _teaching_period_count(timetable, day_name=None):
     periods = [period for period in _builder_periods_data(timetable) if period["is_teaching_period"]]
 
@@ -811,6 +1226,7 @@ def _teaching_period_count(timetable, day_name=None):
     return len(periods)
 
 
+@log_exceptions
 def _teacher_load_payload(timetable, adjustment_date, teacher):
     day_name = _date_day_name(adjustment_date)
     total = _teaching_period_count(timetable, day_name)
@@ -826,6 +1242,7 @@ def _teacher_load_payload(timetable, adjustment_date, teacher):
     }
 
 
+@log_exceptions
 def _teacher_has_period_conflict(timetable, adjustment_date, teacher_id, day_id, period_id, original_entry_id=None):
     master_conflict = TimetableEntry.objects.filter(
         timetable=timetable,
@@ -849,6 +1266,7 @@ def _teacher_has_period_conflict(timetable, adjustment_date, teacher_id, day_id,
     ).exclude(original_entry_id=original_entry_id).exists()
 
 
+@log_exceptions
 def _teacher_static_available(teacher_id, day_id, period_id):
     availability = TeacherAvailability.objects.filter(
         teacher_id=teacher_id,
@@ -859,6 +1277,7 @@ def _teacher_static_available(teacher_id, day_id, period_id):
     return not availability or availability.is_available
 
 
+@log_exceptions
 def _suggest_proxy_teachers(entry, adjustment_date, statuses):
     if not entry.teacher_id:
         return []
@@ -929,6 +1348,7 @@ def _suggest_proxy_teachers(entry, adjustment_date, statuses):
     return sorted(suggestions, key=lambda item: (-item["score"], item["day_load"], item["name"]))[:8]
 
 
+@log_exceptions
 def _entry_adjustment_payload(entry, adjustment_date, statuses, adjustment=None):
     covered_status = _teacher_unavailable_status(statuses, entry.teacher_id, entry.period_id_value)
     effective_adjustment = adjustment
@@ -959,9 +1379,8 @@ def _entry_adjustment_payload(entry, adjustment_date, statuses, adjustment=None)
 
 
 @login_required
+@log_exceptions
 def proxy_adjustment_panel(request):
-    auto_create_class_sections()
-
     timetables = Timetable.objects.select_related("school", "academic_year").filter(is_active=True).order_by("-id")
     selected_timetable = timetables.first()
     teachers = Teacher.objects.select_related("school").filter(is_active=True)
@@ -986,6 +1405,7 @@ def proxy_adjustment_panel(request):
 
 @csrf_exempt
 @login_required
+@log_exceptions
 def proxy_adjustment_data(request):
     timetable_id = request.GET.get("timetable_id")
     adjustment_date = _parse_adjustment_date(request.GET.get("date"))
@@ -1047,6 +1467,7 @@ def proxy_adjustment_data(request):
 
 @csrf_exempt
 @login_required
+@log_exceptions
 def save_teacher_daily_status(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request."})
@@ -1087,6 +1508,7 @@ def save_teacher_daily_status(request):
 
 @csrf_exempt
 @login_required
+@log_exceptions
 def delete_teacher_daily_status(request, status_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request."})
@@ -1103,6 +1525,7 @@ def delete_teacher_daily_status(request, status_id):
     return JsonResponse({"success": True, "message": "Teacher status and linked lecture adjustments removed."})
 
 
+@log_exceptions
 def _create_or_update_adjustment(entry, adjustment_date, payload, teacher_status=None):
     return LectureAdjustment.objects.update_or_create(
         date=adjustment_date,
@@ -1129,6 +1552,7 @@ def _create_or_update_adjustment(entry, adjustment_date, payload, teacher_status
 
 @csrf_exempt
 @login_required
+@log_exceptions
 def save_lecture_adjustment(request):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request."})
@@ -1187,6 +1611,7 @@ def save_lecture_adjustment(request):
 
 @csrf_exempt
 @login_required
+@log_exceptions
 def delete_lecture_adjustment(request, adjustment_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request."})
@@ -1198,6 +1623,7 @@ def delete_lecture_adjustment(request, adjustment_id):
 
 
 @login_required
+@log_exceptions
 def export_proxy_adjustments(request):
     timetable_id = request.GET.get("timetable_id")
     adjustment_date = _parse_adjustment_date(request.GET.get("date"))
@@ -1316,6 +1742,7 @@ def export_proxy_adjustments(request):
     return response
 
 
+@log_exceptions
 def _safe_sheet_title(title, existing_titles):
     clean = re.sub(r"[\[\]\:\*\?\/\\]", " ", str(title)).strip() or "Timetable"
     clean = re.sub(r"\s+", " ", clean)[:31]
@@ -1331,6 +1758,7 @@ def _safe_sheet_title(title, existing_titles):
     return candidate
 
 
+@log_exceptions
 def _ordered_export_days(periods_data):
     days = []
     seen = set()
@@ -1350,6 +1778,7 @@ def _ordered_export_days(periods_data):
     return days
 
 
+@log_exceptions
 def _ordered_export_period_rows(periods_data):
     rows = []
     seen = set()
@@ -1378,6 +1807,7 @@ def _ordered_export_period_rows(periods_data):
     return sorted(rows, key=lambda item: item["number"])
 
 
+@log_exceptions
 def _period_for_day_row(periods_data, day_id, row):
     for period in periods_data:
         if (
@@ -1391,6 +1821,7 @@ def _period_for_day_row(periods_data, day_id, row):
     return None
 
 
+@log_exceptions
 def _export_entities(scope, timetable):
     if scope == "class":
         return ClassSection.objects.select_related(
@@ -1409,6 +1840,7 @@ def _export_entities(scope, timetable):
     ).order_by("name", "id")
 
 
+@log_exceptions
 def _export_entry_lookup(timetable, scope):
     entries = TimetableEntry.objects.filter(
         timetable=timetable
@@ -1433,6 +1865,7 @@ def _export_entry_lookup(timetable, scope):
     return lookup
 
 
+@log_exceptions
 def _entry_text(entry, scope):
     if not entry:
         return ""
@@ -1455,6 +1888,7 @@ def _entry_text(entry, scope):
     return "\n".join(parts)
 
 
+@log_exceptions
 def _entity_title(entity, scope):
     if scope == "class":
         return str(entity)
@@ -1462,6 +1896,7 @@ def _entity_title(entity, scope):
     return entity.name
 
 
+@log_exceptions
 def _entity_subtitle(entity, scope):
     if scope == "class":
         teacher = entity.class_teacher.name if entity.class_teacher else "Not assigned"
@@ -1477,12 +1912,14 @@ def _entity_subtitle(entity, scope):
     return " | ".join(bits)
 
 
+@log_exceptions
 def _export_filename(timetable, scope, extension):
     school = re.sub(r"[^A-Za-z0-9]+", "-", timetable.school.short_name or timetable.school.name).strip("-")
     name = re.sub(r"[^A-Za-z0-9]+", "-", timetable.name).strip("-")
     return f"{school}-{name}-{scope}-wise-timetable.{extension}"
 
 
+@log_exceptions
 def _build_excel_timetable(timetable, scope):
     from openpyxl import Workbook
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
@@ -1511,6 +1948,7 @@ def _build_excel_timetable(timetable, scope):
     thin = Side(style="thin", color=border_color)
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
+    @log_exceptions
     def style_heading(sheet, title, subtitle):
         last_col = max(2, len(days) + 1)
         sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=last_col)
@@ -1638,6 +2076,7 @@ def _build_excel_timetable(timetable, scope):
     return stream.getvalue()
 
 
+@log_exceptions
 def _build_pdf_timetable(timetable, scope):
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER
@@ -1770,6 +2209,7 @@ def _build_pdf_timetable(timetable, scope):
 
 
 @login_required
+@log_exceptions
 def export_timetable(request, timetable_id, scope, file_format):
     if scope not in {"class", "teacher"}:
         return JsonResponse({"success": False, "message": "Invalid export scope"}, status=400)

@@ -1,5 +1,6 @@
 from django.db import models
 from Schools.models import School
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class ClassLevel(models.Model):
@@ -8,7 +9,7 @@ class ClassLevel(models.Model):
         ("Pre-Primary", "Pre-Primary"),
         ("PRIMARY", "Primary"),
         ("SECONDARY", "Secondary"),
-        (" Senior-Secondary", " Senior-Secondary"),
+        ("Senior-Secondary", "Senior-Secondary"),
     )
 
     school = models.ForeignKey(
@@ -32,6 +33,7 @@ class ClassLevel(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name
 
@@ -49,5 +51,6 @@ class Division(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name

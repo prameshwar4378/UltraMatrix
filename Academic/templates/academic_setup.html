@@ -55,6 +55,56 @@
             opacity: .9;
         }
 
+        .form-header-content {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .info-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            color: white;
+            border: 1px solid rgba(255,255,255,.45);
+            background: rgba(255,255,255,.14);
+            font-size: 1.1rem;
+        }
+
+        .info-btn:hover {
+            color: white;
+            background: rgba(255,255,255,.22);
+        }
+
+        .feature-guide-list {
+            display: grid;
+            gap: 14px;
+        }
+
+        .feature-guide-item {
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 14px 16px;
+            background: var(--light-bg);
+        }
+
+        .feature-guide-item h6 {
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+
+        .feature-guide-item p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
         .form-body {
             padding: 40px;
         }
@@ -207,8 +257,20 @@
 <div class="form-container">
 
     <div class="form-header">
-        <h1><i class="bi bi-calendar2-week me-2"></i>{{ form_title }}</h1>
-        <p>{{ form_subtitle }}</p>
+        <div class="form-header-content">
+            <div>
+                <h1><i class="bi bi-calendar2-week me-2"></i>{{ form_title }}</h1>
+                <p>{{ form_subtitle }}</p>
+            </div>
+
+            <button type="button"
+                    class="btn info-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#academicFeatureInfoModal"
+                    title="About Academic Setup">
+                <i class="bi bi-info-circle"></i>
+            </button>
+        </div>
     </div>
 
     <form method="POST" class="form-body" id="academicSetupForm">
@@ -379,10 +441,54 @@
     </form>
 </div>
 
+<div class="modal fade" id="academicFeatureInfoModal" tabindex="-1" aria-labelledby="academicFeatureInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="academicFeatureInfoModalLabel">
+                    <i class="bi bi-info-circle text-primary me-2"></i> Academic Setup Guide
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="feature-guide-list">
+                    <div class="feature-guide-item">
+                        <h6>Basic Academic Information</h6>
+                        <p>Set the session name, start date, end date and active status for the school year.</p>
+                    </div>
+
+                    <div class="feature-guide-item">
+                        <h6>Working Days</h6>
+                        <p>Choose which days are available for timetable generation. Disabled days are ignored.</p>
+                    </div>
+
+                    <div class="feature-guide-item">
+                        <h6>Weekday Period Timing</h6>
+                        <p>Add teaching periods, assembly, breaks and lunch for Monday to Friday.</p>
+                    </div>
+
+                    <div class="feature-guide-item">
+                        <h6>Saturday Timing</h6>
+                        <p>Use separate Saturday periods when the school has shorter or different timings.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-check-circle"></i> Got it
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{ initial_days_json|json_script:"initialDaysData" }}
 {{ initial_weekday_periods_json|json_script:"initialWeekdayPeriodsData" }}
 {{ initial_saturday_periods_json|json_script:"initialSaturdayPeriodsData" }}
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
 <script>

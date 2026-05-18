@@ -68,3 +68,39 @@ class ClassSectionForm(CurrentSchoolFormMixin, forms.ModelForm):
             "capacity": forms.NumberInput(attrs={"class": "form-control", "placeholder": "40"}),
             "is_active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        school = cleaned_data.get("school")
+        class_level = cleaned_data.get("class_level")
+        division = cleaned_data.get("division")
+        class_teacher = cleaned_data.get("class_teacher")
+        default_room = cleaned_data.get("default_room")
+
+        if class_level and school and class_level.school_id != school.id:
+            self.add_error("class_level", "Select a class level from the same school.")
+
+        if division and school and division.school_id != school.id:
+            self.add_error("division", "Select a division from the same school.")
+
+        if class_teacher and school and class_teacher.school_id != school.id:
+            self.add_error("class_teacher", "Select a class teacher from the same school.")
+
+        if default_room and school and default_room.school_id != school.id:
+            self.add_error("default_room", "Select a room from the same school.")
+
+        if school and class_level and division:
+            duplicate = ClassSection.objects.filter(
+                school=school,
+                class_level=class_level,
+                division=division,
+            )
+            if self.instance.pk:
+                duplicate = duplicate.exclude(pk=self.instance.pk)
+            if duplicate.exists():
+                self.add_error(
+                    "division",
+                    "This class section already exists. Please edit the existing section instead of creating a duplicate.",
+                )
+
+        return cleaned_data

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 
 from Schools.models import School
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class SchoolSignupForm(forms.Form):
@@ -25,6 +26,7 @@ class SchoolSignupForm(forms.Form):
         widget=forms.PasswordInput,
     )
 
+    @log_exceptions
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         placeholders = {
@@ -44,6 +46,7 @@ class SchoolSignupForm(forms.Form):
                 "placeholder": placeholders.get(name, field.label),
             })
 
+    @log_exceptions
     def clean_school_code(self):
         value = self.cleaned_data.get("school_code", "").strip()
         if not value:
@@ -54,6 +57,7 @@ class SchoolSignupForm(forms.Form):
 
         return value
 
+    @log_exceptions
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
         User = get_user_model()
@@ -63,6 +67,7 @@ class SchoolSignupForm(forms.Form):
 
         return email
 
+    @log_exceptions
     def clean_username(self):
         username = self.cleaned_data["username"].strip()
         User = get_user_model()
@@ -72,6 +77,7 @@ class SchoolSignupForm(forms.Form):
 
         return username
 
+    @log_exceptions
     def clean(self):
         cleaned_data = super().clean()
         password1 = cleaned_data.get("password1")

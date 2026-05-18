@@ -2,23 +2,28 @@ from contextvars import ContextVar
 
 from django.conf import settings
 from django.http import HttpResponseBadRequest
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 _current_tenant_db = ContextVar("current_tenant_db", default=None)
 
 
+@log_exceptions
 def get_current_tenant_db():
     return _current_tenant_db.get()
 
 
+@log_exceptions
 def set_current_tenant_db(alias):
     return _current_tenant_db.set(alias)
 
 
+@log_exceptions
 def reset_current_tenant_db(token):
     _current_tenant_db.reset(token)
 
 
+@log_exceptions
 def configured_tenant_databases():
     return set(getattr(settings, "SCHOOL_TENANT_DATABASES", ()))
 
@@ -36,9 +41,11 @@ class SchoolTenantMiddleware:
     query_param = "school_db"
     session_key = "school_db_alias"
 
+    @log_exceptions
     def __init__(self, get_response):
         self.get_response = get_response
 
+    @log_exceptions
     def __call__(self, request):
         alias = (
             request.GET.get(self.query_param)

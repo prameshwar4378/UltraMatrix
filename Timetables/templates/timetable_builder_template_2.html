@@ -14,6 +14,7 @@
     --primary:#4f46e5;
     --primary-dark:#3730a3;
     --success:#10b981;
+    --success-dark:#059669;
     --danger:#ef4444;
     --warning:#f59e0b;
     --surface:#fff;
@@ -512,12 +513,63 @@ body{
     margin-bottom:6px;
 }
 
+.conflict-card.fix-summary{
+    border-color:#bbf7d0;
+    background:#f0fdf4;
+}
+
+.audit-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    max-height:360px;
+    overflow:auto;
+}
+
+.audit-item{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 12px;
+    background:#f8fafc;
+    font-size:.9rem;
+}
+
+.audit-item.error{
+    border-color:#fecaca;
+    background:#fef2f2;
+    color:#991b1b;
+}
+
+.audit-item.warning{
+    border-color:#fed7aa;
+    background:#fff7ed;
+    color:#9a3412;
+}
+
 .conflict-empty{
     border:1px dashed var(--border);
     border-radius:8px;
     padding:12px;
     background:#f8fafc;
     color:var(--muted);
+}
+
+.ai-conflict-btn{
+    width:100%;
+    border:0;
+    border-radius:10px;
+    padding:10px 12px;
+    margin:8px 0 12px;
+    background:linear-gradient(135deg,#16a34a,#075021);
+    color:#fff;
+    font-weight:800;
+    box-shadow:0 10px 22px rgba(22,163,74,.24);
+}
+
+.ai-conflict-btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+    box-shadow:none;
 }
 
 .progress-panel{
@@ -699,6 +751,22 @@ body{
     color:#c2410c;
     font-weight:700;
 }
+
+    .btn-gradient-ai {
+        background: linear-gradient(135deg, var(--success), var(--success-dark));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        box-shadow: 0 10px 22px rgba(22, 163, 74, 0.25);
+    }
+
+    .btn-gradient-ai:hover {
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
 </style>
 </head>
 
@@ -713,7 +781,7 @@ body{
     <div class="d-flex gap-2 flex-wrap"> 
         <button class="btn btn-light border" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
         <!-- <button class="btn btn-warning text-white" id="autoFillBtn"><i class="bi bi-stars"></i> Auto Fill</button> -->
-        <button class="btn btn-info text-white" id="smartAllocateBtn"><i class="bi bi-magic"></i> Smart Allocate</button>
+        <button class="btn btn-gradient-ai " id="smartAllocateBtn"><i class="bi bi-magic"></i> Smart Allocate</button>
         <button class="btn btn-light border" id="zoomOutBtn"><i class="bi bi-zoom-out"></i></button>
         <button class="btn btn-light border" id="zoomResetBtn">100%</button>
         <button class="btn btn-light border" id="zoomInBtn"><i class="bi bi-zoom-in"></i></button>
@@ -730,6 +798,7 @@ body{
         </div>
         <a class="btn btn-light border" href="{% url 'proxy_adjustment_panel' %}"><i class="bi bi-person-lines-fill"></i> Proxy Adjustment</a>
         <button class="btn btn-danger" id="deleteTimetableBtn"><i class="bi bi-trash"></i> Clear</button>
+        <button class="btn btn-outline-success" id="validateTimetableBtn"><i class="bi bi-shield-check"></i> Timetable Audit</button>
         <div class="btn-group">
             <button class="btn btn-dark dropdown-toggle" type="button" data-bs-toggle="dropdown">
                 <i class="bi bi-download"></i> Export
@@ -836,6 +905,9 @@ body{
         <hr>
 
         <h6 class="fw-bold">Conflict Hints</h6>
+        <button type="button" class="ai-conflict-btn" id="fixConflictsAiBtn" disabled>
+            <i class="bi bi-magic"></i> Fix Conflicts using AI
+        </button>
         <div id="conflictHints" class="small text-muted">No conflicts yet.</div>
 
         <hr>
@@ -895,6 +967,31 @@ body{
                 </button>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="auditResultModal" tabindex="-1" aria-labelledby="auditResultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header" id="auditResultHeader">
+                <h5 class="modal-title" id="auditResultModalLabel">
+                    <i class="bi bi-shield-check me-2"></i> Timetable Audit
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert mb-3" id="auditResultMessage"></div>
+                <div class="row g-3 mb-3" id="auditSummaryGrid"></div>
+                <div id="auditErrorsBlock" class="mb-3"></div>
+                <div id="auditWarningsBlock"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="resolveAuditIssuesBtn">
+                    <i class="bi bi-magic"></i> AI Resolve Warnings
+                </button>
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -971,6 +1068,8 @@ let selectedSubject = null;
 let selectedRoom = null;
 let assignModal = null;
 let shortcutModal = null;
+let auditResultModal = null;
+let lastAuditData = null;
 let boardZoom = 1;
 let teacherPanelHidden = false;
 let statusPanelHidden = false;
@@ -978,6 +1077,7 @@ let statusPanelHidden = false;
 document.addEventListener("DOMContentLoaded", function(){
     assignModal = new bootstrap.Modal(document.getElementById("assignModal"));
     shortcutModal = new bootstrap.Modal(document.getElementById("shortcutModal"));
+    auditResultModal = new bootstrap.Modal(document.getElementById("auditResultModal"));
 
     autoSelectFirstTimetable();
     initSearchableDropdowns(document);
@@ -1511,7 +1611,7 @@ function previewCell(cell, lecture){
     }
 }
 
-function checkConflict(targetKey, lecture){
+function checkConflict(targetKey, lecture, ignoredKeys = new Set()){
     const [classId, dayId, periodId] = targetKey.split("_");
     const targetClass = classSections.find(section => String(section.id) === String(classId));
     const targetPeriod = periods.find(period =>
@@ -1522,6 +1622,7 @@ function checkConflict(targetKey, lecture){
 
     Object.keys(timetableState).forEach(key => {
         if(key === targetKey) return;
+        if(ignoredKeys.has(key)) return;
 
         const [otherClassId, otherDayId, otherPeriodId] = key.split("_");
         const other = timetableState[key];
@@ -1565,6 +1666,217 @@ function checkConflict(targetKey, lecture){
         message,
         conflicts,
     };
+}
+
+function getConflictEntryKeys(){
+    return Object.keys(timetableState).filter(key => {
+        if(!isRenderableEntryKey(key)) return false;
+        const lecture = timetableState[key];
+        return lecture && checkConflict(key, lecture).hasConflict;
+    });
+}
+
+function getTeacherById(teacherId){
+    return teachers.find(teacher => String(teacher.id) === String(teacherId)) || null;
+}
+
+function countTeacherWeekWithIgnored(teacherId, ignoredKeys = new Set()){
+    return Object.keys(timetableState).filter(key => {
+        if(ignoredKeys.has(key)) return false;
+        const lecture = timetableState[key];
+        return String(lecture?.teacher_id) === String(teacherId);
+    }).length;
+}
+
+function countTeacherDayWithIgnored(teacherId, dayId, ignoredKeys = new Set()){
+    return Object.keys(timetableState).filter(key => {
+        if(ignoredKeys.has(key)) return false;
+        const [, entryDayId] = key.split("_");
+        const lecture = timetableState[key];
+        return String(entryDayId) === String(dayId) &&
+            String(lecture?.teacher_id) === String(teacherId);
+    }).length;
+}
+
+function canTeacherWorkSlot(teacherId, dayId, periodId, ignoredKeys = new Set()){
+    if(!teacherId) return true;
+    if(!isTeacherAvailable(teacherId, dayId, periodId)) return false;
+
+    const maxWeek = effectiveTeacherMaxWeek(teacherId);
+    const maxDay = effectiveTeacherMaxDay(teacherId);
+
+    if(maxWeek && countTeacherWeekWithIgnored(teacherId, ignoredKeys) + 1 > maxWeek) return false;
+    if(maxDay && countTeacherDayWithIgnored(teacherId, dayId, ignoredKeys) + 1 > maxDay) return false;
+
+    return true;
+}
+
+function canPlaceLectureAt(key, lecture, ignoredKeys = new Set()){
+    const [, dayId, periodId] = key.split("_");
+    return canTeacherWorkSlot(lecture.teacher_id, dayId, periodId, ignoredKeys) &&
+        !checkConflict(key, lecture, ignoredKeys).hasConflict;
+}
+
+function getRepairCandidateKeys(sourceKey){
+    const [classId] = sourceKey.split("_");
+    return getTeachingPeriods()
+        .map(period => cellKey(classId, period.day_id, period.period_id))
+        .filter(key => key !== sourceKey)
+        .sort((a, b) => {
+            const [, aDayId, aPeriodId] = a.split("_");
+            const [, bDayId, bPeriodId] = b.split("_");
+            const aPeriod = periods.find(period => String(period.day_id) === String(aDayId) && String(period.period_id) === String(aPeriodId));
+            const bPeriod = periods.find(period => String(period.day_id) === String(bDayId) && String(period.period_id) === String(bPeriodId));
+            const aOccupied = timetableState[a] ? 1 : 0;
+            const bOccupied = timetableState[b] ? 1 : 0;
+            if(aOccupied !== bOccupied) return aOccupied - bOccupied;
+            return Number(aPeriod?.period_number || 0) - Number(bPeriod?.period_number || 0);
+        });
+}
+
+function slotLabel(key){
+    const [classId, dayId, periodId] = key.split("_");
+    const section = classSections.find(item => String(item.id) === String(classId));
+    const period = periods.find(item =>
+        String(item.day_id) === String(dayId) &&
+        String(item.period_id) === String(periodId)
+    );
+    return `${section?.name || "Class"} - ${period?.day_name || "Day"} - ${period?.period_name || "Period"}`;
+}
+
+function lectureLabel(lecture){
+    return `${lecture?.teacher_name || "Teacher"} - ${lecture?.subject_name || "Subject"}`;
+}
+
+function tryRelocateLecture(sourceKey, depth = 2, visited = new Set(), changes = []){
+    const lecture = timetableState[sourceKey];
+    if(!lecture || lecture.is_locked || visited.has(sourceKey)) return false;
+
+    visited.add(sourceKey);
+
+    for(const targetKey of getRepairCandidateKeys(sourceKey)){
+        const targetLecture = timetableState[targetKey];
+        const ignoredKeys = new Set([sourceKey]);
+        if(targetLecture) ignoredKeys.add(targetKey);
+
+        if(!canPlaceLectureAt(targetKey, lecture, ignoredKeys)) continue;
+
+        if(!targetLecture){
+            timetableState[targetKey] = lecture;
+            delete timetableState[sourceKey];
+            changes.push({
+                lecture: lectureLabel(lecture),
+                from: slotLabel(sourceKey),
+                to: slotLabel(targetKey),
+            });
+            return true;
+        }
+
+        if(depth <= 0 || targetLecture.is_locked) continue;
+
+        const snapshot = JSON.stringify(timetableState);
+        delete timetableState[sourceKey];
+
+        const changeCount = changes.length;
+        const targetMoved = tryRelocateLecture(targetKey, depth - 1, new Set(visited), changes);
+
+        if(targetMoved && !timetableState[targetKey] && canPlaceLectureAt(targetKey, lecture)){
+            timetableState[targetKey] = lecture;
+            changes.push({
+                lecture: lectureLabel(lecture),
+                from: slotLabel(sourceKey),
+                to: slotLabel(targetKey),
+            });
+            return true;
+        }
+
+        timetableState = JSON.parse(snapshot);
+        changes.splice(changeCount);
+    }
+
+    return false;
+}
+
+function renderAiFixChanges(changes, remaining){
+    const wrapper = document.getElementById("conflictHints");
+    if(!wrapper) return;
+
+    if(!changes.length){
+        wrapper.innerHTML = `<div class="conflict-empty">AI could not find a safe move for the current conflicts.</div>`;
+        return;
+    }
+
+    wrapper.innerHTML = `
+        <div class="conflict-panel">
+            <div class="conflict-card fix-summary">
+                <span class="badge bg-success">AI Fix Changes</span>
+                <strong>${changes.length} lecture${changes.length === 1 ? "" : "s"} shifted</strong>
+                <div class="meta">
+                    ${changes.map(item => `
+                        <div><b>${item.lecture}</b></div>
+                        <div>From: ${item.from}</div>
+                        <div>To: ${item.to}</div>
+                        <hr class="my-2">
+                    `).join("")}
+                    <div><b>Remaining conflicts:</b> ${remaining}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function fixConflictsWithAi(showResult = true){
+    let conflictKeys = getConflictEntryKeys();
+
+    if(!conflictKeys.length){
+        if(showResult) alert("No conflicts found.");
+        return;
+    }
+
+    saveUndo();
+
+    let moved = 0;
+    let skippedLocked = 0;
+    let passes = 0;
+    const changes = [];
+    const maxPasses = Math.max(1, conflictKeys.length * 2);
+
+    while(conflictKeys.length && passes < maxPasses){
+        let movedThisPass = false;
+
+        conflictKeys.forEach(key => {
+            const lecture = timetableState[key];
+            if(!lecture || !checkConflict(key, lecture).hasConflict) return;
+
+            if(lecture.is_locked){
+                skippedLocked++;
+                return;
+            }
+
+            if(tryRelocateLecture(key, 3, new Set(), changes)){
+                moved++;
+                movedThisPass = true;
+            }
+        });
+
+        conflictKeys = getConflictEntryKeys();
+        if(!movedThisPass) break;
+        passes++;
+    }
+
+    renderTable();
+    refreshAll();
+
+    const remaining = getConflictEntryKeys().length;
+    renderAiFixChanges(changes, remaining);
+
+    if(!showResult) return;
+
+    if(remaining){
+        alert(`AI moved ${moved} lecture${moved === 1 ? "" : "s"}, but ${remaining} conflict${remaining === 1 ? "" : "s"} still need manual adjustment.${skippedLocked ? " Locked lectures were not moved." : ""}`);
+    }else{
+        alert(`AI fixed all conflicts by moving ${moved} lecture${moved === 1 ? "" : "s"} to conflict-free slots.`);
+    }
 }
 
 function conflictHintHtml(conflict){
@@ -1632,6 +1944,9 @@ function validateAllCells(){
         hints.length
             ? `<div class="conflict-panel">${hints.map(conflictHintHtml).join("")}</div>`
             : `<div class="conflict-empty">No conflicts yet.</div>`;
+
+    const fixButton = document.getElementById("fixConflictsAiBtn");
+    if(fixButton) fixButton.disabled = hints.length === 0;
 }
 
 function refreshAll(){
@@ -1689,15 +2004,15 @@ function classTeacherAllocation(section){
 
 function classTeacherLecture(section){
     const allocation = classTeacherAllocation(section);
-    const fallbackSubject = subjects[0];
+    if(!allocation) return null;
 
     return {
         teacher_id: section.class_teacher_id,
         teacher_name: section.class_teacher_name,
-        subject_id: allocation?.subject_id || fallbackSubject?.id || null,
-        subject_name: allocation?.subject_name || fallbackSubject?.name || "Class Teacher Period",
-        room_id: allocation?.room_id || section.default_room_id || null,
-        room_name: allocation?.room_name || section.default_room_name || "",
+        subject_id: allocation.subject_id,
+        subject_name: allocation.subject_name,
+        room_id: allocation.room_id || section.default_room_id || null,
+        room_name: allocation.room_name || section.default_room_name || "",
         is_locked: false,
         is_class_teacher_priority: true,
     };
@@ -1710,8 +2025,14 @@ function assignClassTeacherFirstLectures(overwriteExisting = true){
 
     classSections.forEach(section => {
         if(!section.class_teacher_id) return;
+        const allocation = classTeacherAllocation(section);
+        const lecture = classTeacherLecture(section);
+
+        if(!allocation || !lecture) return;
 
         firstPeriods.forEach(period => {
+            if(countPlacedForAllocation(allocation) >= Number(allocation.weekly_periods || 0)) return;
+
             const key = cellKey(section.id, period.day_id, period.period_id);
             const existing = timetableState[key];
 
@@ -1721,9 +2042,13 @@ function assignClassTeacherFirstLectures(overwriteExisting = true){
             }
 
             if(existing && !overwriteExisting) return;
+            if(existing && (
+                String(existing.teacher_id) !== String(allocation.teacher_id) ||
+                String(existing.subject_id) !== String(allocation.subject_id)
+            )) return;
 
             timetableState[key] = {
-                ...classTeacherLecture(section),
+                ...lecture,
                 is_locked: existing?.is_locked || false,
             };
 
@@ -1749,6 +2074,30 @@ function countTeacherWeek(teacherId){
     return Object.values(timetableState).filter(lecture =>
         String(lecture.teacher_id) === String(teacherId)
     ).length;
+}
+
+function teacherRequiredWeek(teacherId){
+    return lessonAllocations
+        .filter(allocation => String(allocation.teacher_id) === String(teacherId))
+        .reduce((total, allocation) => total + Number(allocation.weekly_periods || 0), 0);
+}
+
+function teachingDayCount(){
+    return new Set(getTeachingPeriods().map(period => String(period.day_id))).size || 1;
+}
+
+function effectiveTeacherMaxWeek(teacherId){
+    const teacher = getTeacherById(teacherId);
+    const configuredMax = Number(teacher?.max_week || 0);
+    const requiredMax = teacherRequiredWeek(teacherId);
+    return Math.max(configuredMax, requiredMax);
+}
+
+function effectiveTeacherMaxDay(teacherId){
+    const teacher = getTeacherById(teacherId);
+    const configuredMax = Number(teacher?.max_day || 0);
+    const requiredMax = Math.ceil(teacherRequiredWeek(teacherId) / teachingDayCount());
+    return Math.max(configuredMax, requiredMax);
 }
 
 function countTeacherDay(teacherId, dayId){
@@ -1801,8 +2150,8 @@ function canPlaceSmartLecture(key, allocation, teacher){
     if(timetableState[key]) return false;
 
     const [, dayId, periodId] = key.split("_");
-    const teacherMaxWeek = Number(teacher?.max_week || 0);
-    const teacherMaxDay = Number(teacher?.max_day || 0);
+    const teacherMaxWeek = effectiveTeacherMaxWeek(allocation.teacher_id);
+    const teacherMaxDay = effectiveTeacherMaxDay(allocation.teacher_id);
 
     if(teacherMaxWeek && countTeacherWeek(allocation.teacher_id) >= teacherMaxWeek) return false;
     if(teacherMaxDay && countTeacherDay(allocation.teacher_id, dayId) >= teacherMaxDay) return false;
@@ -1820,9 +2169,9 @@ function canPlaceSmartLecture(key, allocation, teacher){
     return !conflict.hasConflict;
 }
 
-function smartAllocate(){
+function smartAllocate(showResult = true){
     if(!lessonAllocations.length){
-        alert("No lesson allocations found. Please create lesson allocations first.");
+        if(showResult) alert("No lesson allocations found. Please create lesson allocations first.");
         return;
     }
 
@@ -1889,7 +2238,19 @@ function smartAllocate(){
     renderTable();
     refreshAll();
 
-    alert(`Class teacher priority placed ${priorityResult.placed} first lecture${priorityResult.placed === 1 ? "" : "s"}. Smart Allocate placed ${placed} more lecture${placed === 1 ? "" : "s"}. ${priorityResult.skippedLocked ? priorityResult.skippedLocked + " locked first-period slot(s) were skipped. " : ""}${skipped ? skipped + " placement attempt(s) were skipped because no conflict-free slot was available." : ""}`);
+    const pendingAfter = lessonAllocations
+        .map(allocation => ({
+            allocation,
+            remaining: Number(allocation.weekly_periods || 0) - countPlacedForAllocation(allocation),
+        }))
+        .filter(item => item.remaining > 0);
+    const pendingMessage = pendingAfter.length
+        ? ` Remaining: ${pendingAfter.map(item => `${item.allocation.teacher_name} - ${findClassNameById(item.allocation.class_section_id)} ${item.allocation.subject_name}: ${item.remaining}`).join("; ")}.`
+        : " All allocation workloads are fully placed.";
+
+    if(showResult){
+        alert(`Class teacher priority placed ${priorityResult.placed} first lecture${priorityResult.placed === 1 ? "" : "s"}. Smart Allocate placed ${placed} more lecture${placed === 1 ? "" : "s"}.${pendingMessage} ${priorityResult.skippedLocked ? priorityResult.skippedLocked + " locked first-period slot(s) were skipped. " : ""}${skipped && pendingAfter.length ? skipped + " placement attempt(s) had no valid slot." : ""}`);
+    }
 }
 
 function autoFill(){
@@ -1995,7 +2356,7 @@ function createTimetableThenSave(timetableName) {
 }
 
 
-function saveTimetableToDatabase(timetableId) {
+function collectTimetableEntries() {
     const entries = [];
 
     Object.keys(timetableState).forEach(key => {
@@ -2016,6 +2377,121 @@ function saveTimetableToDatabase(timetableId) {
         });
     });
 
+    return entries;
+}
+
+function validationAlert(data) {
+    lastAuditData = data;
+    const validation = data.validation || {};
+    const errors = validation.errors || [];
+    const warnings = validation.warnings || [];
+    const summary = validation.summary || {};
+    const hasErrors = errors.length > 0;
+    const hasWarnings = warnings.length > 0;
+    const header = document.getElementById("auditResultHeader");
+    const message = document.getElementById("auditResultMessage");
+    const summaryGrid = document.getElementById("auditSummaryGrid");
+    const errorsBlock = document.getElementById("auditErrorsBlock");
+    const warningsBlock = document.getElementById("auditWarningsBlock");
+    const resolveButton = document.getElementById("resolveAuditIssuesBtn");
+
+    header.className = `modal-header ${hasErrors ? "bg-danger" : hasWarnings ? "bg-warning" : "bg-success"} ${hasWarnings && !hasErrors ? "text-dark" : "text-white"}`;
+    message.className = `alert mb-3 ${hasErrors ? "alert-danger" : hasWarnings ? "alert-warning" : "alert-success"}`;
+    message.innerHTML = `<strong>${hasErrors ? "Critical issues found" : hasWarnings ? "Timetable valid with warnings" : "Timetable clean"}</strong><br>${data.message || "Validation complete."}`;
+
+    const cards = [
+        ["Entries", summary.entries || 0],
+        ["Teacher Conflicts", summary.teacher_conflicts || 0],
+        ["Room Conflicts", summary.room_conflicts || 0],
+        ["Missing Periods", summary.missing_allocations || 0],
+        ["Extra Periods", summary.extra_allocations || 0],
+        ["Unavailable", summary.teacher_unavailable || 0],
+        ["Overloads", summary.teacher_overloads || 0],
+        ["No Room", summary.class_without_room || 0],
+        ["Capability Issues", summary.capability_mismatches || 0],
+        ["Class Teacher Issues", summary.class_teacher_issues || 0],
+    ];
+
+    summaryGrid.innerHTML = cards.map(([label, value]) => `
+        <div class="col-md">
+            <div class="border rounded-3 p-3 bg-light">
+                <div class="fw-bold fs-5">${value}</div>
+                <div class="text-muted small">${label}</div>
+            </div>
+        </div>
+    `).join("");
+
+    errorsBlock.innerHTML = errors.length ? `
+        <h6 class="fw-bold text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Critical Errors</h6>
+        <div class="audit-list">${errors.map(item => `<div class="audit-item error">${item}</div>`).join("")}</div>
+    ` : "";
+
+    warningsBlock.innerHTML = warnings.length ? `
+        <h6 class="fw-bold text-warning"><i class="bi bi-info-circle me-1"></i> Warnings</h6>
+        <div class="audit-list">${warnings.map(item => `<div class="audit-item warning">${item}</div>`).join("")}</div>
+    ` : "";
+
+    if(resolveButton){
+        resolveButton.classList.toggle("d-none", !hasErrors && !hasWarnings);
+        resolveButton.disabled = !hasErrors && !hasWarnings;
+    }
+
+    auditResultModal.show();
+}
+
+function resolveAuditWarningsWithAi(){
+    const validation = lastAuditData?.validation || {};
+    const summary = validation.summary || {};
+    const hasConflicts = (summary.teacher_conflicts || 0) > 0 || (summary.room_conflicts || 0) > 0;
+    const hasMissingPeriods = (summary.missing_allocations || 0) > 0;
+
+    if(!hasConflicts && !hasMissingPeriods){
+        alert("AI can automatically resolve teacher/room conflicts and missing periods. This warning needs manual setup correction.");
+        return;
+    }
+
+    saveUndo();
+
+    if(hasConflicts){
+        fixConflictsWithAi(false);
+    }
+
+    if(hasMissingPeriods){
+        smartAllocate(false);
+    }
+
+    renderTable();
+    refreshAll();
+    validateTimetableWithBackend();
+}
+
+function validateTimetableWithBackend() {
+    const timetableId = document.getElementById("timetableSelect").value;
+
+    if (!timetableId) {
+        alert("Please select or create a timetable first.");
+        return;
+    }
+
+    fetch("/api/validate-timetable/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            timetable_id: timetableId,
+            entries: collectTimetableEntries(),
+        })
+    })
+    .then(response => response.json())
+    .then(validationAlert)
+    .catch(error => {
+        console.error(error);
+        alert("Something went wrong while validating timetable.");
+    });
+}
+
+function saveTimetableToDatabase(timetableId) {
     fetch("/api/save-timetable/", {
         method: "POST",
         headers: {
@@ -2023,12 +2499,12 @@ function saveTimetableToDatabase(timetableId) {
         },
         body: JSON.stringify({
             timetable_id: timetableId,
-            entries: entries,
+            entries: collectTimetableEntries(),
         })
     })
     .then(response => response.json())
     .then(data => {
-        alert(data.message);
+        validationAlert(data);
     })
     .catch(error => {
         console.error(error);
@@ -2122,10 +2598,13 @@ function bindControls(){
     const autoFillButton = document.getElementById("autoFillBtn");
     if(autoFillButton) autoFillButton.addEventListener("click", autoFill);
     document.getElementById("smartAllocateBtn").addEventListener("click", smartAllocate);
+    document.getElementById("fixConflictsAiBtn").addEventListener("click", fixConflictsWithAi);
     document.getElementById("zoomInBtn").addEventListener("click", zoomIn);
     document.getElementById("zoomOutBtn").addEventListener("click", zoomOut);
     document.getElementById("zoomResetBtn").addEventListener("click", resetZoom);
     document.getElementById("saveBtn").addEventListener("click", saveTimetableLocal);
+    document.getElementById("validateTimetableBtn").addEventListener("click", validateTimetableWithBackend);
+    document.getElementById("resolveAuditIssuesBtn").addEventListener("click", resolveAuditWarningsWithAi);
     document.getElementById("addTimetableBtn").addEventListener("click", addTimetable);
     document.getElementById("deleteTimetableBtn").addEventListener("click", clearTimetable);
     document.querySelectorAll(".export-option").forEach(button => {

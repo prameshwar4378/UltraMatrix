@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from Schools.models import School
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class SubscriptionPlan(models.Model):
@@ -36,6 +37,7 @@ class SubscriptionPlan(models.Model):
 
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name
 
@@ -79,6 +81,7 @@ class SchoolSubscription(models.Model):
     created_at = models.DateTimeField(default=timezone.now, editable=False)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @log_exceptions
     def __str__(self):
         return f"{self.school} - {self.plan}"
 
@@ -103,6 +106,7 @@ class BillingCustomer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @log_exceptions
     def __str__(self):
         return f"{self.school} billing profile"
 
@@ -151,6 +155,7 @@ class Invoice(models.Model):
     class Meta:
         ordering = ("-issue_date", "-id")
 
+    @log_exceptions
     def __str__(self):
         return f"{self.invoice_number} - {self.school}"
 
@@ -211,5 +216,6 @@ class Payment(models.Model):
     class Meta:
         ordering = ("-paid_at", "-created_at", "-id")
 
+    @log_exceptions
     def __str__(self):
         return f"{self.school} - {self.amount} {self.currency} - {self.status}"

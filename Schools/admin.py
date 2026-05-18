@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import School 
 from Accounts.models import SchoolUser
 from Subscriptions.models import BillingCustomer, Invoice, Payment, SchoolSubscription
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class SchoolUserInline(admin.TabularInline):
@@ -43,6 +44,7 @@ class InvoiceInline(admin.TabularInline):
     can_delete = False
     show_change_link = True
 
+    @log_exceptions
     def has_add_permission(self, request, obj=None):
         return False
 
@@ -55,6 +57,7 @@ class PaymentInline(admin.TabularInline):
     can_delete = False
     show_change_link = True
 
+    @log_exceptions
     def has_add_permission(self, request, obj=None):
         return False
 
@@ -88,6 +91,7 @@ class SchoolAdmin(admin.ModelAdmin):
     )
 
     @admin.display(description="Subscription")
+    @log_exceptions
     def current_subscription_status(self, obj):
         subscription = obj.schoolsubscription_set.order_by("-end_date", "-id").first()
         if not subscription:

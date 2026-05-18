@@ -12,6 +12,8 @@
         --border: #e5e7eb;
         --text: #111827;
         --muted: #6b7280;
+        --success: #16a34a;
+        --success-dark: #075021;
     }
 
     .page-toolbar, .filter-panel, .table-card, .stat-card {
@@ -49,6 +51,21 @@
     }
 
     .btn-gradient:hover {
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .btn-gradient-ai {
+        background: linear-gradient(135deg, var(--success), var(--success-dark));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        box-shadow: 0 10px 22px rgba(22, 163, 74, 0.25);
+    }
+
+    .btn-gradient-ai:hover {
         color: #fff;
         transform: translateY(-1px);
     }
@@ -193,6 +210,11 @@
         justify-content: center;
     }
 
+    .selection-cell {
+        width: 42px;
+        text-align: center;
+    }
+
     .import-card {
         background: #f8fafc;
         border: 1px dashed var(--border);
@@ -247,22 +269,30 @@
     <div class="page-toolbar d-flex justify-content-between align-items-center">
         <div>
             <h2 class="page-title">Teacher Management</h2>
-            <p class="page-subtitle">Manage teachers, departments, workload limits and active status.</p>
+            <p class="page-subtitle">Manage teachers, contact details, workload limits and active status.</p>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
-            <a href="{% url 'teacher_import_template' %}" class="btn btn-light border">
-                <i class="bi bi-file-earmark-arrow-down"></i> Template
-            </a>
-            <a href="{% url 'teacher_export_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success">
-                <i class="bi bi-file-earmark-excel"></i> Export Excel
-            </a>
+            
+            <button type="button" class="btn btn-light border" data-bs-toggle="modal" data-bs-target="#teacherDataModal">
+                <i class="bi bi-folder2-open"></i> Import / Export
+            </button>
+            
             <a href="javascript:void(0);"
                data-url="{% url 'teacher_create' %}"
                class="btn btn-gradient"
                onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> New Teacher
             </a>
+
+
+            <a href="javascript:void(0);"
+               data-url="{% url 'teacher_quick_create' %}"
+               class="btn btn-gradient-ai"
+               onclick="openCreateModal(this, 1300, 780)">
+                <i class="bi bi-magic"></i> AI Auto Generate
+            </a>
+
         </div>
     </div>
 
@@ -342,42 +372,35 @@
         </form>
     </div>
 
-    <div class="import-card">
-        <form method="post" action="{% url 'teacher_import_excel' %}" enctype="multipart/form-data" class="row g-3 align-items-end">
-            {% csrf_token %}
-            <div class="col-lg-7">
-                <label class="form-label fw-bold">
-                    <i class="bi bi-upload"></i> Bulk Import Teachers
-                </label>
-                <input type="file" name="teacher_file" class="form-control" accept=".xlsx" required>
-                <small class="text-muted">Use the downloaded Excel template. Existing teachers update by School + Employee ID.</small>
-            </div>
-            <div class="col-lg-5 d-flex gap-2 flex-wrap">
-                <a href="{% url 'teacher_import_template' %}" class="btn btn-light border">
-                    <i class="bi bi-download"></i> Download Template
-                </a>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-upload"></i> Import Excel
-                </button>
-            </div>
-        </form>
-    </div>
-
     <div class="table-card">
         <div class="table-header">
             <h5><i class="bi bi-list-ul me-1"></i> Teacher Records</h5>
-            <span class="text-muted small">Showing latest teacher records</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small">Showing latest teacher records</span>
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        form="teacherBulkDeleteForm"
+                        id="teacherBulkDeleteBtn"
+                        disabled
+                        onclick="return confirmBulkDelete();">
+                    <i class="bi bi-trash"></i> Delete Selected
+                </button>
+            </div>
         </div>
 
-        <div class="table-responsive">
+        <form method="post" action="{% url 'teacher_bulk_delete' %}" id="teacherBulkDeleteForm">
+            {% csrf_token %}
+            <div class="table-responsive">
             <table class="table table-modern align-middle">
                 <thead>
                     <tr>
+                        <th class="selection-cell">
+                            <input type="checkbox" class="form-check-input" id="selectAllTeachers" title="Select all">
+                        </th>
                         <th>Teacher</th>
                         <th>School</th>
                         <th>Contact</th>
                         <th>Type</th>
-                        <th>Department</th>
                         <th>Workload</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
@@ -387,6 +410,16 @@
                 <tbody>
                     {% for teacher in teachers %}
                     <tr>
+                        <td class="selection-cell">
+                            <input type="checkbox"
+                                   class="form-check-input teacher-select"
+                                   name="teacher_ids"
+                                   value="{{ teacher.pk }}"
+                                   data-sections="{{ teacher.impact_class_sections|default:0 }}"
+                                   data-capabilities="{{ teacher.impact_capabilities|default:0 }}"
+                                   data-allocations="{{ teacher.impact_allocations|default:0 }}"
+                                   data-entries="{{ teacher.impact_entries|default:0 }}">
+                        </td>
                         <td>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="teacher-avatar">
@@ -416,10 +449,6 @@
                             <span class="badge-soft badge-primary-soft">
                                 {{ teacher.get_teacher_type_display }}
                             </span>
-                        </td>
-
-                        <td>
-                            {{ teacher.department|default:"Not specified" }}
                         </td>
 
                         <td>
@@ -476,10 +505,68 @@
                 </tbody>
 
             </table>
-        </div>
+            </div>
+        </form>
     </div>
 
 </main>
+
+<div class="modal fade" id="teacherDataModal" tabindex="-1" aria-labelledby="teacherDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="teacherDataModalLabel">
+                    <i class="bi bi-folder2-open text-primary me-2"></i> Teacher Import / Export
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="import-card h-100 mb-0">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-upload me-1"></i> Bulk Import Teachers</h6>
+                            <p class="text-muted small mb-3">
+                                Upload the Excel template after filling teacher details. Existing teachers update by School + Employee ID.
+                            </p>
+                            <form method="post" action="{% url 'teacher_import_excel' %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="file" name="teacher_file" class="form-control mb-3" accept=".xlsx" required>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-upload"></i> Import Excel
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="import-card h-100 mb-0">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-file-earmark-spreadsheet me-1"></i> Template & Export</h6>
+                            <p class="text-muted small mb-3">
+                                Download the template for new imports or export the currently filtered teacher list.
+                            </p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="{% url 'teacher_import_template' %}" class="btn btn-light border">
+                                    <i class="bi bi-file-earmark-arrow-down"></i> Download Template
+                                </a>
+
+                                <a href="{% url 'teacher_export_excel' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+                                    <i class="bi bi-file-earmark-excel"></i> Export Teachers
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="deleteTeacherModal" tabindex="-1" aria-labelledby="deleteTeacherModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -568,6 +655,65 @@
         const modal = new bootstrap.Modal(document.getElementById("deleteTeacherModal"));
         modal.show();
     }
+
+    function confirmBulkDelete() {
+        const checked = Array.from(document.querySelectorAll(".teacher-select:checked"));
+        const totals = checked.reduce((acc, item) => {
+            acc.sections += Number(item.dataset.sections || 0);
+            acc.capabilities += Number(item.dataset.capabilities || 0);
+            acc.allocations += Number(item.dataset.allocations || 0);
+            acc.entries += Number(item.dataset.entries || 0);
+            return acc;
+        }, {sections: 0, capabilities: 0, allocations: 0, entries: 0});
+
+        const lines = [
+            "Delete selected teacher(s)?",
+            "",
+            "Affected records:",
+            `Class teacher assignments: ${totals.sections}`,
+            `Teacher mappings: ${totals.capabilities}`,
+            `Lesson allocations: ${totals.allocations}`,
+            `Timetable entries: ${totals.entries}`,
+            "",
+            "Continue?"
+        ];
+        return window.confirm(lines.join("\n"));
+    }
+
+    function setupTeacherBulkSelection() {
+        const selectAll = document.getElementById("selectAllTeachers");
+        const deleteButton = document.getElementById("teacherBulkDeleteBtn");
+        const checkboxes = Array.from(document.querySelectorAll(".teacher-select"));
+
+        function refreshState() {
+            const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+            if (deleteButton) {
+                deleteButton.disabled = selectedCount === 0;
+            }
+
+            if (selectAll) {
+                selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+                selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener("change", function () {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAll.checked;
+                });
+                refreshState();
+            });
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", refreshState);
+        });
+
+        refreshState();
+    }
+
+    document.addEventListener("DOMContentLoaded", setupTeacherBulkSelection);
 </script>
 
 {% endblock content %}

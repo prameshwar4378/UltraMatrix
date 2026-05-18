@@ -10,24 +10,30 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 
 from .models import ContactEnquiry
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
+@log_exceptions
 def index(request):
     return render(request, "index.html")
 
 
+@log_exceptions
 def features(request):
     return render(request, "web_features.html")
 
 
+@log_exceptions
 def ai_engine(request):
     return render(request, "web_ai_engine.html")
 
 
+@log_exceptions
 def pricing(request):
     return render(request, "web_pricing.html")
 
 
+@log_exceptions
 def send_email_in_background(email_message):
     try:
         email_message.send()
@@ -35,6 +41,7 @@ def send_email_in_background(email_message):
         print(f"Error sending email: {e}")
 
 
+@log_exceptions
 def contact_us(request):
     if request.method == "POST":
         required_fields = ("name", "school", "phone", "email", "enquiry_type")

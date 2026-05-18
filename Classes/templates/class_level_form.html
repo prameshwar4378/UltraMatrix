@@ -125,6 +125,20 @@
             box-shadow: 0 0 0 4px rgba(102,126,234,.15);
         }
 
+        .class-table th {
+            color: var(--text-primary);
+            font-size: .82rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            justify-content: center;
+        }
+
         .form-actions {
             background: #fff;
             padding-top: 25px;
@@ -174,7 +188,11 @@
 
     <form method="POST" class="form-body">
         {% csrf_token %}
+        {% if bulk_create %}
+            <input type="hidden" name="class_levels_json" id="classLevelsJson">
+        {% endif %}
 
+        {% if bulk_create %}
         <div class="form-section">
             <div class="section-title">
                 <div class="section-title-icon">
@@ -182,54 +200,87 @@
                 </div>
                 <div>
                     <h3>Class Level Information</h3>
-                    <p>Create class levels such as Nursery, LKG, UKG, Class 1 to Class 10.</p>
+                    <p>Edit these starter class levels, remove rows you do not need, then save.</p>
                 </div>
             </div>
 
-            <div class="form-grid">
-                <div>
-                    <label class="form-label"><i class="bi bi-building"></i> School</label>
-                    {{ form.school }}
-                    {{ form.school.errors }}
+            <button type="button" class="btn btn-primary btn-sm mb-3" onclick="addClassLevel()">
+                <i class="bi bi-plus-circle"></i> Add Class Level
+            </button>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle class-table">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Class Name</th>
+                        <th>Short Name</th>
+                        <th>Sort</th>
+                        <th>Section Type</th>
+                        <th>Active</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="classLevelBody"></tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-title-icon">
+                        <i class="bi bi-mortarboard"></i>
+                    </div>
+                    <div>
+                        <h3>Class Level Information</h3>
+                        <p>Create class levels such as Nursery, LKG, UKG, Class 1 to Class 10.</p>
+                    </div>
                 </div>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-card-heading"></i> Class Name</label>
-                    {{ form.name }}
-                    {{ form.name.errors }}
-                </div>
+                <div class="form-grid">
+                    <div>
+                        <label class="form-label"><i class="bi bi-building"></i> School</label>
+                        {{ form.school }}
+                        {{ form.school.errors }}
+                    </div>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-type"></i> Short Name</label>
-                    {{ form.short_name }}
-                    {{ form.short_name.errors }}
-                </div>
+                    <div>
+                        <label class="form-label"><i class="bi bi-card-heading"></i> Class Name</label>
+                        {{ form.name }}
+                        {{ form.name.errors }}
+                    </div>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-sort-numeric-down"></i> Sort Order</label>
-                    {{ form.sort_order }}
-                    {{ form.sort_order.errors }}
-                </div>
+                    <div>
+                        <label class="form-label"><i class="bi bi-type"></i> Short Name</label>
+                        {{ form.short_name }}
+                        {{ form.short_name.errors }}
+                    </div>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-diagram-3"></i> Section Type</label>
-                    {{ form.section_type }}
-                    {{ form.section_type.errors }}
-                </div>
+                    <div>
+                        <label class="form-label"><i class="bi bi-sort-numeric-down"></i> Sort Order</label>
+                        {{ form.sort_order }}
+                        {{ form.sort_order.errors }}
+                    </div>
 
-                <div class="d-flex align-items-center pt-4">
-                    <div class="form-check">
-                        {{ form.is_active }}
-                        <label class="form-check-label fw-semibold">Active</label>
+                    <div>
+                        <label class="form-label"><i class="bi bi-diagram-3"></i> Section Type</label>
+                        {{ form.section_type }}
+                        {{ form.section_type.errors }}
+                    </div>
+
+                    <div class="d-flex align-items-center pt-4">
+                        <div class="form-check">
+                            {{ form.is_active }}
+                            <label class="form-check-label fw-semibold">Active</label>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        {% endif %}
 
         <div class="form-actions">
             <div class="text-muted">
                 <i class="bi bi-info-circle me-1"></i>
-                This class level will be used while creating class sections.
+                Records are saved only after final submit.
             </div>
 
             <div class="d-flex gap-3">
@@ -245,8 +296,85 @@
     </form>
 </div>
 
+{% if bulk_create %}
+{{ initial_class_levels_json|json_script:"initialClassLevelsData" }}
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
+{% if bulk_create %}
+let classLevels = JSON.parse(document.getElementById("initialClassLevelsData").textContent);
+
+function escapeAttr(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function sectionTypeOptions(selected) {
+    const types = [
+        ["Pre-Primary", "Pre-Primary"],
+        ["PRIMARY", "Primary"],
+        ["SECONDARY", "Secondary"],
+        ["Senior-Secondary", "Senior Secondary"]
+    ];
+
+    return types.map(([value, label]) => {
+        return `<option value="${value}" ${selected === value ? "selected" : ""}>${label}</option>`;
+    }).join("");
+}
+
+function renderClassLevels() {
+    const body = document.getElementById("classLevelBody");
+    body.innerHTML = "";
+
+    classLevels.forEach((classLevel, index) => {
+        body.innerHTML += `
+            <tr>
+                <td><input type="text" class="form-control" value="${escapeAttr(classLevel.name)}" onchange="updateClassLevel(${index}, 'name', this.value)"></td>
+                <td><input type="text" class="form-control" value="${escapeAttr(classLevel.short_name)}" onchange="updateClassLevel(${index}, 'short_name', this.value)"></td>
+                <td><input type="number" class="form-control" min="1" value="${classLevel.sort_order || index + 1}" onchange="updateClassLevel(${index}, 'sort_order', this.value)"></td>
+                <td><select class="form-select" onchange="updateClassLevel(${index}, 'section_type', this.value)">${sectionTypeOptions(classLevel.section_type)}</select></td>
+                <td class="text-center"><input class="form-check-input" type="checkbox" ${classLevel.is_active === false ? "" : "checked"} onchange="updateClassLevel(${index}, 'is_active', this.checked)"></td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger icon-btn" onclick="removeClassLevel(${index})" title="Remove">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function updateClassLevel(index, field, value) {
+    classLevels[index][field] = field === "sort_order" ? Number(value || index + 1) : value;
+}
+
+function removeClassLevel(index) {
+    classLevels.splice(index, 1);
+    renderClassLevels();
+}
+
+function addClassLevel() {
+    classLevels.push({
+        name: "",
+        short_name: "",
+        sort_order: classLevels.length + 1,
+        section_type: "PRIMARY",
+        is_active: true
+    });
+    renderClassLevels();
+}
+
+document.querySelector("form").addEventListener("submit", function(){
+    document.getElementById("classLevelsJson").value = JSON.stringify(classLevels);
+});
+
+renderClassLevels();
+{% endif %}
+
 document.addEventListener("DOMContentLoaded", function(){
     if(typeof Choices === "undefined") return;
     document.querySelectorAll("select").forEach(function(select){

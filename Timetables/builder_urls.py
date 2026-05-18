@@ -7,6 +7,7 @@ urlpatterns = [
     path("timetable-builder/template-3/", views_builder.timetable_builder_template_3, name="timetable_builder_template_3"),
     path("proxy-adjustment/", views_builder.proxy_adjustment_panel, name="proxy_adjustment_panel"),
     path("teacher-timetable/<int:teacher_id>/", views_builder.teacher_timetable_builder, name="teacher_timetable_builder"),
+    path("api/validate-timetable/", views_builder.validate_timetable_entries, name="validate_timetable_entries"),
     path("api/save-timetable/", views_builder.save_timetable_entries, name="save_timetable_entries"),
     path("api/save-teacher-timetable/", views_builder.save_teacher_timetable_entries, name="save_teacher_timetable_entries"),
     path("api/create-timetable/", views_builder.create_timetable_api, name="create_timetable_api"),

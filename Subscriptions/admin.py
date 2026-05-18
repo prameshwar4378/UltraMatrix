@@ -4,9 +4,11 @@ from django.contrib import admin
 from django.utils import timezone
 
 from .models import BillingCustomer, Invoice, Payment, SchoolSubscription, SubscriptionPlan
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 @admin.action(description="Extend selected subscriptions by 14 days")
+@log_exceptions
 def extend_trial_14_days(modeladmin, request, queryset):
     for subscription in queryset:
         base_date = max(subscription.end_date, timezone.localdate())
@@ -17,6 +19,7 @@ def extend_trial_14_days(modeladmin, request, queryset):
 
 
 @admin.action(description="Activate selected subscriptions for 30 days")
+@log_exceptions
 def activate_for_30_days(modeladmin, request, queryset):
     today = timezone.localdate()
     queryset.update(
@@ -29,6 +32,7 @@ def activate_for_30_days(modeladmin, request, queryset):
 
 
 @admin.action(description="Activate selected subscriptions for 365 days")
+@log_exceptions
 def activate_for_365_days(modeladmin, request, queryset):
     today = timezone.localdate()
     queryset.update(
@@ -41,16 +45,19 @@ def activate_for_365_days(modeladmin, request, queryset):
 
 
 @admin.action(description="Mark selected subscriptions as expired")
+@log_exceptions
 def mark_subscriptions_expired(modeladmin, request, queryset):
     queryset.update(status="EXPIRED", is_active=False, updated_at=timezone.now())
 
 
 @admin.action(description="Mark selected invoices as paid")
+@log_exceptions
 def mark_invoices_paid(modeladmin, request, queryset):
     queryset.update(status="PAID", paid_at=timezone.now(), updated_at=timezone.now())
 
 
 @admin.action(description="Mark selected invoices as void")
+@log_exceptions
 def mark_invoices_void(modeladmin, request, queryset):
     queryset.update(status="VOID", updated_at=timezone.now())
 
@@ -110,6 +117,7 @@ class SchoolSubscriptionAdmin(admin.ModelAdmin):
     )
 
     @admin.display(description="Days left")
+    @log_exceptions
     def days_remaining(self, obj):
         return max((obj.end_date - timezone.localdate()).days, 0)
 

@@ -1,6 +1,8 @@
 from django import forms
+from django.db.models import Sum
 from Accounts.form_mixins import CurrentSchoolFormMixin
 from .models import LessonAllocation
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
@@ -49,12 +51,14 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
             }),
         }
 
+    @log_exceptions
     def clean_weekly_periods(self):
         weekly_periods = self.cleaned_data["weekly_periods"]
         if weekly_periods < 1:
             raise forms.ValidationError("Weekly periods must be at least 1.")
         return weekly_periods
 
+    @log_exceptions
     def clean(self):
         cleaned_data = super().clean()
         school = cleaned_data.get("school")
@@ -63,6 +67,8 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
         subject = cleaned_data.get("subject")
         teacher = cleaned_data.get("teacher")
         default_room = cleaned_data.get("default_room")
+        weekly_periods = cleaned_data.get("weekly_periods")
+        is_active = cleaned_data.get("is_active")
 
         if academic_year and school and academic_year.school_id != school.id:
             self.add_error("academic_year", "Select an academic year from the same school.")
@@ -89,5 +95,27 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
                 duplicate = duplicate.exclude(pk=self.instance.pk)
             if duplicate.exists():
                 self.add_error("subject", "This subject is already allocated for the selected class section and academic year.")
+
+        if academic_year and teacher and weekly_periods and is_active:
+            existing_load = LessonAllocation.objects.filter(
+                academic_year=academic_year,
+                teacher=teacher,
+                is_active=True,
+            )
+            if self.instance.pk:
+                existing_load = existing_load.exclude(pk=self.instance.pk)
+
+            current_weekly_load = existing_load.aggregate(total=Sum("weekly_periods"))["total"] or 0
+            teacher_week_limit = teacher.max_periods_per_week or 0
+            new_weekly_load = current_weekly_load + weekly_periods
+
+            if teacher_week_limit and new_weekly_load > teacher_week_limit:
+                self.add_error(
+                    "weekly_periods",
+                    (
+                        f"This allocation would take {teacher.name} to {new_weekly_load} periods/week, "
+                        f"above the teacher limit of {teacher_week_limit}. Current active allocation load is {current_weekly_load}."
+                    )
+                )
 
         return cleaned_data

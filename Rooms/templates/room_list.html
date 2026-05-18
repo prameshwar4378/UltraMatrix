@@ -53,6 +53,21 @@
         transform: translateY(-1px);
     }
 
+    .btn-gradient-ai {
+        background: linear-gradient(135deg, #16a34a, #075021);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        box-shadow: 0 10px 22px rgba(22, 163, 74, 0.25);
+    }
+
+    .btn-gradient-ai:hover {
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
     .stat-grid {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -207,6 +222,11 @@
         justify-content: center;
     }
 
+    .selection-cell {
+        width: 42px;
+        text-align: center;
+    }
+
     .action-form {
         display: inline-block;
     }
@@ -261,8 +281,8 @@
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
-            <button type="button" class="btn btn-light border" data-bs-toggle="modal" data-bs-target="#autoCreateRoomsModal">
-                <i class="bi bi-magic"></i> Auto Create Classrooms
+            <button type="button" class="btn btn-gradient-ai" data-bs-toggle="modal" data-bs-target="#autoCreateRoomsModal">
+                <i class="bi bi-magic"></i> AI Auto Create Classroom
             </button>
 
             <a href="javascript:void(0);"
@@ -324,8 +344,8 @@
             </p>
         </div>
 
-        <button type="button" class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#autoCreateRoomsModal">
-            <i class="bi bi-magic"></i> Generate Missing Rooms
+        <button type="button" class="btn btn-gradient-ai" data-bs-toggle="modal" data-bs-target="#autoCreateRoomsModal">
+            <i class="bi bi-magic"></i> AI Auto Create Classroom
         </button>
     </div>
 
@@ -383,13 +403,29 @@
     <div class="table-card">
         <div class="table-header">
             <h5><i class="bi bi-list-ul me-1"></i> Room Records</h5>
-            <span class="text-muted small">Rooms used for class sections and timetable slots</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small">Rooms used for class sections and timetable slots</span>
+                <button type="submit"
+                        class="btn btn-sm btn-outline-danger"
+                        form="roomBulkDeleteForm"
+                        id="roomBulkDeleteBtn"
+                        disabled
+                        onclick="return confirmBulkDelete('selected room(s)? Timetable or class-section references may become empty.');">
+                    <i class="bi bi-trash"></i> Delete Selected
+                </button>
+            </div>
         </div>
 
+        <form method="post" action="{% url 'room_bulk_delete' %}" id="roomBulkDeleteForm">
+            {% csrf_token %}
+        </form>
         <div class="table-responsive">
             <table class="table table-modern align-middle">
                 <thead>
                     <tr>
+                        <th class="selection-cell">
+                            <input type="checkbox" class="form-check-input" id="selectAllRooms" title="Select all">
+                        </th>
                         <th>Room</th>
                         <th>School</th>
                         <th>Type</th>
@@ -402,6 +438,16 @@
                 <tbody>
                     {% for room in rooms %}
                     <tr>
+                        <td class="selection-cell">
+                            <input type="checkbox"
+                                   class="form-check-input room-select"
+                                   form="roomBulkDeleteForm"
+                                   name="room_ids"
+                                   value="{{ room.pk }}"
+                                   data-sections="{{ room.impact_sections|default:0 }}"
+                                   data-allocations="{{ room.impact_allocations|default:0 }}"
+                                   data-entries="{{ room.impact_entries|default:0 }}">
+                        </td>
                         <td>
                             <div class="d-flex align-items-center gap-3">
                                 <div class="room-avatar">
@@ -473,7 +519,7 @@
 
                     {% empty %}
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             <div class="empty-state">
                                 <i class="bi bi-door-open"></i>
                                 <h5>No Rooms Found</h5>
@@ -500,9 +546,9 @@
 <div class="modal fade" id="autoCreateRoomsModal" tabindex="-1" aria-labelledby="autoCreateRoomsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="autoCreateRoomsModalLabel">
-                    <i class="bi bi-magic me-2"></i> Auto Create Classrooms
+                    <i class="bi bi-magic me-2"></i> AI Auto Create Classroom
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -550,7 +596,7 @@
                     <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle"></i> Cancel
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-success">
                         <i class="bi bi-check-circle"></i> Create Missing Rooms
                     </button>
                 </div>
@@ -649,6 +695,65 @@ function openDeleteRoomModal(button) {
     const modal = new bootstrap.Modal(document.getElementById("deleteRoomModal"));
     modal.show();
 }
+
+function confirmBulkDelete(label) {
+    const checked = Array.from(document.querySelectorAll(".room-select:checked"));
+    const totals = checked.reduce((acc, item) => {
+        acc.sections += Number(item.dataset.sections || 0);
+        acc.allocations += Number(item.dataset.allocations || 0);
+        acc.entries += Number(item.dataset.entries || 0);
+        return acc;
+    }, {sections: 0, allocations: 0, entries: 0});
+
+    const lines = [
+        `Delete ${label}`,
+        "",
+        "Affected records:",
+        `Class section default rooms: ${totals.sections}`,
+        `Lesson allocation rooms: ${totals.allocations}`,
+        `Timetable entries: ${totals.entries}`,
+        "",
+        "Continue?"
+    ];
+    return window.confirm(lines.join("\n"));
+}
+
+function setupBulkSelection(selectAllId, checkboxClass, buttonId) {
+    const selectAll = document.getElementById(selectAllId);
+    const button = document.getElementById(buttonId);
+    const checkboxes = Array.from(document.querySelectorAll(`.${checkboxClass}`));
+
+    function refreshState() {
+        const selectedCount = checkboxes.filter(checkbox => checkbox.checked).length;
+        if (button) {
+            button.disabled = selectedCount === 0;
+        }
+
+        if (selectAll) {
+            selectAll.checked = checkboxes.length > 0 && selectedCount === checkboxes.length;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < checkboxes.length;
+        }
+    }
+
+    if (selectAll) {
+        selectAll.addEventListener("change", function () {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            refreshState();
+        });
+    }
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", refreshState);
+    });
+
+    refreshState();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    setupBulkSelection("selectAllRooms", "room-select", "roomBulkDeleteBtn");
+});
 </script>
 
 {% endblock content %}

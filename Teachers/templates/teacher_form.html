@@ -123,6 +123,20 @@
             box-shadow: 0 0 0 4px rgba(102,126,234,.15);
         }
 
+        .teacher-table th {
+            color: var(--text-primary);
+            font-size: .82rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            justify-content: center;
+        }
+
         .form-actions {
             background: #fff;
             padding-top: 25px;
@@ -172,56 +186,103 @@
 
     <form method="POST" class="form-body">
         {% csrf_token %}
+        {% if bulk_create %}
+            <input type="hidden" name="teachers_json" id="teachersJson">
+        {% endif %}
 
+        {% if bulk_create %}
         <div class="form-section">
             <div class="section-title">
                 <div class="section-title-icon">
                     <i class="bi bi-person-badge"></i>
                 </div>
                 <div>
-                    <h3>Basic Teacher Information</h3>
-                    <p>Add teacher identity, contact and employment details.</p>
+                    <h3>AI Generated Teacher Rows</h3>
+                    <p>Add, edit or remove teachers locally, then save all rows together.</p>
                 </div>
             </div>
 
-            <div class="form-grid">
-                <div>
-                    <label class="form-label"><i class="bi bi-building"></i> School</label>
-                    {{ form.school }}
-                    {{ form.school.errors }}
-                </div>
+            <button type="button" class="btn btn-primary btn-sm mb-3" onclick="addTeacherRow()">
+                <i class="bi bi-plus-circle"></i> Add Teacher Row
+            </button>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-person"></i> Teacher Name</label>
-                    {{ form.name }}
-                    {{ form.name.errors }}
-                </div>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle teacher-table">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Short</th>
+                        <th>Employee ID</th>
+                        <th>Mobile</th>
+                        <th>Email</th>
+                        <th>Type</th>
+                        <th>Day</th>
+                        <th>Week</th>
+                        <th>Active</th>
+                        <th>Action</th>
+                    </tr>
+                    </thead>
+                    <tbody id="teacherRowsBody"></tbody>
+                </table>
+            </div>
 
-                <div>
-                    <label class="form-label"><i class="bi bi-type"></i> Short Name</label>
-                    {{ form.short_name }}
-                    {{ form.short_name.errors }}
-                </div>
-
-                <div>
-                    <label class="form-label"><i class="bi bi-card-text"></i> Employee ID</label>
-                    {{ form.employee_id }}
-                    {{ form.employee_id.errors }}
-                </div>
-
-                <div>
-                    <label class="form-label"><i class="bi bi-phone"></i> Mobile Number</label>
-                    {{ form.mobile_number }}
-                    {{ form.mobile_number.errors }}
-                </div>
-
-                <div>
-                    <label class="form-label"><i class="bi bi-envelope"></i> Email</label>
-                    {{ form.email }}
-                    {{ form.email.errors }}
-                </div>
+            <div class="alert alert-info small mb-0">
+                Employee ID is used to update an existing teacher in this school. Blank names are skipped.
             </div>
         </div>
+        {% else %}
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-title-icon">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div>
+                        <h3>Basic Teacher Information</h3>
+                        <p>Add teacher identity, contact and employment details.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div>
+                        <label class="form-label"><i class="bi bi-building"></i> School</label>
+                        {{ form.school }}
+                        {{ form.school.errors }}
+                    </div>
+
+                    <div>
+                        <label class="form-label"><i class="bi bi-person"></i> Teacher Name</label>
+                        {{ form.name }}
+                        {{ form.name.errors }}
+                    </div>
+
+                    <div>
+                        <label class="form-label"><i class="bi bi-type"></i> Short Name</label>
+                        {{ form.short_name }}
+                        {{ form.short_name.errors }}
+                    </div>
+
+                    <div>
+                        <label class="form-label"><i class="bi bi-card-text"></i> Employee ID</label>
+                        {{ form.employee_id }}
+                        <div class="form-text">
+                            Suggested automatically from school prefix{% if employee_id_prefix %} {{ employee_id_prefix }}{% endif %}. You can edit it if needed.
+                        </div>
+                        {{ form.employee_id.errors }}
+                    </div>
+
+                    <div>
+                        <label class="form-label"><i class="bi bi-phone"></i> Mobile Number</label>
+                        {{ form.mobile_number }}
+                        {{ form.mobile_number.errors }}
+                    </div>
+
+                    <div>
+                        <label class="form-label"><i class="bi bi-envelope"></i> Email</label>
+                        {{ form.email }}
+                        {{ form.email.errors }}
+                    </div>
+                </div>
+            </div>
 
         <div class="form-section">
             <div class="section-title">
@@ -229,8 +290,8 @@
                     <i class="bi bi-briefcase"></i>
                 </div>
                 <div>
-                    <h3>Work & Department</h3>
-                    <p>Set teacher type, department and workload limits.</p>
+                    <h3>Workload Settings</h3>
+                    <p>Set teacher type and workload limits.</p>
                 </div>
             </div>
 
@@ -242,20 +303,20 @@
                 </div>
 
                 <div>
-                    <label class="form-label"><i class="bi bi-diagram-3"></i> Department</label>
-                    {{ form.department }}
-                    {{ form.department.errors }}
-                </div>
-
-                <div>
                     <label class="form-label"><i class="bi bi-calendar-day"></i> Max Periods Per Day</label>
                     {{ form.max_periods_per_day }}
+                    <div class="form-text">
+                        Maximum lectures this teacher can be assigned in one day.
+                    </div>
                     {{ form.max_periods_per_day.errors }}
                 </div>
 
                 <div>
                     <label class="form-label"><i class="bi bi-calendar-week"></i> Max Periods Per Week</label>
                     {{ form.max_periods_per_week }}
+                    <div class="form-text">
+                        Total weekly teaching load limit for this teacher. Lesson Allocation periods are subject/class requirements; this value prevents assigning more total lectures than the teacher can handle.
+                    </div>
                     {{ form.max_periods_per_week.errors }}
                 </div>
 
@@ -267,6 +328,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <div class="form-actions">
             <div class="text-muted">
@@ -287,8 +349,99 @@
     </form>
 </div>
 
+{% if bulk_create %}
+{{ initial_teachers_json|json_script:"initialTeachersData" }}
+{% endif %}
+
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 <script>
+{% if bulk_create %}
+let teacherRows = JSON.parse(document.getElementById("initialTeachersData").textContent);
+const employeeIdPrefix = "{{ employee_id_prefix|default:'EMP' }}";
+
+function escapeAttr(value) {
+    return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function teacherTypeOptions(selected) {
+    return ["FULL_TIME", "PART_TIME"].map(type => {
+        const label = type === "FULL_TIME" ? "Full Time" : "Part Time";
+        return `<option value="${type}" ${selected === type ? "selected" : ""}>${label}</option>`;
+    }).join("");
+}
+
+function renderTeacherRows() {
+    const body = document.getElementById("teacherRowsBody");
+    body.innerHTML = "";
+
+    teacherRows.forEach((teacher, index) => {
+        body.innerHTML += `
+            <tr>
+                <td><input type="text" class="form-control" value="${escapeAttr(teacher.name)}" onchange="updateTeacherRow(${index}, 'name', this.value)"></td>
+                <td><input type="text" class="form-control" value="${escapeAttr(teacher.short_name)}" onchange="updateTeacherRow(${index}, 'short_name', this.value)"></td>
+                <td><input type="text" class="form-control" value="${escapeAttr(teacher.employee_id)}" onchange="updateTeacherRow(${index}, 'employee_id', this.value)"></td>
+                <td><input type="text" class="form-control" value="${escapeAttr(teacher.mobile_number)}" onchange="updateTeacherRow(${index}, 'mobile_number', this.value)"></td>
+                <td><input type="email" class="form-control" value="${escapeAttr(teacher.email)}" onchange="updateTeacherRow(${index}, 'email', this.value)"></td>
+                <td><select class="form-select" onchange="updateTeacherRow(${index}, 'teacher_type', this.value)">${teacherTypeOptions(teacher.teacher_type)}</select></td>
+                <td><input type="number" class="form-control" min="1" value="${teacher.max_periods_per_day || 6}" onchange="updateTeacherRow(${index}, 'max_periods_per_day', this.value)"></td>
+                <td><input type="number" class="form-control" min="1" value="${teacher.max_periods_per_week || 30}" onchange="updateTeacherRow(${index}, 'max_periods_per_week', this.value)"></td>
+                <td class="text-center"><input type="checkbox" class="form-check-input" ${teacher.is_active === false ? "" : "checked"} onchange="updateTeacherRow(${index}, 'is_active', this.checked)"></td>
+                <td>
+                    <button type="button" class="btn btn-outline-danger icon-btn" onclick="removeTeacherRow(${index})" title="Remove">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function updateTeacherRow(index, field, value) {
+    if (field === "max_periods_per_day" || field === "max_periods_per_week") {
+        teacherRows[index][field] = Number(value || 1);
+        return;
+    }
+    teacherRows[index][field] = value;
+}
+
+function removeTeacherRow(index) {
+    teacherRows.splice(index, 1);
+    renderTeacherRows();
+}
+
+function addTeacherRow() {
+    const usedNumbers = teacherRows
+        .map(row => String(row.employee_id || ""))
+        .filter(id => id.toUpperCase().startsWith(employeeIdPrefix.toUpperCase()))
+        .map(id => Number(id.slice(employeeIdPrefix.length)))
+        .filter(number => Number.isFinite(number));
+    const nextNumber = Math.max(0, ...usedNumbers) + 1;
+
+    teacherRows.push({
+        name: "",
+        short_name: "",
+        employee_id: `${employeeIdPrefix}${String(nextNumber).padStart(3, "0")}`,
+        mobile_number: "",
+        email: "",
+        teacher_type: "FULL_TIME",
+        max_periods_per_day: 6,
+        max_periods_per_week: 30,
+        is_active: true
+    });
+    renderTeacherRows();
+}
+
+document.querySelector("form").addEventListener("submit", function(){
+    document.getElementById("teachersJson").value = JSON.stringify(teacherRows);
+});
+
+renderTeacherRows();
+{% endif %}
+
 document.addEventListener("DOMContentLoaded", function(){
     if(typeof Choices === "undefined") return;
     document.querySelectorAll("select").forEach(function(select){

@@ -1,5 +1,6 @@
 from django.db import models
 from Schools.models import School
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class AcademicYear(models.Model):
@@ -9,6 +10,7 @@ class AcademicYear(models.Model):
     end_date = models.DateField()
     is_active = models.BooleanField(default=False)
 
+    @log_exceptions
     def __str__(self):
         return self.name
 
@@ -26,6 +28,7 @@ class Day(models.Model):
     day_type = models.CharField(max_length=20, choices=DAY_TYPE_CHOICES, default="WEEKDAY")
     is_working = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name
 
@@ -36,6 +39,7 @@ class BellSchedule(models.Model):
     name = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name
 
@@ -65,5 +69,6 @@ class Period(models.Model):
     period_type = models.CharField(max_length=20, choices=PERIOD_TYPE_CHOICES, default="TEACHING")
     is_teaching_period = models.BooleanField(default=True)
 
+    @log_exceptions
     def __str__(self):
         return f"{self.name} - {self.day_type}"

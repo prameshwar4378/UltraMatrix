@@ -1,4 +1,5 @@
 from django.db import models
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class School(models.Model):
@@ -35,6 +36,7 @@ class School(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @log_exceptions
     def __str__(self):
         return self.name
     

@@ -54,6 +54,40 @@
         transform: translateY(-1px);
     }
 
+    .info-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+    }
+
+    .feature-guide-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .feature-guide-item {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: var(--soft-bg);
+    }
+
+    .feature-guide-item h6 {
+        font-weight: 800;
+        margin-bottom: 6px;
+        color: var(--text);
+    }
+
+    .feature-guide-item p {
+        margin: 0;
+        color: var(--muted);
+    }
+
     .stat-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -276,12 +310,22 @@
             <p class="page-subtitle">Manage academic years, weekday timings and Saturday special periods.</p>
         </div>
 
-        <a href="javascript:void(0);"
-           data-url="{% url 'academic_setup' %}"
-           class="btn btn-gradient"
-           onclick="openCreateModal(this)">
-            <i class="bi bi-plus-circle"></i> New Setup
-        </a>
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button"
+                    class="btn btn-light border info-btn"
+                    data-bs-toggle="modal"
+                    data-bs-target="#academicFeatureInfoModal"
+                    title="About Academic Setup">
+                <i class="bi bi-info-circle"></i>
+            </button>
+
+            <a href="javascript:void(0);"
+               data-url="{% url 'academic_setup' %}"
+               class="btn btn-gradient"
+               onclick="openCreateModal(this)">
+                <i class="bi bi-plus-circle"></i> New Setup
+            </a>
+        </div>
     </div>
 
     {% if messages %}
@@ -481,6 +525,49 @@
     </div>
 
 </main>
+
+<div class="modal fade" id="academicFeatureInfoModal" tabindex="-1" aria-labelledby="academicFeatureInfoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="academicFeatureInfoModalLabel">
+                    <i class="bi bi-info-circle text-primary me-2"></i> Academic Setup Guide
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <div class="feature-guide-list">
+                    <div class="feature-guide-item">
+                        <h6>What This Page Does</h6>
+                        <p>Academic Setup defines the academic year, working days, bell schedule and teaching periods that the timetable engine uses.</p>
+                    </div>
+
+                    <div class="feature-guide-item">
+                        <h6>When To Create A Setup</h6>
+                        <p>Create one setup for each school session, such as 2026-2027. Mark the current session as active.</p>
+                    </div>
+
+                    <div class="feature-guide-item">
+                        <h6>Bell Schedule</h6>
+                        <p>Bell schedules store the time slots for assembly, classes, breaks and lunch. Weekdays and Saturdays can use different timings.</p>
+                    </div>
+
+                    <div class="feature-guide-item">
+                        <h6>Why It Matters</h6>
+                        <p>Lesson allocation and timetable generation depend on these periods, so set this up before building timetables.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">
+                    <i class="bi bi-check-circle"></i> Got it
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="deleteAcademicModal" tabindex="-1" aria-labelledby="deleteAcademicModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

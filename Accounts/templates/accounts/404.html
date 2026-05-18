@@ -1,0 +1,585 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 Error | UltraMatrix</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary:#123c7a;
+      --secondary:#1d65c1;
+      --accent:#f4b942;
+      --dark:#071527;
+      --text:#1b2b45;
+      --muted:#6b7a90;
+      --white:#fff;
+      --glass:rgba(255,255,255,.88);
+      --shadow:0 24px 70px rgba(7,21,39,.18);
+      --ease:cubic-bezier(.22,1,.36,1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 18%, rgba(29,101,193,.22), transparent 34%),
+        radial-gradient(circle at 88% 18%, rgba(244,185,66,.24), transparent 30%),
+        linear-gradient(135deg, #eef6ff 0%, #f8fbff 52%, #ffffff 100%);
+      display: grid;
+      place-items: center;
+      padding: 26px;
+      overflow-x: hidden;
+    }
+
+    .error-wrapper {
+      width: min(1080px, 100%);
+      position: relative;
+    }
+
+    .error-wrapper::before,
+    .error-wrapper::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(5px);
+      z-index: 0;
+      animation: floatOrb 7s var(--ease) infinite alternate;
+    }
+
+    .error-wrapper::before {
+      width: 180px;
+      height: 180px;
+      background: rgba(29,101,193,.18);
+      top: -40px;
+      left: -35px;
+    }
+
+    .error-wrapper::after {
+      width: 150px;
+      height: 150px;
+      background: rgba(244,185,66,.24);
+      right: -30px;
+      bottom: -30px;
+      animation-delay: 1.2s;
+    }
+
+    @keyframes floatOrb {
+      from { transform: translateY(0) scale(1); }
+      to { transform: translateY(-22px) scale(1.06); }
+    }
+
+    .error-card {
+      position: relative;
+      z-index: 2;
+      background: var(--glass);
+      backdrop-filter: blur(22px);
+      border: 1px solid rgba(255,255,255,.72);
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: cardIn .8s var(--ease) both;
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .error-grid {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      min-height: 560px;
+    }
+
+    .error-content {
+      padding: clamp(28px, 5vw, 54px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .brand-pill {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      background: rgba(18,60,122,.08);
+      border: 1px solid rgba(18,60,122,.13);
+      color: var(--primary);
+      font-weight: 800;
+      margin-bottom: 24px;
+    }
+
+    .error-code {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      width: fit-content;
+      padding: 12px 18px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: var(--white);
+      font-size: 18px;
+      font-weight: 900;
+      margin-bottom: 22px;
+      box-shadow: 0 18px 38px rgba(18,60,122,.22);
+    }
+
+    .error-title {
+      font-size: clamp(36px, 5vw, 64px);
+      line-height: 1.02;
+      font-weight: 950;
+      letter-spacing: -.045em;
+      color: var(--dark);
+      margin-bottom: 18px;
+    }
+
+    .error-title span {
+      color: var(--secondary);
+    }
+
+    .error-text {
+      font-size: 17px;
+      line-height: 1.8;
+      color: var(--muted);
+      max-width: 620px;
+      margin-bottom: 26px;
+    }
+
+    .contact-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: fit-content;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid #e3edf8;
+      box-shadow: 0 14px 32px rgba(18,60,122,.08);
+      margin-bottom: 28px;
+    }
+
+    .contact-box i {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(244,185,66,.2);
+      color: var(--primary);
+      font-size: 20px;
+    }
+
+    .contact-box small {
+      display: block;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .contact-box a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-ultra {
+      border: none;
+      border-radius: 999px;
+      padding: 13px 22px;
+      font-weight: 850;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: .3s var(--ease);
+      cursor: pointer;
+    }
+
+    .btn-primary-ultra {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      box-shadow: 0 15px 34px rgba(18,60,122,.24);
+    }
+
+    .btn-outline-ultra {
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid #dbe5f0;
+    }
+
+    .btn-ultra:hover {
+      transform: translateY(-3px);
+    }
+
+    .illustration-panel {
+      position: relative;
+      background:
+        radial-gradient(circle at 50% 28%, rgba(244,185,66,.25), transparent 30%),
+        linear-gradient(135deg, rgba(18,60,122,.96), rgba(29,101,193,.92));
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      padding: 40px;
+    }
+
+    .illustration-panel::before {
+      content: "";
+      position: absolute;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,.14);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .illustration-panel::after {
+      content: "";
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      right: -70px;
+      top: -70px;
+    }
+
+    .maintenance-img {
+      position: relative;
+      z-index: 2;
+      width: min(360px, 92%);
+      filter: drop-shadow(0 28px 42px rgba(0,0,0,.22));
+      animation: floatImage 4.8s var(--ease) infinite alternate;
+    }
+
+    @keyframes floatImage {
+      from { transform: translateY(0); }
+      to { transform: translateY(-18px); }
+    }
+
+    .status-card {
+      position: absolute;
+      z-index: 3;
+      left: 34px;
+      bottom: 34px;
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.16);
+      border: 1px solid rgba(255,255,255,.22);
+      backdrop-filter: blur(16px);
+      color: #fff;
+      max-width: 280px;
+    }
+
+    .status-card strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .status-card span {
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .details-box {
+      display: none;
+      margin-top: 28px;
+      border-radius: 24px;
+      background: #fff;
+      border: 1px solid #dfe9f5;
+      box-shadow: 0 14px 34px rgba(18,60,122,.09);
+      overflow: hidden;
+    }
+
+    .details-box.active {
+      display: block;
+      animation: detailsIn .35s var(--ease) both;
+    }
+
+    @keyframes detailsIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .details-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 17px 20px;
+      background: linear-gradient(135deg, rgba(18,60,122,.08), rgba(29,101,193,.05));
+      border-bottom: 1px solid #e8eef7;
+      color: var(--primary);
+      font-weight: 900;
+    }
+
+    .details-list {
+      padding: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .detail-item {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 15px;
+      background: #f7faff;
+      border: 1px solid #e7eef8;
+    }
+
+    .detail-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--primary);
+      font-weight: 900;
+    }
+
+    .detail-value {
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    code {
+      color: #b42318;
+      background: #fff3f0;
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid #ffd7cf;
+    }
+
+    @media (max-width: 900px) {
+      .error-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .illustration-panel {
+        min-height: 320px;
+        order: -1;
+      }
+
+      .status-card {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 576px) {
+      body {
+        padding: 14px;
+      }
+
+      .error-card {
+        border-radius: 26px;
+      }
+
+      .error-content {
+        padding: 26px 18px;
+      }
+
+      .contact-box {
+        width: 100%;
+      }
+
+      .action-row {
+        flex-direction: column;
+      }
+
+      .btn-ultra {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .detail-item {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="error-wrapper">
+    <section class="error-card">
+      <div class="error-grid">
+
+        <div class="error-content">
+          <div class="brand-pill">
+            <i class="bi bi-stars"></i>
+            UltraMatrix
+          </div>
+
+          <div class="error-code">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            404 Error
+          </div>
+
+          <h1 class="error-title">
+            Sorry for the <span>inconvenience</span>
+          </h1>
+
+          <p class="error-text">
+            The page you are looking for is currently unavailable or under maintenance.
+            Our software team is working on it, and we will reach out or restore the service as early as possible.
+          </p>
+
+          <div class="contact-box">
+            <i class="bi bi-telephone-fill"></i>
+            <div>
+              <small>Need help? Contact support</small>
+              <a href="tel:7776824564">7776824564</a>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <a href="/" class="btn-ultra btn-primary-ultra">
+              <i class="bi bi-house-door-fill"></i>
+              Back to Home
+            </a>
+
+            <button type="button" class="btn-ultra btn-outline-ultra" id="viewDetailsBtn">
+              <i class="bi bi-list-check"></i>
+              View Details
+            </button>
+          </div>
+
+          {% if error_message or error_explanation or error_type or error_file or error_line or error_function or error_code or error_source %}
+          <div class="details-box" id="errorDetailsBox">
+            <div class="details-head">
+              <i class="bi bi-bug-fill"></i>
+              Technical Error Details
+            </div>
+
+            <div class="details-list">
+              {% if error_message %}
+              <div class="detail-item">
+                <div class="detail-label">Error</div>
+                <div class="detail-value">{{ error_message }}</div>
+              </div>
+              {% endif %}
+
+              {% if error_explanation %}
+              <div class="detail-item">
+                <div class="detail-label">Explanation</div>
+                <div class="detail-value">{{ error_explanation }}</div>
+              </div>
+              {% endif %}
+
+              {% if error_type %}
+              <div class="detail-item">
+                <div class="detail-label">Type</div>
+                <div class="detail-value">{{ error_type }}</div>
+              </div>
+              {% endif %}
+
+              {% if error_file %}
+              <div class="detail-item">
+                <div class="detail-label">File</div>
+                <div class="detail-value">{{ error_file }}</div>
+              </div>
+              {% endif %}
+
+              {% if error_line %}
+              <div class="detail-item">
+                <div class="detail-label">Line</div>
+                <div class="detail-value">{{ error_line }}</div>
+              </div>
+              {% endif %}
+
+              {% if error_function %}
+              <div class="detail-item">
+                <div class="detail-label">Function</div>
+                <div class="detail-value">{{ error_function }}</div>
+              </div>
+              {% endif %}
+
+              {% if error_code %}
+              <div class="detail-item">
+                <div class="detail-label">Code</div>
+                <div class="detail-value"><code>{{ error_code }}</code></div>
+              </div>
+              {% endif %}
+
+              {% if error_source %}
+              <div class="detail-item">
+                <div class="detail-label">Source</div>
+                <div class="detail-value">{{ error_source }}</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="illustration-panel">
+          <img src="{% static 'img/maintenance.png' %}" alt="Software under maintenance" class="maintenance-img">
+          <div class="status-card">
+            <strong><i class="bi bi-tools"></i> System Maintenance</strong>
+            <span>We are improving your experience. Please try again after some time.</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const viewDetailsBtn = document.getElementById("viewDetailsBtn");
+    const errorDetailsBox = document.getElementById("errorDetailsBox");
+
+    if (viewDetailsBtn && errorDetailsBox) {
+      viewDetailsBtn.addEventListener("click", function () {
+        errorDetailsBox.classList.toggle("active");
+
+        const isOpen = errorDetailsBox.classList.contains("active");
+
+        viewDetailsBtn.innerHTML = isOpen
+          ? '<i class="bi bi-x-circle"></i> Hide Details'
+          : '<i class="bi bi-list-check"></i> View Details';
+      });
+    }
+  </script>
+</body>
+</html>

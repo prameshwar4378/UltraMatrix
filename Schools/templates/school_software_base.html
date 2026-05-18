@@ -14132,6 +14132,32 @@
             100% { transform: rotate(360deg); }
         }
 
+        .errorlist,
+        .errorlist li,
+        .invalid-feedback,
+        .form-error,
+        .field-error {
+            color: #dc2626 !important;
+        }
+
+        .errorlist {
+            list-style: none;
+            margin: 6px 0 0;
+            padding: 0;
+            font-size: .86rem;
+            font-weight: 700;
+        }
+
+        .is-invalid,
+        .form-control.is-invalid,
+        .form-select.is-invalid {
+            border-color: #dc2626 !important;
+        }
+
+        .alert-danger {
+            color: #991b1b !important;
+        }
+
 
 
 </style>
@@ -14216,7 +14242,7 @@
 
                     <li class="profile-menu-list">
                         <a class="dropdown-item profile-menu-item" href="{% url 'setup_completion_status' %}">
-                            <i class="bi bi-check2-circle"></i>
+                                <i class="bi bi-check2-circle"></i>
                             <span class="profile-menu-copy">
                                 Setup Completion Status
                                 <small>{% if setup_percent is not None %}{{ setup_percent }}% complete{% else %}Review your onboarding progress{% endif %}</small>
@@ -14432,8 +14458,6 @@
       </div>
     </div>
   </div>
-
-
 
 {% block content %}{% endblock content %}
 

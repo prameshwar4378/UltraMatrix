@@ -1,4 +1,5 @@
 from django.db import models
+from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 class ContactEnquiry(models.Model):
@@ -41,5 +42,6 @@ class ContactEnquiry(models.Model):
         verbose_name = "Contact enquiry"
         verbose_name_plural = "Contact enquiries"
 
+    @log_exceptions
     def __str__(self):
         return f"{self.name} - {self.school}"

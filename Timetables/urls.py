@@ -23,6 +23,11 @@ urlpatterns = [
         views.lesson_allocation_create,
         name="lesson_allocation_create"
     ),
+    path(
+        "lesson-allocation/teacher/<int:teacher_id>/update/",
+        views.lesson_allocation_teacher_update,
+        name="lesson_allocation_teacher_update"
+    ),
 
     path(
         "lesson-allocation/<int:pk>/update/",
@@ -38,5 +43,10 @@ urlpatterns = [
         "lesson-allocation/<int:pk>/delete/",
         views.lesson_allocation_delete,
         name="lesson_allocation_delete"
+    ),
+    path(
+        "lesson-allocation/bulk-delete/",
+        views.lesson_allocation_bulk_delete,
+        name="lesson_allocation_bulk_delete"
     ),
 ]
