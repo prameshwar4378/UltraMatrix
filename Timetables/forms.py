@@ -1,13 +1,58 @@
 from django import forms
 from django.db.models import Sum
 from Accounts.form_mixins import CurrentSchoolFormMixin
-from .models import LessonAllocation
+from .models import LessonAllocation, Timetable
 from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
+
+
+class TimetableForm(forms.ModelForm):
+    class Meta:
+        model = Timetable
+        fields = [
+            "name",
+            "academic_year",
+        ]
+
+        widgets = {
+            "name": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Primary Timetable 2026",
+            }),
+            "academic_year": forms.Select(attrs={"class": "form-select"}),
+        }
+
+    @log_exceptions
+    def __init__(self, *args, current_school=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.current_school = current_school
+        if current_school:
+            self.fields["academic_year"].queryset = self.fields["academic_year"].queryset.filter(
+                school=current_school
+            ).order_by("-start_date", "-id")
+
+    @log_exceptions
+    def clean_academic_year(self):
+        academic_year = self.cleaned_data["academic_year"]
+        if self.current_school and academic_year.school_id != self.current_school.id:
+            raise forms.ValidationError("Select an academic year from the current school.")
+        return academic_year
+
+    @log_exceptions
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if self.current_school:
+            instance.school = self.current_school
+        if not instance.timetable_type:
+            instance.timetable_type = "PRIMARY"
+        if commit:
+            instance.save()
+        return instance
 
 
 class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
     school_related_fields = (
         "academic_year",
+        "timetable",
         "class_section",
         "subject",
         "teacher",
@@ -19,6 +64,7 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
 
         fields = [
             "school",
+            "timetable",
             "academic_year",
             "class_section",
             "subject",
@@ -31,6 +77,7 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
 
         widgets = {
             "school": forms.Select(attrs={"class": "form-select"}),
+            "timetable": forms.HiddenInput(),
             "academic_year": forms.Select(attrs={"class": "form-select"}),
             "class_section": forms.Select(attrs={"class": "form-select"}),
             "subject": forms.Select(attrs={"class": "form-select"}),
@@ -62,6 +109,7 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         school = cleaned_data.get("school")
+        timetable = cleaned_data.get("timetable")
         academic_year = cleaned_data.get("academic_year")
         class_section = cleaned_data.get("class_section")
         subject = cleaned_data.get("subject")
@@ -69,6 +117,12 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
         default_room = cleaned_data.get("default_room")
         weekly_periods = cleaned_data.get("weekly_periods")
         is_active = cleaned_data.get("is_active")
+
+        if timetable and school and timetable.school_id != school.id:
+            self.add_error("timetable", "Select a timetable from the same school.")
+
+        if timetable and academic_year and timetable.academic_year_id != academic_year.id:
+            self.add_error("academic_year", "Academic year must match the selected timetable.")
 
         if academic_year and school and academic_year.school_id != school.id:
             self.add_error("academic_year", "Select an academic year from the same school.")
@@ -85,9 +139,9 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
         if default_room and school and default_room.school_id != school.id:
             self.add_error("default_room", "Select a room from the same school.")
 
-        if academic_year and class_section and subject:
+        if timetable and class_section and subject:
             duplicate = LessonAllocation.objects.filter(
-                academic_year=academic_year,
+                timetable=timetable,
                 class_section=class_section,
                 subject=subject,
             )
@@ -96,9 +150,9 @@ class LessonAllocationForm(CurrentSchoolFormMixin, forms.ModelForm):
             if duplicate.exists():
                 self.add_error("subject", "This subject is already allocated for the selected class section and academic year.")
 
-        if academic_year and teacher and weekly_periods and is_active:
+        if timetable and teacher and weekly_periods and is_active:
             existing_load = LessonAllocation.objects.filter(
-                academic_year=academic_year,
+                timetable=timetable,
                 teacher=teacher,
                 is_active=True,
             )

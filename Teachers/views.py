@@ -18,8 +18,8 @@ from .models import Teacher
 from .forms import TeacherForm
 from Schools.models import School
 from Subjects.models import TeacherSubjectCapability
-from Timetables.models import ClassSection, LessonAllocation, TimetableEntry
-from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
+from Timetables.models import ClassSection, LessonAllocation, TimetableConfiguration, TimetableEntry
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset, scoped_redirect_url, timetable_scope_from_request
 from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
@@ -40,10 +40,15 @@ TEACHER_IMPORT_HEADERS = [
 
 @log_exceptions
 def _filtered_teachers(request):
+    timetable_scope = timetable_scope_from_request(request)
     teachers = school_queryset(
         request,
         Teacher.objects.select_related("school"),
     ).order_by("-id")
+    if timetable_scope:
+        teachers = teachers.filter(timetable=timetable_scope)
+    else:
+        teachers = teachers.none()
 
     search_query = request.GET.get("search", "")
     teacher_type_filter = request.GET.get("teacher_type", "")
@@ -68,13 +73,13 @@ def _filtered_teachers(request):
     if status_filter == "inactive":
         teachers = teachers.filter(is_active=False)
 
-    return teachers, search_query, teacher_type_filter, status_filter
+    return teachers, search_query, teacher_type_filter, status_filter, timetable_scope
 
 
 @login_required
 @log_exceptions
 def teacher_list(request):
-    teachers, search_query, teacher_type_filter, status_filter = _filtered_teachers(request)
+    teachers, search_query, teacher_type_filter, status_filter, timetable_scope = _filtered_teachers(request)
     current_school = get_current_school(request)
 
     for teacher in teachers:
@@ -93,6 +98,8 @@ def teacher_list(request):
         "search_query": search_query,
         "teacher_type_filter": teacher_type_filter,
         "status_filter": status_filter,
+        "timetable_scope": timetable_scope,
+        "scope_query": f"?timetable_id={timetable_scope.id}" if timetable_scope else "",
     }
 
     return render(request, "teacher_list.html", context)
@@ -106,11 +113,18 @@ def teacher_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Teacher setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         form = TeacherForm(request.POST, current_school=current_school)
 
         if form.is_valid():
-            form.save()
+            teacher = form.save(commit=False)
+            teacher.timetable = timetable_scope
+            teacher.save()
+            TimetableConfiguration.objects.get_or_create(timetable=timetable_scope)[0].teachers.add(teacher)
             messages.success(request, "Teacher created successfully.")
             return HttpResponse("""
             <script>
@@ -119,7 +133,7 @@ def teacher_create(request):
             """)
     else:
         form = TeacherForm(current_school=current_school)
-        form.fields["employee_id"].initial = _next_employee_id(current_school)
+        form.fields["employee_id"].initial = _next_employee_id(current_school, timetable=timetable_scope)
 
     return render(request, "teacher_form.html", {
         "form": form,
@@ -127,6 +141,7 @@ def teacher_create(request):
         "subtitle": "Add teacher details, contact information and workload limits.",
         "button_text": "Save Teacher",
         "employee_id_prefix": _employee_id_prefix(current_school),
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -177,12 +192,15 @@ def _employee_id_prefix(school):
 
 
 @log_exceptions
-def _next_employee_id(school, offset=0):
+def _next_employee_id(school, offset=0, timetable=None):
     prefix = _employee_id_prefix(school)
     existing_ids = Teacher.objects.filter(
         school=school,
         employee_id__istartswith=prefix,
-    ).values_list("employee_id", flat=True)
+    )
+    if timetable:
+        existing_ids = existing_ids.filter(timetable=timetable)
+    existing_ids = existing_ids.values_list("employee_id", flat=True)
 
     max_number = 0
     pattern = re.compile(rf"^{re.escape(prefix)}(\d+)$", re.IGNORECASE)
@@ -202,6 +220,10 @@ def teacher_quick_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Teacher setup from a timetable dashboard.")
+        return redirect("timetable_list")
 
     if request.method == "POST":
         teacher_rows = json.loads(request.POST.get("teachers_json") or "[]")
@@ -237,6 +259,7 @@ def teacher_quick_create(request):
                 if employee_id:
                     teacher = Teacher.objects.filter(
                         school=current_school,
+                        timetable=timetable_scope,
                         employee_id__iexact=employee_id,
                     ).first()
 
@@ -246,7 +269,8 @@ def teacher_quick_create(request):
                     teacher.save()
                     updated_count += 1
                 else:
-                    Teacher.objects.create(school=current_school, **defaults)
+                    teacher = Teacher.objects.create(school=current_school, timetable=timetable_scope, **defaults)
+                    TimetableConfiguration.objects.get_or_create(timetable=timetable_scope)[0].teachers.add(teacher)
                     created_count += 1
 
         messages.success(
@@ -268,11 +292,12 @@ def teacher_quick_create(request):
         "initial_teachers_json": [
             {
                 **teacher_row,
-                "employee_id": _next_employee_id(current_school, index),
+                "employee_id": _next_employee_id(current_school, index, timetable_scope),
             }
             for index, teacher_row in enumerate(_default_teacher_rows())
         ],
         "employee_id_prefix": _employee_id_prefix(current_school),
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -310,9 +335,10 @@ def teacher_update(request, pk):
 def teacher_delete(request, pk):
     teacher = get_school_object_or_404(request, Teacher.objects.all(), pk=pk)
     name = teacher.name
+    timetable_scope = teacher.timetable
     teacher.delete()
     messages.success(request, f"Teacher '{name}' deleted successfully.")
-    return redirect("teacher_list")
+    return redirect(scoped_redirect_url("teacher_list", timetable_scope))
 
 
 @login_required
@@ -320,6 +346,7 @@ def teacher_delete(request, pk):
 @log_exceptions
 def teacher_bulk_delete(request):
     selected_ids = request.POST.getlist("teacher_ids")
+    timetable_scope = timetable_scope_from_request(request)
     if not selected_ids:
         messages.warning(request, "Select at least one teacher to delete.")
         return redirect("teacher_list")
@@ -328,6 +355,8 @@ def teacher_bulk_delete(request):
         request,
         Teacher.objects.filter(id__in=selected_ids),
     )
+    if timetable_scope:
+        teachers = teachers.filter(timetable=timetable_scope)
     deleted_count = teachers.count()
     teachers.delete()
 
@@ -336,7 +365,7 @@ def teacher_bulk_delete(request):
     else:
         messages.info(request, "No teachers were deleted.")
 
-    return redirect("teacher_list")
+    return redirect(scoped_redirect_url("teacher_list", timetable_scope))
 
 
 @log_exceptions
@@ -405,6 +434,7 @@ def _style_teacher_sheet(sheet, title):
 @log_exceptions
 def teacher_import_template(request):
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Teacher Import"
@@ -436,7 +466,7 @@ def teacher_import_template(request):
 @login_required
 @log_exceptions
 def teacher_export_excel(request):
-    teachers, _, _, _ = _filtered_teachers(request)
+    teachers, _, _, _, _ = _filtered_teachers(request)
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Teachers"
@@ -496,9 +526,13 @@ def _school_from_import(school_code, school_name):
 @log_exceptions
 def teacher_import_excel(request):
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
     if not current_school:
         messages.error(request, "No active school is linked with your session.")
         return redirect("teacher_list")
+    if not timetable_scope:
+        messages.warning(request, "Open Teacher import from a timetable dashboard.")
+        return redirect("timetable_list")
 
     upload = request.FILES.get("teacher_file")
 
@@ -556,7 +590,7 @@ def teacher_import_excel(request):
 
         teacher = None
         if employee_id:
-            teacher = Teacher.objects.filter(school=school, employee_id__iexact=employee_id).first()
+            teacher = Teacher.objects.filter(school=school, timetable=timetable_scope, employee_id__iexact=employee_id).first()
 
         if teacher:
             for field, value in defaults.items():
@@ -565,7 +599,8 @@ def teacher_import_excel(request):
             teacher.save()
             updated += 1
         else:
-            Teacher.objects.create(school=school, **defaults)
+            teacher = Teacher.objects.create(school=school, timetable=timetable_scope, **defaults)
+            TimetableConfiguration.objects.get_or_create(timetable=timetable_scope)[0].teachers.add(teacher)
             created += 1
 
     message = f"Teacher import completed. Created: {created}, Updated: {updated}."
@@ -577,4 +612,4 @@ def teacher_import_excel(request):
     else:
         messages.success(request, message)
 
-    return redirect("teacher_list")
+    return redirect(scoped_redirect_url("teacher_list", timetable_scope))

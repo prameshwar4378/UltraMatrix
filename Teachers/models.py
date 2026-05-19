@@ -16,6 +16,14 @@ class Teacher(models.Model):
         on_delete=models.CASCADE
     )
 
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="teachers"
+    )
+
     name = models.CharField(max_length=255)
 
     short_name = models.CharField(

@@ -9,21 +9,26 @@ from django.views.decorators.http import require_POST
 
 from .models import Subject, TeacherSubjectCapability
 from .forms import SubjectForm, TeacherSubjectCapabilityForm
-from Timetables.models import ClassSection, LessonAllocation, TimetableEntry
+from Timetables.models import ClassSection, LessonAllocation, TimetableConfiguration, TimetableEntry
 from Teachers.models import Teacher
 
 from django.contrib import messages
 from django.http import HttpResponse
-from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset, scoped_redirect_url, timetable_scope_from_request
 from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
 @log_exceptions
 def _filtered_subjects(request):
+    timetable_scope = timetable_scope_from_request(request)
     subjects = school_queryset(
         request,
         Subject.objects.select_related("school"),
     ).order_by("-id")
+    if timetable_scope:
+        subjects = subjects.filter(timetable=timetable_scope)
+    else:
+        subjects = subjects.none()
     search_query = request.GET.get("search", "")
     section_filter = request.GET.get("section_type", "")
     subject_type_filter = request.GET.get("subject_type", "")
@@ -49,14 +54,14 @@ def _filtered_subjects(request):
     if status_filter == "inactive":
         subjects = subjects.filter(is_active=False)
 
-    return subjects, search_query, section_filter, subject_type_filter, status_filter
+    return subjects, search_query, section_filter, subject_type_filter, status_filter, timetable_scope
 
 
 @login_required
 @log_exceptions
 def subject_list(request):
     current_school = get_current_school(request)
-    subjects, search_query, section_filter, subject_type_filter, status_filter = _filtered_subjects(request)
+    subjects, search_query, section_filter, subject_type_filter, status_filter, timetable_scope = _filtered_subjects(request)
     capabilities = school_queryset(request, TeacherSubjectCapability.objects.select_related(
         "school", "teacher", "subject"
     ).prefetch_related(
@@ -65,14 +70,19 @@ def subject_list(request):
         "class_sections__class_level",
         "class_sections__division",
     )).order_by("-id")
+    if timetable_scope:
+        capabilities = capabilities.filter(timetable=timetable_scope)
+    else:
+        capabilities = capabilities.none()
 
     active_sections = school_queryset(request, ClassSection.objects.select_related("class_level", "division")).filter(
+        timetable=timetable_scope,
         is_active=True,
         class_level__is_active=True,
         division__is_active=True,
     ).order_by("class_level__sort_order", "division__sort_order")
     active_subjects = subjects.filter(is_active=True)
-    active_teachers = school_queryset(request, Teacher.objects.filter(is_active=True)).order_by("name")
+    active_teachers = school_queryset(request, Teacher.objects.filter(is_active=True, timetable=timetable_scope)).order_by("name")
     missing_mappings = []
     mapped_pairs = set()
 
@@ -140,6 +150,8 @@ def subject_list(request):
         "section_filter": section_filter,
         "subject_type_filter": subject_type_filter,
         "status_filter": status_filter,
+        "timetable_scope": timetable_scope,
+        "scope_query": f"?timetable_id={timetable_scope.id}" if timetable_scope else "",
     }
 
     return render(request, "subject_list.html", context)
@@ -162,7 +174,7 @@ def _default_subject_rows():
 @login_required
 @log_exceptions
 def subject_export_csv(request):
-    subjects, search_query, section_filter, subject_type_filter, status_filter = _filtered_subjects(request)
+    subjects, search_query, section_filter, subject_type_filter, status_filter, timetable_scope = _filtered_subjects(request)
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="subject_setup.csv"'
@@ -202,11 +214,18 @@ def subject_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Subject setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         form = SubjectForm(request.POST, current_school=current_school)
+        _scope_subject_form(form, timetable_scope)
 
         if form.is_valid():
-            form.save()
+            subject = form.save(commit=False)
+            subject.timetable = timetable_scope
+            subject.save()
             messages.success(request, "Subject created successfully.")
             return HttpResponse("""
             <script>
@@ -221,6 +240,7 @@ def subject_create(request):
         "title": "Create Subject",
         "subtitle": "Add subject details for primary, secondary or both sections.",
         "button_text": "Save Subject",
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -232,6 +252,10 @@ def subject_quick_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Subject setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         subject_rows = json.loads(request.POST.get("subjects_json") or "[]")
         created_count = 0
@@ -244,15 +268,16 @@ def subject_quick_create(request):
                 if not name:
                     skipped_count += 1
                     continue
-                duplicate = Subject.objects.filter(school=current_school, name__iexact=name)
+                duplicate = Subject.objects.filter(school=current_school, timetable=timetable_scope, name__iexact=name)
                 if code:
-                    duplicate = duplicate | Subject.objects.filter(school=current_school, code__iexact=code)
+                    duplicate = duplicate | Subject.objects.filter(school=current_school, timetable=timetable_scope, code__iexact=code)
                 if duplicate.exists():
                     skipped_count += 1
                     continue
 
                 Subject.objects.create(
                     school=current_school,
+                    timetable=timetable_scope,
                     name=name,
                     short_name=str(subject_data.get("short_name") or "").strip(),
                     code=code,
@@ -277,11 +302,12 @@ def subject_quick_create(request):
         "button_text": "Save Subjects",
         "bulk_create": True,
         "initial_subjects_json": _default_subject_rows(),
+        "timetable_scope": timetable_scope,
     })
 
 
 @log_exceptions
-def _class_section_options(current_school):
+def _class_section_options(current_school, timetable=None):
     return [{
         "id": section.id,
         "name": f"{section.class_level.name}-{section.division.name}",
@@ -291,6 +317,7 @@ def _class_section_options(current_school):
         "division",
     ).filter(
         school=current_school,
+        timetable=timetable,
         is_active=True,
         class_level__is_active=True,
         division__is_active=True,
@@ -299,15 +326,36 @@ def _class_section_options(current_school):
 
 @log_exceptions
 def _mapping_form_context(form, title, subtitle, button_text, current_school, **extra):
+    timetable_scope = extra.get("timetable_scope")
     context = {
         "form": form,
         "title": title,
         "subtitle": subtitle,
         "button_text": button_text,
-        "class_sections_json": _class_section_options(current_school),
+        "class_sections_json": _class_section_options(current_school, timetable_scope),
     }
     context.update(extra)
     return context
+
+
+@log_exceptions
+def _scope_subject_form(form, timetable):
+    if timetable:
+        form.instance.timetable = timetable
+    return form
+
+
+@log_exceptions
+def _scope_capability_form(form, timetable):
+    if not timetable:
+        return form
+
+    form.instance.timetable = timetable
+    form.fields["teacher"].queryset = form.fields["teacher"].queryset.filter(timetable=timetable)
+    form.fields["subject"].queryset = form.fields["subject"].queryset.filter(timetable=timetable)
+    form.fields["class_levels"].queryset = form.fields["class_levels"].queryset.filter(timetable=timetable)
+    form.fields["class_sections"].queryset = form.fields["class_sections"].queryset.filter(timetable=timetable)
+    return form
 
 
 @login_required
@@ -315,9 +363,11 @@ def _mapping_form_context(form, title, subtitle, button_text, current_school, **
 def subject_update(request, pk):
     subject = get_school_object_or_404(request, Subject.objects.all(), pk=pk)
     current_school = get_current_school(request)
+    timetable_scope = subject.timetable
 
     if request.method == "POST":
         form = SubjectForm(request.POST, instance=subject, current_school=current_school)
+        _scope_subject_form(form, timetable_scope)
 
         if form.is_valid():
             form.save()
@@ -330,6 +380,7 @@ def subject_update(request, pk):
             """)
     else:
         form = SubjectForm(instance=subject, current_school=current_school)
+        _scope_subject_form(form, timetable_scope)
 
     return render(request, "subject_form.html", {
         "form": form,
@@ -345,9 +396,10 @@ def subject_update(request, pk):
 def subject_delete(request, pk):
     subject = get_school_object_or_404(request, Subject.objects.all(), pk=pk)
     name = subject.name
+    timetable_scope = subject.timetable
     subject.delete()
     messages.success(request, f"Subject '{name}' deleted successfully.")
-    return redirect("subject_list")
+    return redirect(scoped_redirect_url("subject_list", timetable_scope))
 
 
 @login_required
@@ -355,6 +407,7 @@ def subject_delete(request, pk):
 @log_exceptions
 def subject_bulk_delete(request):
     selected_ids = request.POST.getlist("subject_ids")
+    timetable_scope = timetable_scope_from_request(request)
     if not selected_ids:
         messages.warning(request, "Select at least one subject to delete.")
         return redirect("subject_list")
@@ -363,6 +416,8 @@ def subject_bulk_delete(request):
         request,
         Subject.objects.filter(id__in=selected_ids),
     )
+    if timetable_scope:
+        subjects = subjects.filter(timetable=timetable_scope)
     deleted_count = subjects.count()
     subjects.delete()
 
@@ -371,7 +426,7 @@ def subject_bulk_delete(request):
     else:
         messages.info(request, "No subjects were deleted.")
 
-    return redirect("subject_list")
+    return redirect(scoped_redirect_url("subject_list", timetable_scope))
 
 
 @login_required
@@ -384,7 +439,7 @@ def subject_toggle_status(request, pk):
 
     status = "activated" if subject.is_active else "deactivated"
     messages.success(request, f"Subject '{subject.name}' {status} successfully.")
-    return redirect("subject_list")
+    return redirect(scoped_redirect_url("subject_list", subject.timetable))
 
 
 @login_required
@@ -395,11 +450,19 @@ def teacher_subject_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Teacher Capability setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         form = TeacherSubjectCapabilityForm(request.POST, current_school=current_school)
+        _scope_capability_form(form, timetable_scope)
 
         if form.is_valid():
-            form.save()
+            capability = form.save(commit=False)
+            capability.timetable = timetable_scope
+            capability.save()
+            form.save_m2m()
             messages.success(request, "Teacher Subject Capability created successfully.")
             return HttpResponse("""
             <script>
@@ -408,6 +471,7 @@ def teacher_subject_create(request):
             """)
     else:
         form = TeacherSubjectCapabilityForm(current_school=current_school)
+        _scope_capability_form(form, timetable_scope)
 
     return render(request, "teacher_subject_form.html", _mapping_form_context(
         form,
@@ -415,6 +479,7 @@ def teacher_subject_create(request):
         "Map which teacher can teach which subject and class sections.",
         "Save Mapping",
         current_school,
+        timetable_scope=timetable_scope,
     ))
 
 
@@ -426,6 +491,10 @@ def teacher_subject_quick_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Teacher Capability setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         mapping_rows = json.loads(request.POST.get("mappings_json") or "[]")
         created_count = 0
@@ -446,9 +515,9 @@ def teacher_subject_quick_create(request):
                     skipped_count += 1
                     continue
 
-                teacher = Teacher.objects.filter(id=teacher_id, school=current_school, is_active=True).first()
-                subject = Subject.objects.filter(id=subject_id, school=current_school, is_active=True).first()
-                sections = list(ClassSection.objects.filter(id__in=section_ids, school=current_school))
+                teacher = Teacher.objects.filter(id=teacher_id, school=current_school, timetable=timetable_scope, is_active=True).first()
+                subject = Subject.objects.filter(id=subject_id, school=current_school, timetable=timetable_scope, is_active=True).first()
+                sections = list(ClassSection.objects.filter(id__in=section_ids, school=current_school, timetable=timetable_scope))
 
                 if not teacher or not subject or not sections:
                     skipped_count += 1
@@ -458,6 +527,7 @@ def teacher_subject_quick_create(request):
                 for section in sections:
                     already_mapped_to_teacher = TeacherSubjectCapability.objects.filter(
                         school=current_school,
+                        timetable=timetable_scope,
                         teacher=teacher,
                         subject=subject,
                         class_sections=section,
@@ -468,6 +538,7 @@ def teacher_subject_quick_create(request):
 
                     assigned_priorities = set(TeacherSubjectCapability.objects.filter(
                         school=current_school,
+                        timetable=timetable_scope,
                         subject=subject,
                         class_sections=section,
                     ).exclude(teacher=teacher).values_list("priority", flat=True))
@@ -485,6 +556,7 @@ def teacher_subject_quick_create(request):
 
                     capability = TeacherSubjectCapability.objects.filter(
                         school=current_school,
+                        timetable=timetable_scope,
                         teacher=teacher,
                         subject=subject,
                         priority=priority,
@@ -493,6 +565,7 @@ def teacher_subject_quick_create(request):
                     if created:
                         capability = TeacherSubjectCapability.objects.create(
                             school=current_school,
+                            timetable=timetable_scope,
                             teacher=teacher,
                             subject=subject,
                             priority=priority,
@@ -513,8 +586,8 @@ def teacher_subject_quick_create(request):
         </script>
         """)
 
-    teachers = Teacher.objects.filter(school=current_school, is_active=True).order_by("name")
-    subjects = Subject.objects.filter(school=current_school, is_active=True).order_by("name")
+    teachers = Teacher.objects.filter(school=current_school, timetable=timetable_scope, is_active=True).order_by("name")
+    subjects = Subject.objects.filter(school=current_school, timetable=timetable_scope, is_active=True).order_by("name")
 
     return render(request, "teacher_subject_form.html", _mapping_form_context(
         TeacherSubjectCapabilityForm(current_school=current_school),
@@ -526,6 +599,7 @@ def teacher_subject_quick_create(request):
         teachers_json=[{"id": teacher.id, "name": teacher.name} for teacher in teachers],
         subjects_json=[{"id": subject.id, "name": subject.name} for subject in subjects],
         initial_mappings_json=[{"teacher_id": "", "subject_id": "", "class_section_ids": []}],
+        timetable_scope=timetable_scope,
     ))
 
 @login_required
@@ -533,9 +607,11 @@ def teacher_subject_quick_create(request):
 def teacher_subject_update(request, pk):
     capability = get_school_object_or_404(request, TeacherSubjectCapability.objects.all(), pk=pk)
     current_school = get_current_school(request)
+    timetable_scope = capability.timetable
 
     if request.method == "POST":
         form = TeacherSubjectCapabilityForm(request.POST, instance=capability, current_school=current_school)
+        _scope_capability_form(form, timetable_scope)
 
         if form.is_valid():
             form.save()
@@ -547,6 +623,7 @@ def teacher_subject_update(request, pk):
             """)
     else:
         form = TeacherSubjectCapabilityForm(instance=capability, current_school=current_school)
+        _scope_capability_form(form, timetable_scope)
 
     return render(request, "teacher_subject_form.html", _mapping_form_context(
         form,
@@ -554,6 +631,7 @@ def teacher_subject_update(request, pk):
         "Update teacher, subject and class-section mapping.",
         "Update Mapping",
         current_school,
+        timetable_scope=timetable_scope,
     ))
 
 
@@ -563,9 +641,10 @@ def teacher_subject_update(request, pk):
 def teacher_subject_delete(request, pk):
     capability = get_school_object_or_404(request, TeacherSubjectCapability.objects.all(), pk=pk)
     name = str(capability)
+    timetable_scope = capability.timetable
     capability.delete()
     messages.success(request, f"Teacher subject mapping '{name}' deleted successfully.")
-    return redirect("subject_list")
+    return redirect(scoped_redirect_url("subject_list", timetable_scope))
 
 
 @login_required
@@ -573,6 +652,7 @@ def teacher_subject_delete(request, pk):
 @log_exceptions
 def teacher_subject_bulk_delete(request):
     selected_ids = request.POST.getlist("teacher_subject_ids")
+    timetable_scope = timetable_scope_from_request(request)
     if not selected_ids:
         messages.warning(request, "Select at least one teacher mapping to delete.")
         return redirect("subject_list")
@@ -581,6 +661,8 @@ def teacher_subject_bulk_delete(request):
         request,
         TeacherSubjectCapability.objects.filter(id__in=selected_ids),
     )
+    if timetable_scope:
+        capabilities = capabilities.filter(timetable=timetable_scope)
     deleted_count = capabilities.count()
     capabilities.delete()
 
@@ -589,4 +671,4 @@ def teacher_subject_bulk_delete(request):
     else:
         messages.info(request, "No teacher mappings were deleted.")
 
-    return redirect("subject_list")
+    return redirect(scoped_redirect_url("subject_list", timetable_scope))

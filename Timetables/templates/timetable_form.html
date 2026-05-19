@@ -1,0 +1,115 @@
+{% extends "school_software_base.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block content %}
+<style>
+    .timetable-form-page {
+        --primary: #123c7a;
+        --primary-dark: #0d2c5d;
+        --surface: #ffffff;
+        --border: #e5e7eb;
+        --text: #111827;
+        --muted: #6b7280;
+    }
+
+    .form-shell {
+        max-width: 860px;
+        margin: 0 auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        overflow: hidden;
+    }
+
+    .form-head {
+        padding: 24px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #fff;
+    }
+
+    .form-head h1 {
+        margin: 0 0 6px;
+        font-size: 1.6rem;
+        font-weight: 800;
+    }
+
+    .form-head p {
+        margin: 0;
+        opacity: .9;
+    }
+
+    .form-body {
+        padding: 28px;
+    }
+
+    .form-card {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px;
+    }
+
+    .form-actions {
+        padding-top: 22px;
+        margin-top: 22px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+    }
+
+    .btn-gradient:hover {
+        color: #fff;
+    }
+</style>
+
+<main id="main" class="main timetable-form-page">
+    <div class="form-shell">
+        <div class="form-head">
+            <h1><i class="bi bi-calendar-week me-2"></i>{{ title }}</h1>
+            <p>{{ subtitle }}</p>
+        </div>
+
+        <form method="post" class="form-body">
+            {% csrf_token %}
+            <div class="form-card">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Timetable Name</label>
+                        {{ form.name }}
+                        {{ form.name.errors }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Academic Year</label>
+                        {{ form.academic_year }}
+                        {{ form.academic_year.errors }}
+                    </div>
+                </div>
+            </div>
+
+            {{ form.non_field_errors }}
+
+            <div class="form-actions">
+                <a href="{% url 'timetable_list' %}" class="btn btn-light border">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <button type="submit" class="btn btn-gradient">
+                    <i class="bi bi-check-circle"></i> {{ button_text }}
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock content %}

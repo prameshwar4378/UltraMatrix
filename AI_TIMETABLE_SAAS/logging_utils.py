@@ -1,14 +1,10 @@
 import functools
-import logging
 import traceback
 from pathlib import Path
 
 from django.http import HttpRequest
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-
-
-logger = logging.getLogger("software_status")
 
 
 def _request_from_call(args, kwargs):
@@ -72,12 +68,10 @@ def log_exceptions(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         qualified_name = f"{func.__module__}.{func.__qualname__}"
-        logger.info("Started %s", qualified_name)
 
         try:
             result = func(*args, **kwargs)
         except Exception as error:
-            logger.exception("Error in %s", qualified_name)
             request = _request_from_call(args, kwargs)
             if not request or not _is_response_handler(func):
                 raise
@@ -88,7 +82,6 @@ def log_exceptions(func):
             )
             return HttpResponse(content, status=404)
 
-        logger.info("Completed %s", qualified_name)
         return result
 
     return wrapper

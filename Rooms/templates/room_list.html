@@ -268,7 +268,11 @@
         <h1>Room Setup</h1>
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'school_dashboard' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'timetable_list' %}">Timetables</a></li>
+                {% if timetable_scope %}
+                    <li class="breadcrumb-item"><a href="{% url 'timetable_config' timetable_scope.pk %}">Timetable Configuration</a></li>
+                {% endif %}
                 <li class="breadcrumb-item active">Rooms</li>
             </ol>
         </nav>
@@ -286,7 +290,7 @@
             </button>
 
             <a href="javascript:void(0);"
-               data-url="{% url 'room_create' %}"
+               data-url="{% url 'room_create' %}{{ scope_query }}"
                class="btn btn-gradient"
                onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> New Room
@@ -392,7 +396,7 @@
                     <i class="bi bi-search"></i> Apply Filter
                 </button>
 
-                <a href="{% url 'room_list' %}" class="btn btn-light border">
+                <a href="{% url 'room_list' %}{{ scope_query }}" class="btn btn-light border">
                     <i class="bi bi-x-circle"></i> Clear
                 </a>
             </div>
@@ -416,7 +420,7 @@
             </div>
         </div>
 
-        <form method="post" action="{% url 'room_bulk_delete' %}" id="roomBulkDeleteForm">
+        <form method="post" action="{% url 'room_bulk_delete' %}{{ scope_query }}" id="roomBulkDeleteForm">
             {% csrf_token %}
         </form>
         <div class="table-responsive">
@@ -500,7 +504,7 @@
                         <td class="text-end">
                             <a href="javascript:void(0);"
                                class="btn btn-sm btn-outline-warning action-btn"
-                               data-url="{% url 'room_update' room.pk %}"
+                               data-url="{% url 'room_update' room.pk %}{{ scope_query }}"
                                onclick="openCreateModal(this)"
                                title="Edit">
                                 <i class="bi bi-pencil-square"></i>
@@ -508,7 +512,7 @@
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger action-btn"
                                     title="Delete"
-                                    data-delete-url="{% url 'room_delete' room.pk %}"
+                                    data-delete-url="{% url 'room_delete' room.pk %}{{ scope_query }}"
                                     data-room-name="{{ room.name }}"
                                     data-room-school="{{ room.school.name }}"
                                     onclick="openDeleteRoomModal(this)">
@@ -526,7 +530,7 @@
                                 <p>Create classrooms, labs and facilities before class section and timetable setup.</p>
 
                                 <a href="javascript:void(0);"
-                                   data-url="{% url 'room_create' %}"
+                                   data-url="{% url 'room_create' %}{{ scope_query }}"
                                    class="btn btn-gradient"
                                    onclick="openCreateModal(this)">
                                     <i class="bi bi-plus-circle"></i> Create Room
@@ -553,7 +557,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form method="post" action="{% url 'room_auto_create_classrooms' %}">
+            <form method="post" action="{% url 'room_auto_create_classrooms' %}{{ scope_query }}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <p class="text-muted mb-3">
@@ -757,3 +761,4 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 {% endblock content %}
+

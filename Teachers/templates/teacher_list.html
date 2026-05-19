@@ -260,7 +260,11 @@
         <h1>Teacher Setup</h1>
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'school_dashboard' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'timetable_list' %}">Timetables</a></li>
+                {% if timetable_scope %}
+                    <li class="breadcrumb-item"><a href="{% url 'timetable_config' timetable_scope.pk %}">Timetable Configuration</a></li>
+                {% endif %}
                 <li class="breadcrumb-item active">Teachers</li>
             </ol>
         </nav>
@@ -279,7 +283,7 @@
             </button>
             
             <a href="javascript:void(0);"
-               data-url="{% url 'teacher_create' %}"
+               data-url="{% url 'teacher_create' %}{{ scope_query }}"
                class="btn btn-gradient"
                onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> New Teacher
@@ -287,7 +291,7 @@
 
 
             <a href="javascript:void(0);"
-               data-url="{% url 'teacher_quick_create' %}"
+               data-url="{% url 'teacher_quick_create' %}{{ scope_query }}"
                class="btn btn-gradient-ai"
                onclick="openCreateModal(this, 1300, 780)">
                 <i class="bi bi-magic"></i> AI Auto Generate
@@ -365,7 +369,7 @@
                     <i class="bi bi-search"></i> Apply Filter
                 </button>
 
-                <a href="{% url 'teacher_list' %}" class="btn btn-light border">
+                <a href="{% url 'teacher_list' %}{{ scope_query }}" class="btn btn-light border">
                     <i class="bi bi-x-circle"></i> Clear
                 </a>
             </div>
@@ -388,7 +392,7 @@
             </div>
         </div>
 
-        <form method="post" action="{% url 'teacher_bulk_delete' %}" id="teacherBulkDeleteForm">
+        <form method="post" action="{% url 'teacher_bulk_delete' %}{{ scope_query }}" id="teacherBulkDeleteForm">
             {% csrf_token %}
             <div class="table-responsive">
             <table class="table table-modern align-middle">
@@ -473,14 +477,14 @@
                             <div class="btn-group">
                                 <a href="javascript:void(0);"
                                    class="btn btn-sm btn-outline-warning action-btn"
-                                   data-url="{% url 'teacher_update' teacher.pk %}"
+                                   data-url="{% url 'teacher_update' teacher.pk %}{{ scope_query }}"
                                    onclick="openCreateModal(this)"
                                    title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
                                 <button type="button"
                                         class="btn btn-sm btn-outline-danger action-btn"
-                                        data-delete-url="{% url 'teacher_delete' teacher.pk %}"
+                                        data-delete-url="{% url 'teacher_delete' teacher.pk %}{{ scope_query }}"
                                         data-teacher-name="{{ teacher.name }}"
                                         data-teacher-school="{{ teacher.school.name }}"
                                         onclick="openDeleteTeacherModal(this)"
@@ -529,7 +533,7 @@
                             <p class="text-muted small mb-3">
                                 Upload the Excel template after filling teacher details. Existing teachers update by School + Employee ID.
                             </p>
-                            <form method="post" action="{% url 'teacher_import_excel' %}" enctype="multipart/form-data">
+                            <form method="post" action="{% url 'teacher_import_excel' %}{{ scope_query }}" enctype="multipart/form-data">
                                 {% csrf_token %}
                                 <input type="file" name="teacher_file" class="form-control mb-3" accept=".xlsx" required>
                                 <button type="submit" class="btn btn-primary">
@@ -546,7 +550,7 @@
                                 Download the template for new imports or export the currently filtered teacher list.
                             </p>
                             <div class="d-flex gap-2 flex-wrap">
-                                <a href="{% url 'teacher_import_template' %}" class="btn btn-light border">
+                                <a href="{% url 'teacher_import_template' %}{{ scope_query }}" class="btn btn-light border">
                                     <i class="bi bi-file-earmark-arrow-down"></i> Download Template
                                 </a>
 
@@ -717,3 +721,4 @@
 </script>
 
 {% endblock content %}
+

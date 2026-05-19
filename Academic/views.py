@@ -10,7 +10,7 @@ from django.views.decorators.http import require_POST
 from Schools.models import School
 from .models import AcademicYear, Day, BellSchedule, Period
 from django.db.models import Q
-from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset, scoped_redirect_url, timetable_scope_from_request
 from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
@@ -59,8 +59,10 @@ def _default_saturday_periods():
 
 
 @log_exceptions
-def _days_for_school(school):
+def _days_for_school(school, timetable=None):
     days = Day.objects.filter(school=school).order_by("sort_order", "id")
+    if timetable:
+        days = days.filter(timetable=timetable)
 
     if not days.exists():
         return _default_days()
@@ -99,6 +101,7 @@ def _periods_for_schedule(bell_schedule, day_type, defaults):
 @log_exceptions
 def _save_academic_setup(request, academic_year=None):
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
     school = current_school or get_object_or_404(School, id=request.POST.get("school"))
     days_data = json.loads(request.POST.get("days_json") or "[]")
     weekday_periods = json.loads(request.POST.get("weekday_periods_json") or "[]")
@@ -108,6 +111,7 @@ def _save_academic_setup(request, academic_year=None):
         if academic_year is None:
             academic_year = AcademicYear.objects.create(
                 school=school,
+                timetable=timetable_scope,
                 name=request.POST.get("academic_name"),
                 start_date=request.POST.get("start_date"),
                 end_date=request.POST.get("end_date"),
@@ -115,6 +119,7 @@ def _save_academic_setup(request, academic_year=None):
             )
         else:
             academic_year.school = school
+            academic_year.timetable = timetable_scope or academic_year.timetable
             academic_year.name = request.POST.get("academic_name")
             academic_year.start_date = request.POST.get("start_date")
             academic_year.end_date = request.POST.get("end_date")
@@ -123,6 +128,7 @@ def _save_academic_setup(request, academic_year=None):
 
         bell_schedule, _ = BellSchedule.objects.get_or_create(
             academic_year=academic_year,
+            timetable=academic_year.timetable,
             defaults={
                 "school": school,
                 "name": request.POST.get("bell_schedule_name"),
@@ -130,6 +136,7 @@ def _save_academic_setup(request, academic_year=None):
             }
         )
         bell_schedule.school = school
+        bell_schedule.timetable = academic_year.timetable
         bell_schedule.name = request.POST.get("bell_schedule_name")
         bell_schedule.is_active = True
         bell_schedule.save()
@@ -143,6 +150,7 @@ def _save_academic_setup(request, academic_year=None):
             }
             matching_days = Day.objects.filter(
                 school=school,
+                timetable=academic_year.timetable,
                 name=day["name"],
             )
 
@@ -151,6 +159,7 @@ def _save_academic_setup(request, academic_year=None):
             else:
                 Day.objects.create(
                     school=school,
+                    timetable=academic_year.timetable,
                     name=day["name"],
                     **day_defaults,
                 )
@@ -161,6 +170,7 @@ def _save_academic_setup(request, academic_year=None):
             for period in period_data:
                 Period.objects.create(
                     school=school,
+                    timetable=academic_year.timetable,
                     bell_schedule=bell_schedule,
                     day_type=day_type,
                     name=period["name"],
@@ -170,6 +180,15 @@ def _save_academic_setup(request, academic_year=None):
                     period_type=period["period_type"],
                     is_teaching_period=period["period_type"] == "TEACHING",
                 )
+        if timetable_scope:
+            from Timetables.models import TimetableConfiguration
+            timetable_scope.academic_year = academic_year
+            timetable_scope.save(update_fields=["academic_year"])
+            configuration, _ = TimetableConfiguration.objects.get_or_create(timetable=timetable_scope)
+            configuration.bell_schedule = bell_schedule
+            configuration.save(update_fields=["bell_schedule", "updated_at"])
+            configuration.working_days.set(Day.objects.filter(school=school, timetable=timetable_scope, is_working=True))
+            configuration.periods.set(Period.objects.filter(school=school, timetable=timetable_scope, bell_schedule=bell_schedule))
 
     return academic_year
 
@@ -177,10 +196,15 @@ def _save_academic_setup(request, academic_year=None):
 @log_exceptions
 def academic_setup_list(request):
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
     academic_years = school_queryset(
         request,
         AcademicYear.objects.select_related("school"),
     ).order_by("-id")
+    if timetable_scope:
+        academic_years = academic_years.filter(timetable=timetable_scope)
+    else:
+        academic_years = academic_years.none()
 
     status_filter = request.GET.get("status", "")
     search_query = request.GET.get("search", "")
@@ -216,6 +240,8 @@ def academic_setup_list(request):
         "search_query": search_query,
         "date_from": date_from,
         "date_to": date_to,
+        "timetable_scope": timetable_scope,
+        "scope_query": f"?timetable_id={timetable_scope.id}" if timetable_scope else "",
     }
 
     return render(request, "academic_setup_list.html", context)
@@ -229,6 +255,10 @@ def academic_setup(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Academic Calendar from a timetable dashboard.")
+        return redirect("timetable_list")
     schools = School.objects.filter(is_active=True).order_by("name")
     if current_school:
         schools = schools.filter(pk=current_school.pk)
@@ -254,6 +284,7 @@ def academic_setup(request):
         "button_text": "Save Complete Setup",
         "form_title": "Academic Setup",
         "form_subtitle": "Create academic year, working days, weekday periods and Saturday separate timings.",
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -266,6 +297,7 @@ def academic_setup_update(request, pk):
         AcademicYear.objects.select_related("school"),
         pk=pk,
     )
+    timetable_scope = academic_year.timetable or timetable_scope_from_request(request)
     schools = School.objects.filter(is_active=True).order_by("name")
     if current_school:
         schools = schools.filter(pk=current_school.pk)
@@ -285,12 +317,13 @@ def academic_setup_update(request, pk):
         "current_school": current_school,
         "academic_year": academic_year,
         "bell_schedule": bell_schedule,
-        "initial_days_json": _days_for_school(academic_year.school),
+        "initial_days_json": _days_for_school(academic_year.school, timetable_scope),
         "initial_weekday_periods_json": _periods_for_schedule(bell_schedule, "WEEKDAY", _default_weekday_periods),
         "initial_saturday_periods_json": _periods_for_schedule(bell_schedule, "SATURDAY", _default_saturday_periods),
         "button_text": "Update Complete Setup",
         "form_title": "Update Academic Setup",
         "form_subtitle": "Update academic year, working days and bell period timings.",
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -300,6 +333,7 @@ def academic_setup_update(request, pk):
 def academic_setup_delete(request, pk):
     academic_year = get_school_object_or_404(request, AcademicYear.objects.all(), pk=pk)
     name = academic_year.name
+    timetable_scope = academic_year.timetable
     academic_year.delete()
     messages.success(request, f"Academic setup '{name}' deleted successfully.")
-    return redirect("academic_setup_list")
+    return redirect(scoped_redirect_url("academic_setup_list", timetable_scope))

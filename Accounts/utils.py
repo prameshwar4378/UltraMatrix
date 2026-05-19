@@ -79,6 +79,35 @@ def school_queryset(request, queryset):
 
 
 @log_exceptions
+def timetable_scope_from_request(request):
+    from Timetables.models import Timetable
+
+    school = get_current_school(request)
+    timetable_id = (
+        request.GET.get("timetable_id")
+        or request.POST.get("timetable_id")
+        or request.GET.get("timetable")
+        or request.POST.get("timetable")
+    )
+
+    if not school or not timetable_id:
+        return None
+
+    return Timetable.objects.filter(pk=timetable_id, school=school).first()
+
+
+@log_exceptions
+def scoped_redirect_url(url_name, timetable=None):
+    from django.urls import reverse
+
+    url = reverse(url_name)
+    if not timetable:
+        return url
+
+    return f"{url}?timetable_id={timetable.id}"
+
+
+@log_exceptions
 def get_school_object_or_404(request, queryset, **lookup):
     return get_object_or_404(school_queryset(request, queryset), **lookup)
 

@@ -785,7 +785,6 @@ body{
         <button class="btn btn-light border" id="zoomOutBtn"><i class="bi bi-zoom-out"></i></button>
         <button class="btn btn-light border" id="zoomResetBtn">100%</button>
         <button class="btn btn-light border" id="zoomInBtn"><i class="bi bi-zoom-in"></i></button>
-        <button class="btn btn-primary" id="addTimetableBtn"><i class="bi bi-plus-circle"></i> Add Timetable</button>
         <div class="btn-group">
             <button class="btn btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown">
                 <i class="bi bi-columns-gap"></i> Day Planner Cards
@@ -1021,6 +1020,66 @@ body{
     </div>
 </div>
 
+<div class="modal fade" id="builderNoticeModal" tabindex="-1" aria-labelledby="builderNoticeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="builderNoticeModalLabel">
+                    <i class="bi bi-info-circle me-2"></i> Timetable Notice
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="builderNoticeMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="builderConfirmModal" tabindex="-1" aria-labelledby="builderConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="builderConfirmModalLabel">
+                    <i class="bi bi-question-circle me-2"></i> Confirm Action
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="builderConfirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" id="builderConfirmCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="builderConfirmOkBtn">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="builderPromptModal" tabindex="-1" aria-labelledby="builderPromptModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="builderPromptModalLabel">
+                    <i class="bi bi-pencil-square me-2"></i> Timetable Name
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-semibold" for="builderPromptInput">Enter timetable name</label>
+                <input type="text" class="form-control" id="builderPromptInput" autocomplete="off">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="builderPromptOkBtn">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{ class_sections_json|json_script:"classSectionsData" }}
 {{ teachers_json|json_script:"teachersData" }}
 {{ subjects_json|json_script:"subjectsData" }}
@@ -1033,6 +1092,79 @@ body{
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
 <script>
+let builderNoticeModal = null;
+let builderConfirmModal = null;
+let builderConfirmCallback = null;
+let builderPromptModal = null;
+let builderPromptCallback = null;
+
+function showBuilderNotice(message) {
+    const messageElement = document.getElementById("builderNoticeMessage");
+    if (!messageElement) return;
+
+    messageElement.textContent = String(message || "");
+    if (!builderNoticeModal) {
+        builderNoticeModal = new bootstrap.Modal(document.getElementById("builderNoticeModal"));
+    }
+    builderNoticeModal.show();
+}
+
+window.alert = showBuilderNotice;
+
+function showBuilderConfirm(message, onConfirm, options = {}) {
+    const messageElement = document.getElementById("builderConfirmMessage");
+    const okButton = document.getElementById("builderConfirmOkBtn");
+    const cancelButton = document.getElementById("builderConfirmCancelBtn");
+    if (!messageElement || !okButton || !cancelButton) return;
+
+    messageElement.textContent = String(message || "");
+    okButton.textContent = options.okText || "Continue";
+    cancelButton.textContent = options.cancelText || "Cancel";
+    cancelButton.onclick = null;
+    builderConfirmCallback = onConfirm;
+
+    if (!builderConfirmModal) {
+        builderConfirmModal = new bootstrap.Modal(document.getElementById("builderConfirmModal"));
+        okButton.addEventListener("click", function () {
+            const callback = builderConfirmCallback;
+            builderConfirmCallback = null;
+            builderConfirmModal.hide();
+            if (typeof callback === "function") callback();
+        });
+    }
+
+    builderConfirmModal.show();
+}
+
+function showBuilderPrompt(defaultValue, onSubmit) {
+    const input = document.getElementById("builderPromptInput");
+    const okButton = document.getElementById("builderPromptOkBtn");
+    if (!input || !okButton) return;
+
+    input.value = defaultValue || "";
+    builderPromptCallback = onSubmit;
+
+    if (!builderPromptModal) {
+        builderPromptModal = new bootstrap.Modal(document.getElementById("builderPromptModal"));
+        okButton.addEventListener("click", function () {
+            const value = input.value.trim();
+            const callback = builderPromptCallback;
+            builderPromptCallback = null;
+            builderPromptModal.hide();
+            if (typeof callback === "function") callback(value);
+        });
+        input.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                okButton.click();
+            }
+        });
+    }
+
+    builderPromptModal.show();
+    setTimeout(() => input.focus(), 150);
+}
+
 function initSearchableDropdowns(root){
     if(typeof Choices === "undefined") return;
 
@@ -1451,12 +1583,12 @@ function bindTableCells(){
                 return;
             }
 
-            if(confirm("Remove this lecture?")){
+            showBuilderConfirm("Remove this lecture?", function () {
                 saveUndo();
                 delete timetableState[cell.dataset.key];
                 renderTable();
                 refreshAll();
-            }
+            }, {okText: "Remove"});
         });
     });
 }
@@ -2289,7 +2421,31 @@ function saveTimetableLocal() {
     let timetableId = document.getElementById("timetableSelect").value;
 
     if (timetableId) {
-        saveTimetableToDatabase(timetableId);
+        const visibleSectionIds = getVisibleClasses().map(section => String(section.id));
+        if (visibleSectionIds.length < classSections.length) {
+            const cancelButton = document.getElementById("builderConfirmCancelBtn");
+            showBuilderConfirm(
+                "Save only the currently visible/filtered sections?",
+                function () {
+                    saveTimetableToDatabase(timetableId, false, null, "section_scope", visibleSectionIds);
+                },
+                {okText: "Save Visible", cancelText: "Save Full"}
+            );
+            cancelButton.onclick = function () {
+                builderConfirmCallback = null;
+                builderConfirmModal.hide();
+                cancelButton.onclick = null;
+                saveTimetableToDatabase(timetableId, false, null, "full_timetable", []);
+            };
+            return;
+        }
+        saveTimetableToDatabase(
+            timetableId,
+            false,
+            null,
+            "full_timetable",
+            []
+        );
         return;
     }
 
@@ -2491,7 +2647,13 @@ function validateTimetableWithBackend() {
     });
 }
 
-function saveTimetableToDatabase(timetableId) {
+function saveTimetableToDatabase(timetableId, confirmedImpact = false, preparedEntries = null, saveScope = "full_timetable", scopeSectionIds = []) {
+    let entries = preparedEntries || collectTimetableEntries();
+    if(saveScope === "section_scope"){
+        const scopeSet = new Set(scopeSectionIds.map(String));
+        entries = entries.filter(entry => scopeSet.has(String(entry.class_section_id)));
+    }
+
     fetch("/api/save-timetable/", {
         method: "POST",
         headers: {
@@ -2499,11 +2661,44 @@ function saveTimetableToDatabase(timetableId) {
         },
         body: JSON.stringify({
             timetable_id: timetableId,
-            entries: collectTimetableEntries(),
+            entries,
+            save_scope: saveScope,
+            scope_class_section_ids: scopeSectionIds,
+            preview_only: !confirmedImpact,
+            confirmed_impact: confirmedImpact,
         })
     })
     .then(response => response.json())
     .then(data => {
+        if(data.success && !confirmedImpact){
+            const impact = data.impact || {};
+            const message = [
+                "Save impact preview:",
+                `Existing slots affected: ${impact.total_affected || 0}`,
+                `Save scope: ${impact.scope === "section_scope" ? "visible sections" : "full timetable"}`,
+                `Sections in scope: ${impact.scope_sections || "all"}`,
+                `Slots to create: ${impact.entries_to_create || 0}`,
+                `Slots to replace: ${impact.entries_to_replace || 0}`,
+                `Slots to delete: ${impact.entries_to_delete || 0}`,
+                `Locked slots affected: ${impact.locked_entries || 0}`,
+                "",
+                "Continue and save this timetable?"
+            ].join("\n");
+
+            showBuilderConfirm(message, function () {
+                saveTimetableToDatabase(timetableId, true, entries, saveScope, scopeSectionIds);
+            });
+            return;
+        }
+
+        if(data.requires_confirmation){
+            const impact = data.impact || {};
+            showBuilderConfirm(`This save affects ${impact.total_affected || 0} existing slot(s), including ${impact.locked_entries || 0} locked slot(s). Continue?`, function () {
+                saveTimetableToDatabase(timetableId, true, entries, saveScope, scopeSectionIds);
+            });
+            return;
+        }
+
         validationAlert(data);
     })
     .catch(error => {
@@ -2530,30 +2725,28 @@ function undoLast(){
 }
 
 function addTimetable() {
-    const timetableName = prompt("Enter timetable name:");
-
-    if (timetableName === null) return;
-
-    createTimetableThenSave(timetableName);
+    showBuilderPrompt("", function (timetableName) {
+        createTimetableThenSave(timetableName);
+    });
 }
 
 function clearTimetable(){
-    if(!confirm("Clear current timetable board?")) return;
+    showBuilderConfirm("Clear current timetable board?", function () {
+        saveUndo();
+        const lockedEntries = {};
 
-    saveUndo();
-    const lockedEntries = {};
+        Object.keys(timetableState).forEach(key => {
+            if(timetableState[key]?.is_locked){
+                lockedEntries[key] = timetableState[key];
+            }
+        });
 
-    Object.keys(timetableState).forEach(key => {
-        if(timetableState[key]?.is_locked){
-            lockedEntries[key] = timetableState[key];
-        }
-    });
+        timetableState = lockedEntries;
+        localStorage.removeItem("master_timetable_state");
 
-    timetableState = lockedEntries;
-    localStorage.removeItem("master_timetable_state");
-
-    renderTable();
-    refreshAll();
+        renderTable();
+        refreshAll();
+    }, {okText: "Clear"});
 }
 
 function exportTimetable(scope, format){
@@ -2605,7 +2798,6 @@ function bindControls(){
     document.getElementById("saveBtn").addEventListener("click", saveTimetableLocal);
     document.getElementById("validateTimetableBtn").addEventListener("click", validateTimetableWithBackend);
     document.getElementById("resolveAuditIssuesBtn").addEventListener("click", resolveAuditWarningsWithAi);
-    document.getElementById("addTimetableBtn").addEventListener("click", addTimetable);
     document.getElementById("deleteTimetableBtn").addEventListener("click", clearTimetable);
     document.querySelectorAll(".export-option").forEach(button => {
         button.addEventListener("click", function(){

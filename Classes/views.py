@@ -8,10 +8,10 @@ from django.views.decorators.http import require_POST
 
 from .models import ClassLevel, Division
 from .forms import ClassLevelForm, DivisionForm, ClassSectionForm
-from Timetables.models import ClassSection, LessonAllocation, TimetableEntry
+from Timetables.models import ClassSection, LessonAllocation, TimetableConfiguration, TimetableEntry
 from Rooms.models import Room
 from Schools.models import School
-from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset, scoped_redirect_url, timetable_scope_from_request
 from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 
@@ -19,6 +19,7 @@ from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 @log_exceptions
 def class_setup_list(request):
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
     search_query = request.GET.get("search", "")
     section_filter = request.GET.get("section_type", "")
     status_filter = request.GET.get("status", "")
@@ -34,6 +35,16 @@ def class_setup_list(request):
     class_levels = school_queryset(request, ClassLevel.objects.select_related("school")).order_by("school__name", "sort_order", "name")
     divisions = school_queryset(request, Division.objects.select_related("school")).order_by("school__name", "sort_order", "name")
     rooms = school_queryset(request, Room.objects.select_related("school")).order_by("room_type", "name")
+    if timetable_scope:
+        class_sections = class_sections.filter(timetable=timetable_scope)
+        class_levels = class_levels.filter(timetable=timetable_scope)
+        divisions = divisions.filter(timetable=timetable_scope)
+        rooms = rooms.filter(timetable=timetable_scope)
+    else:
+        class_sections = class_sections.none()
+        class_levels = class_levels.none()
+        divisions = divisions.none()
+        rooms = rooms.none()
     active_class_levels = class_levels.filter(is_active=True)
     active_divisions = divisions.filter(is_active=True)
     active_rooms = rooms.filter(is_active=True)
@@ -42,6 +53,7 @@ def class_setup_list(request):
     if current_school:
         existing_section_pairs = set(ClassSection.objects.filter(
             school=current_school,
+            timetable=timetable_scope,
             class_level__is_active=True,
             division__is_active=True,
         ).values_list("class_level_id", "division_id"))
@@ -70,7 +82,7 @@ def class_setup_list(request):
         class_sections = class_sections.filter(is_active=False)
 
     for class_level in class_levels:
-        related_sections = ClassSection.objects.filter(school=class_level.school, class_level=class_level)
+        related_sections = ClassSection.objects.filter(school=class_level.school, timetable=timetable_scope, class_level=class_level)
         class_level.impact_sections = related_sections.count()
         class_level.impact_allocations = LessonAllocation.objects.filter(class_section__in=related_sections).count()
         class_level.impact_entries = TimetableEntry.objects.filter(class_section__in=related_sections).count()
@@ -101,6 +113,8 @@ def class_setup_list(request):
         "search_query": search_query,
         "section_filter": section_filter,
         "status_filter": status_filter,
+        "timetable_scope": timetable_scope,
+        "scope_query": f"?timetable_id={timetable_scope.id}" if timetable_scope else "",
     }
 
     return render(request, "class_setup_list.html", context)
@@ -134,21 +148,39 @@ def _positive_int(value, default):
         return default
 
 
+@log_exceptions
+def _scope_class_section_form(form, timetable):
+    if not timetable:
+        return form
+
+    form.fields["class_level"].queryset = form.fields["class_level"].queryset.filter(timetable=timetable)
+    form.fields["division"].queryset = form.fields["division"].queryset.filter(timetable=timetable)
+    form.fields["class_teacher"].queryset = form.fields["class_teacher"].queryset.filter(timetable=timetable)
+    form.fields["default_room"].queryset = form.fields["default_room"].queryset.filter(timetable=timetable)
+    return form
+
+
 @login_required
 @require_POST
 @log_exceptions
 def class_sections_quick_create(request):
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
     if not current_school:
         messages.error(request, "No active school is linked with your session.")
         return redirect("class_setup_list")
+    if not timetable_scope:
+        messages.warning(request, "Open Class Setup from a timetable dashboard.")
+        return redirect("timetable_list")
 
     class_levels = ClassLevel.objects.filter(
         school=current_school,
+        timetable=timetable_scope,
         is_active=True,
     ).order_by("sort_order", "name")
     divisions = Division.objects.filter(
         school=current_school,
+        timetable=timetable_scope,
         is_active=True,
     ).order_by("sort_order", "name")
 
@@ -174,6 +206,7 @@ def class_sections_quick_create(request):
                     Q(short_name__iexact=room_name[:30]) |
                     Q(name__iexact=old_room_name),
                     school=current_school,
+                    timetable=timetable_scope,
                     room_type="CLASSROOM",
                 ).first()
 
@@ -182,6 +215,7 @@ def class_sections_quick_create(request):
                 else:
                     room = Room.objects.create(
                         school=current_school,
+                        timetable=timetable_scope,
                         name=room_name,
                         short_name=room_name[:30],
                         room_type="CLASSROOM",
@@ -192,6 +226,7 @@ def class_sections_quick_create(request):
 
                 existing_section = ClassSection.objects.filter(
                     school=current_school,
+                    timetable=timetable_scope,
                     class_level=class_level,
                     division=division,
                 ).first()
@@ -206,6 +241,7 @@ def class_sections_quick_create(request):
 
                 ClassSection.objects.create(
                     school=current_school,
+                    timetable=timetable_scope,
                     class_level=class_level,
                     division=division,
                     default_room=room,
@@ -214,6 +250,12 @@ def class_sections_quick_create(request):
                 )
                 created_count += 1
                 assigned_room_count += 1
+                TimetableConfiguration.objects.get_or_create(timetable=timetable_scope)[0].class_sections.add(ClassSection.objects.get(
+                    school=current_school,
+                    timetable=timetable_scope,
+                    class_level=class_level,
+                    division=division,
+                ))
 
     if created_count:
         messages.success(
@@ -226,7 +268,7 @@ def class_sections_quick_create(request):
             f"No new class sections were needed. {skipped_count} matching section(s) already exist. Created {room_created_count} missing classroom(s) and assigned default rooms to {assigned_room_count} section(s)."
         )
 
-    return redirect("class_setup_list")
+    return redirect(scoped_redirect_url("class_setup_list", timetable_scope))
 
 @login_required
 @log_exceptions
@@ -236,6 +278,10 @@ def class_level_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Class Level setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         if request.POST.get("class_levels_json"):
             class_levels_data = json.loads(request.POST.get("class_levels_json") or "[]")
@@ -254,12 +300,13 @@ def class_level_create(request):
                         skipped_count += 1
                         continue
 
-                    if ClassLevel.objects.filter(school=current_school, name__iexact=name).exists():
+                    if ClassLevel.objects.filter(school=current_school, timetable=timetable_scope, name__iexact=name).exists():
                         skipped_count += 1
                         continue
 
                     ClassLevel.objects.create(
                         school=current_school,
+                        timetable=timetable_scope,
                         name=name,
                         short_name=str(class_data.get("short_name") or "").strip(),
                         sort_order=_positive_int(class_data.get("sort_order"), created_count + skipped_count + 1),
@@ -281,7 +328,9 @@ def class_level_create(request):
 
         form = ClassLevelForm(request.POST, current_school=current_school)
         if form.is_valid():
-            form.save()
+            class_level = form.save(commit=False)
+            class_level.timetable = timetable_scope
+            class_level.save()
             messages.success(request, "Class level created successfully.")
             return HttpResponse("""
             <script>
@@ -298,6 +347,7 @@ def class_level_create(request):
         "button_text": "Save Class Level",
         "bulk_create": True,
         "initial_class_levels_json": _default_class_levels(),
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -334,9 +384,10 @@ def class_level_update(request, pk):
 def class_level_delete(request, pk):
     class_level = get_school_object_or_404(request, ClassLevel.objects.all(), pk=pk)
     name = class_level.name
+    timetable_scope = class_level.timetable
     class_level.delete()
     messages.success(request, f"Class level '{name}' deleted successfully.")
-    return redirect("class_setup_list")
+    return redirect(scoped_redirect_url("class_setup_list", timetable_scope))
 
 
 @login_required
@@ -344,6 +395,7 @@ def class_level_delete(request, pk):
 @log_exceptions
 def class_level_bulk_delete(request):
     selected_ids = request.POST.getlist("class_level_ids")
+    timetable_scope = timetable_scope_from_request(request)
     if not selected_ids:
         messages.warning(request, "Select at least one class level to delete.")
         return redirect("class_setup_list")
@@ -352,6 +404,8 @@ def class_level_bulk_delete(request):
         request,
         ClassLevel.objects.filter(id__in=selected_ids),
     )
+    if timetable_scope:
+        class_levels = class_levels.filter(timetable=timetable_scope)
     deleted_count = class_levels.count()
     class_levels.delete()
 
@@ -360,7 +414,7 @@ def class_level_bulk_delete(request):
     else:
         messages.info(request, "No class levels were deleted.")
 
-    return redirect("class_setup_list")
+    return redirect(scoped_redirect_url("class_setup_list", timetable_scope))
 
 
 @login_required
@@ -371,10 +425,16 @@ def division_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Division setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         form = DivisionForm(request.POST, current_school=current_school)
         if form.is_valid():
-            form.save()
+            division = form.save(commit=False)
+            division.timetable = timetable_scope
+            division.save()
             messages.success(request, "Division created successfully.")
             return HttpResponse("""
             <script>
@@ -389,6 +449,7 @@ def division_create(request):
         "title": "Create Division",
         "subtitle": "Add divisions like A, B, C or D.",
         "button_text": "Save Division",
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -425,9 +486,10 @@ def division_update(request, pk):
 def division_delete(request, pk):
     division = get_school_object_or_404(request, Division.objects.all(), pk=pk)
     name = division.name
+    timetable_scope = division.timetable
     division.delete()
     messages.success(request, f"Division '{name}' deleted successfully.")
-    return redirect("class_setup_list")
+    return redirect(scoped_redirect_url("class_setup_list", timetable_scope))
 
 
 @login_required
@@ -438,10 +500,19 @@ def class_section_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Class Section setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         form = ClassSectionForm(request.POST, current_school=current_school)
+        _scope_class_section_form(form, timetable_scope)
+        form.instance.timetable = timetable_scope
         if form.is_valid():
-            form.save()
+            class_section = form.save(commit=False)
+            class_section.timetable = timetable_scope
+            class_section.save()
+            TimetableConfiguration.objects.get_or_create(timetable=timetable_scope)[0].class_sections.add(class_section)
             messages.success(request, "Class section created successfully.")
             return HttpResponse("""
             <script>
@@ -450,12 +521,14 @@ def class_section_create(request):
             """)
     else:
         form = ClassSectionForm(current_school=current_school)
+        _scope_class_section_form(form, timetable_scope)
 
     return render(request, "class_section_form.html", {
         "form": form,
         "title": "Create Class Section",
         "subtitle": "Create actual class section like Class 1A, Class 10B.",
         "button_text": "Save Class Section",
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -464,9 +537,11 @@ def class_section_create(request):
 def class_section_update(request, pk):
     class_section = get_school_object_or_404(request, ClassSection.objects.all(), pk=pk)
     current_school = get_current_school(request)
+    timetable_scope = class_section.timetable
 
     if request.method == "POST":
         form = ClassSectionForm(request.POST, instance=class_section, current_school=current_school)
+        _scope_class_section_form(form, timetable_scope)
         if form.is_valid():
             form.save()
             messages.success(request, "Class section updated successfully.")
@@ -477,6 +552,7 @@ def class_section_update(request, pk):
             """)
     else:
         form = ClassSectionForm(instance=class_section, current_school=current_school)
+        _scope_class_section_form(form, timetable_scope)
 
     return render(request, "class_section_form.html", {
         "form": form,
@@ -492,9 +568,10 @@ def class_section_update(request, pk):
 def class_section_delete(request, pk):
     class_section = get_school_object_or_404(request, ClassSection.objects.all(), pk=pk)
     name = str(class_section)
+    timetable_scope = class_section.timetable
     class_section.delete()
     messages.success(request, f"Class section '{name}' deleted successfully.")
-    return redirect("class_setup_list")
+    return redirect(scoped_redirect_url("class_setup_list", timetable_scope))
 
 
 @login_required
@@ -502,6 +579,7 @@ def class_section_delete(request, pk):
 @log_exceptions
 def class_section_bulk_delete(request):
     selected_ids = request.POST.getlist("class_section_ids")
+    timetable_scope = timetable_scope_from_request(request)
     if not selected_ids:
         messages.warning(request, "Select at least one class section to delete.")
         return redirect("class_setup_list")
@@ -510,6 +588,8 @@ def class_section_bulk_delete(request):
         request,
         ClassSection.objects.filter(id__in=selected_ids),
     )
+    if timetable_scope:
+        class_sections = class_sections.filter(timetable=timetable_scope)
     deleted_count = class_sections.count()
     class_sections.delete()
 
@@ -518,4 +598,4 @@ def class_section_bulk_delete(request):
     else:
         messages.info(request, "No class sections were deleted.")
 
-    return redirect("class_setup_list")
+    return redirect(scoped_redirect_url("class_setup_list", timetable_scope))

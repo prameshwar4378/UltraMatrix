@@ -7,14 +7,15 @@ from .models import Room
 from .forms import RoomForm
 from Classes.models import ClassLevel, Division
 from Schools.models import School
-from Timetables.models import ClassSection, LessonAllocation, TimetableEntry
-from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset
+from Timetables.models import ClassSection, LessonAllocation, TimetableConfiguration, TimetableEntry
+from Accounts.utils import get_current_school, get_school_object_or_404, redirect_if_no_current_school, school_queryset, scoped_redirect_url, timetable_scope_from_request
 from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 @login_required
 @log_exceptions
 def room_list(request):
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
 
     # Timetable.objects.filter(is_active=True).delete()
 
@@ -23,6 +24,10 @@ def room_list(request):
         request,
         Room.objects.select_related("school"),
     ).order_by("-id")
+    if timetable_scope:
+        rooms = rooms.filter(timetable=timetable_scope)
+    else:
+        rooms = rooms.none()
 
     search_query = request.GET.get("search", "")
     room_type_filter = request.GET.get("room_type", "")
@@ -51,8 +56,8 @@ def room_list(request):
 
     auto_room_targets = []
     for school in schools:
-        class_count = ClassLevel.objects.filter(school=school, is_active=True).count()
-        division_count = Division.objects.filter(school=school, is_active=True).count()
+        class_count = ClassLevel.objects.filter(school=school, timetable=timetable_scope, is_active=True).count()
+        division_count = Division.objects.filter(school=school, timetable=timetable_scope, is_active=True).count()
         expected_count = class_count * division_count
         if expected_count:
             auto_room_targets.append({
@@ -79,6 +84,8 @@ def room_list(request):
         "search_query": search_query,
         "room_type_filter": room_type_filter,
         "status_filter": status_filter,
+        "timetable_scope": timetable_scope,
+        "scope_query": f"?timetable_id={timetable_scope.id}" if timetable_scope else "",
     }
 
     return render(request, "room_list.html", context)
@@ -95,11 +102,18 @@ def room_create(request):
         return no_school_response
 
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
+    if not timetable_scope:
+        messages.warning(request, "Open Room setup from a timetable dashboard.")
+        return redirect("timetable_list")
     if request.method == "POST":
         form = RoomForm(request.POST, current_school=current_school)
 
         if form.is_valid():
-            form.save()
+            room = form.save(commit=False)
+            room.timetable = timetable_scope
+            room.save()
+            TimetableConfiguration.objects.get_or_create(timetable=timetable_scope)[0].rooms.add(room)
             messages.success(request, "Room created successfully.")
             return HttpResponse("""
             <script>
@@ -114,6 +128,7 @@ def room_create(request):
         "title": "Create Room",
         "subtitle": "Add classrooms, labs, library, playground and activity rooms.",
         "button_text": "Save Room",
+        "timetable_scope": timetable_scope,
     })
 
 
@@ -151,9 +166,10 @@ def room_update(request, pk):
 def room_delete(request, pk):
     room = get_school_object_or_404(request, Room.objects.all(), pk=pk)
     room_name = room.name
+    timetable_scope = room.timetable
     room.delete()
     messages.success(request, f"Room '{room_name}' deleted successfully.")
-    return redirect("room_list")
+    return redirect(scoped_redirect_url("room_list", timetable_scope))
 
 
 @login_required
@@ -161,6 +177,7 @@ def room_delete(request, pk):
 @log_exceptions
 def room_bulk_delete(request):
     selected_ids = request.POST.getlist("room_ids")
+    timetable_scope = timetable_scope_from_request(request)
     if not selected_ids:
         messages.warning(request, "Select at least one room to delete.")
         return redirect("room_list")
@@ -169,6 +186,8 @@ def room_bulk_delete(request):
         request,
         Room.objects.filter(id__in=selected_ids),
     )
+    if timetable_scope:
+        rooms = rooms.filter(timetable=timetable_scope)
     deleted_count = rooms.count()
     rooms.delete()
 
@@ -177,7 +196,7 @@ def room_bulk_delete(request):
     else:
         messages.info(request, "No rooms were deleted.")
 
-    return redirect("room_list")
+    return redirect(scoped_redirect_url("room_list", timetable_scope))
 
 
 @login_required
@@ -185,9 +204,13 @@ def room_bulk_delete(request):
 @log_exceptions
 def room_auto_create_classrooms(request):
     current_school = get_current_school(request)
+    timetable_scope = timetable_scope_from_request(request)
     if not current_school:
         messages.error(request, "No active school is linked with your session.")
         return redirect("room_list")
+    if not timetable_scope:
+        messages.warning(request, "Open Room setup from a timetable dashboard.")
+        return redirect("timetable_list")
 
     school_id = current_school.id if current_school else request.POST.get("school")
     capacity = request.POST.get("capacity") or 40
@@ -206,10 +229,12 @@ def room_auto_create_classrooms(request):
     for school in schools:
         class_levels = ClassLevel.objects.filter(
             school=school,
+            timetable=timetable_scope,
             is_active=True,
         ).order_by("sort_order", "name")
         divisions = Division.objects.filter(
             school=school,
+            timetable=timetable_scope,
             is_active=True,
         ).order_by("sort_order", "name")
 
@@ -218,6 +243,7 @@ def room_auto_create_classrooms(request):
                 room_name = f"{class_level.name} {division.name}"
                 room = Room.objects.filter(
                     school=school,
+                    timetable=timetable_scope,
                     name__iexact=room_name,
                     room_type="CLASSROOM",
                 ).first()
@@ -228,6 +254,7 @@ def room_auto_create_classrooms(request):
                     short_level = class_level.short_name or class_level.name
                     room = Room.objects.create(
                         school=school,
+                        timetable=timetable_scope,
                         name=room_name,
                         short_name=f"{short_level}-{division.name}"[:30],
                         room_type="CLASSROOM",
@@ -238,11 +265,13 @@ def room_auto_create_classrooms(request):
 
                 updated_sections = ClassSection.objects.filter(
                     school=school,
+                    timetable=timetable_scope,
                     class_level=class_level,
                     division=division,
                     default_room__isnull=True,
                 ).update(default_room=room)
                 assigned_count += updated_sections
+                TimetableConfiguration.objects.get_or_create(timetable=timetable_scope)[0].rooms.add(room)
 
     if created_count:
         messages.success(
@@ -255,4 +284,4 @@ def room_auto_create_classrooms(request):
             f"No new classrooms were needed. {skipped_count} matching classroom(s) already exist."
         )
 
-    return redirect("room_list")
+    return redirect(scoped_redirect_url("room_list", timetable_scope))

@@ -17,6 +17,14 @@ class ClassLevel(models.Model):
         on_delete=models.CASCADE
     )
 
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="class_levels"
+    )
+
     name = models.CharField(max_length=50)
 
     short_name = models.CharField(
@@ -43,6 +51,14 @@ class Division(models.Model):
     school = models.ForeignKey(
         School,
         on_delete=models.CASCADE
+    )
+
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="divisions"
     )
 
     name = models.CharField(max_length=20)

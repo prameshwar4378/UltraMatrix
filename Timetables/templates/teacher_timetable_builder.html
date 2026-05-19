@@ -366,6 +366,45 @@ body{
     </div>
 </div>
 
+<div class="modal fade" id="builderNoticeModal" tabindex="-1" aria-labelledby="builderNoticeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="builderNoticeModalLabel">
+                    <i class="bi bi-info-circle me-2"></i> Timetable Notice
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="builderNoticeMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="builderConfirmModal" tabindex="-1" aria-labelledby="builderConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="builderConfirmModalLabel">
+                    <i class="bi bi-question-circle me-2"></i> Confirm Action
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="builderConfirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light border" id="builderConfirmCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="builderConfirmOkBtn">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{ class_sections_json|json_script:"classSectionsData" }}
 {{ subjects_json|json_script:"subjectsData" }}
 {{ rooms_json|json_script:"roomsData" }}
@@ -377,6 +416,48 @@ body{
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
 <script>
+let builderNoticeModal = null;
+let builderConfirmModal = null;
+let builderConfirmCallback = null;
+
+function showBuilderNotice(message) {
+    const messageElement = document.getElementById("builderNoticeMessage");
+    if (!messageElement) return;
+
+    messageElement.textContent = String(message || "");
+    if (!builderNoticeModal) {
+        builderNoticeModal = new bootstrap.Modal(document.getElementById("builderNoticeModal"));
+    }
+    builderNoticeModal.show();
+}
+
+window.alert = showBuilderNotice;
+
+function showBuilderConfirm(message, onConfirm, options = {}) {
+    const messageElement = document.getElementById("builderConfirmMessage");
+    const okButton = document.getElementById("builderConfirmOkBtn");
+    const cancelButton = document.getElementById("builderConfirmCancelBtn");
+    if (!messageElement || !okButton || !cancelButton) return;
+
+    messageElement.textContent = String(message || "");
+    okButton.textContent = options.okText || "Continue";
+    cancelButton.textContent = options.cancelText || "Cancel";
+    cancelButton.onclick = null;
+    builderConfirmCallback = onConfirm;
+
+    if (!builderConfirmModal) {
+        builderConfirmModal = new bootstrap.Modal(document.getElementById("builderConfirmModal"));
+        okButton.addEventListener("click", function () {
+            const callback = builderConfirmCallback;
+            builderConfirmCallback = null;
+            builderConfirmModal.hide();
+            if (typeof callback === "function") callback();
+        });
+    }
+
+    builderConfirmModal.show();
+}
+
 function initSearchableDropdowns(root){
     if(typeof Choices === "undefined") return;
 
@@ -734,6 +815,28 @@ function addLecture(){
     const occupiedClass = occupiedByOtherTeacher(selectedClass.id, dayId, periodId);
     const occupiedRoom = selectedRoom ? occupiedRoomByOtherTeacher(selectedRoom.id, dayId, periodId) : null;
 
+    const assignLecture = function () {
+        teacherEntries[activeCellKey] = {
+            class_section_id: selectedClass.id,
+            class_section_name: selectedClass.name,
+            force_assign: Boolean(occupiedClass || occupiedRoom),
+            teacher_id: teacher.id,
+            teacher_name: teacher.name,
+            subject_id: selectedSubject.id,
+            subject_name: selectedSubject.name,
+            room_id: selectedRoom ? selectedRoom.id : null,
+            room_name: selectedRoom ? selectedRoom.name : "",
+            is_locked: teacherEntries[activeCellKey]?.is_locked || false,
+            day_id: cell.dataset.dayId,
+            day_name: cell.dataset.dayName,
+            period_id: cell.dataset.periodId,
+            period_name: cell.dataset.periodName,
+        };
+
+        assignModal.hide();
+        renderTable();
+    };
+
     if(occupiedClass || occupiedRoom){
         const messages = [];
 
@@ -745,32 +848,15 @@ function addLecture(){
             messages.push(`Room is already used by ${occupiedRoom.teacher_name || "another teacher"} for ${occupiedRoom.class_section_name || "another class"}`);
         }
 
-        const forceAssign = confirm(
-            `${messages.join(". ")}. Do you want to force assign this lecture to ${teacher.name}?`
+        showBuilderConfirm(
+            `${messages.join(". ")}. Do you want to force assign this lecture to ${teacher.name}?`,
+            assignLecture,
+            {okText: "Force Assign"}
         );
-
-        if(!forceAssign) return;
+        return;
     }
 
-    teacherEntries[activeCellKey] = {
-        class_section_id: selectedClass.id,
-        class_section_name: selectedClass.name,
-        force_assign: Boolean(occupiedClass || occupiedRoom),
-        teacher_id: teacher.id,
-        teacher_name: teacher.name,
-        subject_id: selectedSubject.id,
-        subject_name: selectedSubject.name,
-        room_id: selectedRoom ? selectedRoom.id : null,
-        room_name: selectedRoom ? selectedRoom.name : "",
-        is_locked: teacherEntries[activeCellKey]?.is_locked || false,
-        day_id: cell.dataset.dayId,
-        day_name: cell.dataset.dayName,
-        period_id: cell.dataset.periodId,
-        period_name: cell.dataset.periodName,
-    };
-
-    assignModal.hide();
-    renderTable();
+    assignLecture();
 }
 
 function saveTeacherTimetable(){
@@ -831,7 +917,27 @@ function saveTeacherTimetable(){
             "Save these changes?"
         ];
 
-        if((impact.total_replaced || 0) && !confirm(warningLines.join("\n"))){
+        if(impact.total_replaced || 0){
+            showBuilderConfirm(warningLines.join("\n"), function () {
+                fetch("/api/save-teacher-timetable/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({...payload, confirmed_impact: true})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    if(data.success && window.opener){
+                        window.opener.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    alert("Something went wrong while saving teacher timetable.");
+                });
+            });
             return;
         }
 

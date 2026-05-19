@@ -438,7 +438,11 @@
         <h1>Subject Setup</h1>
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'school_dashboard' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'timetable_list' %}">Timetables</a></li>
+                {% if timetable_scope %}
+                    <li class="breadcrumb-item"><a href="{% url 'timetable_config' timetable_scope.pk %}">Timetable Configuration</a></li>
+                {% endif %}
                 <li class="breadcrumb-item active">Subjects</li>
             </ol>
         </nav>
@@ -451,11 +455,11 @@
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
-            <a href="javascript:void(0);" data-url="{% url 'subject_quick_create' %}" class="btn btn-light border" onclick="openCreateModal(this, 1250, 780)">
+            <a href="javascript:void(0);" data-url="{% url 'subject_quick_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this, 1250, 780)">
                 <i class="bi bi-lightning-charge"></i> Quick Subjects
             </a>
 
-            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_quick_create' %}" class="btn btn-light border" onclick="openCreateModal(this, 1300, 780)">
+            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_quick_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this, 1300, 780)">
                 <i class="bi bi-magic"></i> Quick Mapping
             </a>
 
@@ -463,11 +467,11 @@
                 <i class="bi bi-download"></i> Export CSV
             </a>
 
-            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this)">
                 <i class="bi bi-person-check"></i> Teacher Mapping
             </a>
 
-            <a href="javascript:void(0);" data-url="{% url 'subject_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
+            <a href="javascript:void(0);" data-url="{% url 'subject_create' %}{{ scope_query }}" class="btn btn-gradient" onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> New Subject
             </a>
         </div>
@@ -504,10 +508,10 @@
                     <div class="setup-flow-body">
                         <p>Subjects define what can be allocated in the timetable. Use Quick Subjects for the standard starter list, or add a subject manually for custom school-specific entries.</p>
                         <div class="setup-flow-actions">
-                            <a href="javascript:void(0);" data-url="{% url 'subject_quick_create' %}" class="btn btn-light border" onclick="openCreateModal(this, 1250, 780)">
+                            <a href="javascript:void(0);" data-url="{% url 'subject_quick_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this, 1250, 780)">
                                 <i class="bi bi-lightning-charge"></i> Quick Subjects
                             </a>
-                            <a href="javascript:void(0);" data-url="{% url 'subject_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
+                            <a href="javascript:void(0);" data-url="{% url 'subject_create' %}{{ scope_query }}" class="btn btn-gradient" onclick="openCreateModal(this)">
                                 <i class="bi bi-plus-circle"></i> New Subject
                             </a>
                         </div>
@@ -537,7 +541,7 @@
                     <div class="setup-flow-body">
                         <p>Teacher capabilities work best when exact class sections are available. If sections are missing, complete Classes, Divisions & Sections first.</p>
                         <div class="setup-flow-actions">
-                            <a href="{% url 'class_setup_list' %}" class="btn btn-light border">
+                            <a href="{% url 'class_setup_list' %}{{ scope_query }}" class="btn btn-light border">
                                 <i class="bi bi-grid"></i> Open Class Setup
                             </a>
                         </div>
@@ -567,7 +571,7 @@
                     <div class="setup-flow-body">
                         <p>Add teacher records and keep active status enabled for staff who should appear in subject capability mapping and timetable allocation.</p>
                         <div class="setup-flow-actions">
-                            <a href="{% url 'teacher_list' %}" class="btn btn-light border">
+                            <a href="{% url 'teacher_list' %}{{ scope_query }}" class="btn btn-light border">
                                 <i class="bi bi-people"></i> Open Teacher Setup
                             </a>
                         </div>
@@ -599,10 +603,10 @@
                     <div class="setup-flow-body">
                         <p>Use Quick Mapping to assign many teacher-subject combinations at once, or use Teacher Mapping for one capability entry at a time.</p>
                         <div class="setup-flow-actions">
-                            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_quick_create' %}" class="btn btn-light border" onclick="openCreateModal(this, 1300, 780)">
+                            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_quick_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this, 1300, 780)">
                                 <i class="bi bi-magic"></i> Quick Mapping
                             </a>
-                            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
+                            <a href="javascript:void(0);" data-url="{% url 'teacher_subject_create' %}{{ scope_query }}" class="btn btn-gradient" onclick="openCreateModal(this)">
                                 <i class="bi bi-person-check"></i> Teacher Mapping
                             </a>
                         </div>
@@ -691,7 +695,7 @@
                     <i class="bi bi-search"></i> Apply Filter
                 </button>
 
-                <a href="{% url 'subject_list' %}" class="btn btn-light border">
+                <a href="{% url 'subject_list' %}{{ scope_query }}" class="btn btn-light border">
                     <i class="bi bi-x-circle"></i> Clear
                 </a>
             </div>
@@ -714,7 +718,7 @@
             </div>
         </div>
 
-        <form method="post" action="{% url 'subject_bulk_delete' %}" id="subjectBulkDeleteForm">
+        <form method="post" action="{% url 'subject_bulk_delete' %}{{ scope_query }}" id="subjectBulkDeleteForm">
             {% csrf_token %}
         </form>
         <div class="table-responsive">
@@ -783,13 +787,13 @@
                         <td class="text-end">
                             <a href="javascript:void(0);"
                                class="btn btn-sm btn-outline-warning action-btn"
-                               data-url="{% url 'subject_update' subject.pk %}"
+                               data-url="{% url 'subject_update' subject.pk %}{{ scope_query }}"
                                onclick="openCreateModal(this)"
                                title="Edit">
                                 <i class="bi bi-pencil-square"></i>
                             </a>
 
-                            <form method="post" action="{% url 'subject_toggle_status' subject.pk %}" class="action-form">
+                            <form method="post" action="{% url 'subject_toggle_status' subject.pk %}{{ scope_query }}" class="action-form">
                                 {% csrf_token %}
                                 <button type="submit"
                                         class="btn btn-sm {% if subject.is_active %}btn-outline-secondary{% else %}btn-outline-success{% endif %} action-btn"
@@ -805,7 +809,7 @@
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger action-btn"
                                     title="Delete"
-                                    data-delete-url="{% url 'subject_delete' subject.pk %}"
+                                    data-delete-url="{% url 'subject_delete' subject.pk %}{{ scope_query }}"
                                     data-delete-title="Delete Subject"
                                     data-delete-name="{{ subject.name }}"
                                     data-delete-detail="{{ subject.school.name }}"
@@ -823,7 +827,7 @@
                                 <i class="bi bi-book"></i>
                                 <h5>No Subjects Found</h5>
                                 <p>Create subjects before lesson allocation.</p>
-                                <a href="javascript:void(0);" data-url="{% url 'subject_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
+                                <a href="javascript:void(0);" data-url="{% url 'subject_create' %}{{ scope_query }}" class="btn btn-gradient" onclick="openCreateModal(this)">
                                     <i class="bi bi-plus-circle"></i> Create Subject
                                 </a>
                             </div>
@@ -856,7 +860,7 @@
             </div>
         </div>
 
-        <form method="post" action="{% url 'teacher_subject_bulk_delete' %}" id="teacherSubjectBulkDeleteForm">
+        <form method="post" action="{% url 'teacher_subject_bulk_delete' %}{{ scope_query }}" id="teacherSubjectBulkDeleteForm">
             {% csrf_token %}
         </form>
         <div class="table-responsive">
@@ -904,7 +908,7 @@
                         <td class="text-end">
                             <a href="javascript:void(0);"
                                class="btn btn-sm btn-outline-warning action-btn"
-                               data-url="{% url 'teacher_subject_update' cap.pk %}"
+                               data-url="{% url 'teacher_subject_update' cap.pk %}{{ scope_query }}"
                                onclick="openCreateModal(this)"
                                title="Edit">
                                 <i class="bi bi-pencil-square"></i>
@@ -913,7 +917,7 @@
                             <button type="button"
                                     class="btn btn-sm btn-outline-danger action-btn"
                                     title="Delete"
-                                    data-delete-url="{% url 'teacher_subject_delete' cap.pk %}"
+                                    data-delete-url="{% url 'teacher_subject_delete' cap.pk %}{{ scope_query }}"
                                     data-delete-title="Delete Teacher Mapping"
                                     data-delete-name="{{ cap.teacher.name }} - {{ cap.subject.name }}"
                                     data-delete-detail="{{ cap.school.name }}"
@@ -1295,3 +1299,4 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 
 {% endblock content %}
+

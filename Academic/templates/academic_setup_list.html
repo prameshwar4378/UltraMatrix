@@ -298,7 +298,11 @@
         <h1>Academic Setup</h1>
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'school_dashboard' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'timetable_list' %}">Timetables</a></li>
+                {% if timetable_scope %}
+                    <li class="breadcrumb-item"><a href="{% url 'timetable_config' timetable_scope.pk %}">Timetable Configuration</a></li>
+                {% endif %}
                 <li class="breadcrumb-item active">Academic Setup</li>
             </ol>
         </nav>
@@ -320,7 +324,7 @@
             </button>
 
             <a href="javascript:void(0);"
-               data-url="{% url 'academic_setup' %}"
+               data-url="{% url 'academic_setup' %}{{ scope_query }}"
                class="btn btn-gradient"
                onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> New Setup
@@ -402,7 +406,7 @@
                     <i class="bi bi-search"></i> Apply Filter
                 </button>
 
-                <a href="{% url 'academic_setup_list' %}" class="btn btn-light border">
+                <a href="{% url 'academic_setup_list' %}{{ scope_query }}" class="btn btn-light border">
                     <i class="bi bi-x-circle"></i> Clear
                 </a>
             </div>
@@ -482,7 +486,7 @@
 
                                 <a href="javascript:void(0);"
                                    class="btn btn-sm btn-outline-warning action-btn"
-                                   data-url="{% url 'academic_setup_update' year.pk %}"
+                                   data-url="{% url 'academic_setup_update' year.pk %}{{ scope_query }}"
                                    onclick="openUpdateModal(this)"
                                    title="Edit">
                                     <i class="bi bi-pencil-square"></i>
@@ -490,7 +494,7 @@
 
                                 <button type="button"
                                         class="btn btn-sm btn-outline-danger action-btn"
-                                        data-delete-url="{% url 'academic_setup_delete' year.pk %}"
+                                        data-delete-url="{% url 'academic_setup_delete' year.pk %}{{ scope_query }}"
                                         data-academic-name="{{ year.name }}"
                                         data-school-name="{{ year.school.name }}"
                                         onclick="openDeleteAcademicModal(this)"
@@ -509,7 +513,7 @@
                                 <h5>No Academic Setup Found</h5>
                                 <p>Create your first academic setup with weekday and Saturday timing.</p>
                                 <a href="javascript:void(0);"
-                                   data-url="{% url 'academic_setup' %}"
+                                   data-url="{% url 'academic_setup' %}{{ scope_query }}"
                                    class="btn btn-gradient"
                                    onclick="openCreateModal(this)">
                                     <i class="bi bi-plus-circle"></i> Create Setup
@@ -700,3 +704,4 @@
 </script>
 
 {% endblock content %}
+

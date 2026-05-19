@@ -239,6 +239,10 @@
 
     <form method="POST" class="form-body">
         {% csrf_token %}
+        {{ form.timetable }}
+        {% if source_timetable %}
+            <input type="hidden" name="timetable_id" value="{{ source_timetable.id }}">
+        {% endif %}
         {% if bulk_create %}
             <input type="hidden" name="allocation_rows_json" id="allocationRowsJson">
         {% endif %}

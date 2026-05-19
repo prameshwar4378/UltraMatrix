@@ -529,7 +529,11 @@
         <h1>Class Setup</h1>
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'school_dashboard' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'timetable_list' %}">Timetables</a></li>
+                {% if timetable_scope %}
+                    <li class="breadcrumb-item"><a href="{% url 'timetable_config' timetable_scope.pk %}">Timetable Configuration</a></li>
+                {% endif %}
                 <li class="breadcrumb-item active">Class Setup</li>
             </ol>
         </nav>
@@ -550,17 +554,17 @@
                 <i class="bi bi-info-circle"></i>
             </button>
             
-            <a href="javascript:void(0);" data-url="{% url 'division_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+            <a href="javascript:void(0);" data-url="{% url 'division_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> Division
             </a>
 
-            <a href="javascript:void(0);" data-url="{% url 'class_level_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+            <a href="javascript:void(0);" data-url="{% url 'class_level_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> Class Level
             </a>
 
 
 
-            <a href="javascript:void(0);" data-url="{% url 'class_section_create' %}" class="btn btn-gradient" onclick="openCreateModal(this)">
+            <a href="javascript:void(0);" data-url="{% url 'class_section_create' %}{{ scope_query }}" class="btn btn-gradient" onclick="openCreateModal(this)">
                 <i class="bi bi-plus-circle"></i> Class Section Manual
             </a>
             
@@ -609,7 +613,7 @@
                     <div class="setup-flow-body">
                         <p>Divisions are the reusable labels used to create final sections. Example: division A and division B can be used with every class level.</p>
                         <div class="setup-flow-actions">
-                            <a href="javascript:void(0);" data-url="{% url 'division_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                            <a href="javascript:void(0);" data-url="{% url 'division_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this)">
                                 <i class="bi bi-plus-circle"></i> Add Division
                             </a>
                         </div>
@@ -639,7 +643,7 @@
                     <div class="setup-flow-body">
                         <p>Class levels define the grade and grouping. Set primary or secondary correctly so filters, reports and timetable setup stay organized.</p>
                         <div class="setup-flow-actions">
-                            <a href="javascript:void(0);" data-url="{% url 'class_level_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                            <a href="javascript:void(0);" data-url="{% url 'class_level_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this)">
                                 <i class="bi bi-plus-circle"></i> Add Class Level
                             </a>
                         </div>
@@ -671,7 +675,7 @@
                     <div class="setup-flow-body">
                         <p>Sections are the final teaching groups. For quick setup, use AI Auto Class Setup after divisions and class levels are ready.</p>
                         <div class="setup-flow-actions">
-                            <a href="javascript:void(0);" data-url="{% url 'class_section_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                            <a href="javascript:void(0);" data-url="{% url 'class_section_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this)">
                                 <i class="bi bi-plus-circle"></i> Class Section Manual
                             </a>
                             <button type="button" class="btn btn-gradient-ai" data-bs-toggle="modal" data-bs-target="#quickCreateClassesModal">
@@ -712,10 +716,10 @@
                                     onclick="openFeatureInfoModal(this)">
                                 <i class="bi bi-info-circle"></i> Room Guide
                             </button>
-                            <a href="{% url 'room_list' %}" class="btn btn-light border">
+                            <a href="{% url 'room_list' %}{{ scope_query }}" class="btn btn-light border">
                                 <i class="bi bi-door-open"></i> Open Room Setup
                             </a>
-                            <form method="post" action="{% url 'room_auto_create_classrooms' %}" class="m-0">
+                            <form method="post" action="{% url 'room_auto_create_classrooms' %}{{ scope_query }}" class="m-0">
                                 {% csrf_token %}
                                 <button type="submit"
                                         class="btn btn-gradient-ai"
@@ -723,7 +727,7 @@
                                     <i class="bi bi-magic"></i> AI Auto Create Classroom
                                 </button>
                             </form>
-                            <a href="javascript:void(0);" data-url="{% url 'room_create' %}" class="btn btn-light border" onclick="openCreateModal(this)">
+                            <a href="javascript:void(0);" data-url="{% url 'room_create' %}{{ scope_query }}" class="btn btn-light border" onclick="openCreateModal(this)">
                                 <i class="bi bi-plus-circle"></i> Add Room
                             </a>
                         </div>
@@ -857,7 +861,7 @@
                     <i class="bi bi-search"></i> Apply Filter
                 </button>
 
-                <a href="{% url 'class_setup_list' %}" class="btn btn-light border">
+                <a href="{% url 'class_setup_list' %}{{ scope_query }}" class="btn btn-light border">
                     <i class="bi bi-x-circle"></i> Clear
                 </a>
             </div>
@@ -890,14 +894,14 @@
                     <div class="d-flex gap-1">
                         <button type="button"
                                 class="btn btn-sm btn-outline-warning action-btn"
-                                data-url="{% url 'division_update' division.pk %}"
+                                data-url="{% url 'division_update' division.pk %}{{ scope_query }}"
                                 onclick="openCreateModal(this)"
                                 title="Edit Division">
                             <i class="bi bi-pencil-square"></i>
                         </button>
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger action-btn"
-                                data-delete-url="{% url 'division_delete' division.pk %}"
+                                data-delete-url="{% url 'division_delete' division.pk %}{{ scope_query }}"
                                 data-delete-title="Delete Division"
                                 data-delete-name="{{ division.name }}"
                                 data-delete-detail="{{ division.school.name }}"
@@ -941,7 +945,7 @@
                 </div>
             </div>
 
-            <form method="post" action="{% url 'class_level_bulk_delete' %}" id="classLevelBulkDeleteForm">
+            <form method="post" action="{% url 'class_level_bulk_delete' %}{{ scope_query }}" id="classLevelBulkDeleteForm">
                 {% csrf_token %}
                 <div class="mini-list">
                     {% if class_levels %}
@@ -972,14 +976,14 @@
                     <div class="d-flex gap-1">
                         <button type="button"
                                 class="btn btn-sm btn-outline-warning action-btn"
-                                data-url="{% url 'class_level_update' level.pk %}"
+                                data-url="{% url 'class_level_update' level.pk %}{{ scope_query }}"
                                 onclick="openCreateModal(this)"
                                 title="Edit Class Level">
                             <i class="bi bi-pencil-square"></i>
                         </button>
                         <button type="button"
                                 class="btn btn-sm btn-outline-danger action-btn"
-                                data-delete-url="{% url 'class_level_delete' level.pk %}"
+                                data-delete-url="{% url 'class_level_delete' level.pk %}{{ scope_query }}"
                                 data-delete-title="Delete Class Level"
                                 data-delete-name="{{ level.name }}"
                                 data-delete-detail="{{ level.school.name }}"
@@ -1025,7 +1029,7 @@
             </div>
         </div>
 
-        <form method="post" action="{% url 'class_section_bulk_delete' %}" id="classSectionBulkDeleteForm">
+        <form method="post" action="{% url 'class_section_bulk_delete' %}{{ scope_query }}" id="classSectionBulkDeleteForm">
             {% csrf_token %}
             <div class="table-responsive">
             <table class="table table-modern align-middle">
@@ -1121,7 +1125,7 @@
 
                                 <button type="button"
                                         class="btn btn-sm btn-outline-warning action-btn"
-                                        data-url="{% url 'class_section_update' section.pk %}"
+                                        data-url="{% url 'class_section_update' section.pk %}{{ scope_query }}"
                                         onclick="openCreateModal(this)"
                                         title="Edit">
                                     <i class="bi bi-pencil-square"></i>
@@ -1129,7 +1133,7 @@
 
                                 <button type="button"
                                         class="btn btn-sm btn-outline-danger action-btn"
-                                        data-delete-url="{% url 'class_section_delete' section.pk %}"
+                                        data-delete-url="{% url 'class_section_delete' section.pk %}{{ scope_query }}"
                                         data-delete-title="Delete Class Section"
                                         data-delete-name="{{ section.class_level.name }} {{ section.division.name }}"
                                         data-delete-detail="{{ section.school.name }}"
@@ -1172,7 +1176,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
-            <form method="post" action="{% url 'class_sections_quick_create' %}">
+            <form method="post" action="{% url 'class_sections_quick_create' %}{{ scope_query }}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
                     <p class="text-muted mb-3">
@@ -1489,3 +1493,4 @@
 </script>
 
 {% endblock content %}
+

@@ -16,6 +16,14 @@ class ClassSection(models.Model):
         on_delete=models.CASCADE
     )
 
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="class_sections"
+    )
+
     class_level = models.ForeignKey(
         ClassLevel,
         on_delete=models.CASCADE
@@ -65,6 +73,14 @@ class LessonAllocation(models.Model):
         on_delete=models.CASCADE
     )
 
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        related_name="lesson_allocations",
+        null=True,
+        blank=True
+    )
+
     academic_year = models.ForeignKey(
         AcademicYear,
         on_delete=models.CASCADE
@@ -105,8 +121,9 @@ class LessonAllocation(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["school", "academic_year", "class_section", "subject"],
-                name="unique_lesson_allocation_per_class_subject_year",
+                fields=["timetable", "class_section", "subject"],
+                condition=models.Q(timetable__isnull=False),
+                name="unique_lesson_allocation_per_timetable_class_subject",
             ),
         ]
 
@@ -127,7 +144,8 @@ class Timetable(models.Model):
 
     academic_year = models.ForeignKey(
         "Academic.AcademicYear",
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="timetables"
     )
 
     name = models.CharField(max_length=255)
@@ -145,6 +163,59 @@ class Timetable(models.Model):
     def __str__(self):
         return self.name
     
+
+
+class TimetableConfiguration(models.Model):
+
+    timetable = models.OneToOneField(
+        Timetable,
+        on_delete=models.CASCADE,
+        related_name="configuration"
+    )
+
+    class_sections = models.ManyToManyField(
+        ClassSection,
+        blank=True,
+        related_name="timetable_configurations"
+    )
+
+    bell_schedule = models.ForeignKey(
+        BellSchedule,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="timetable_configurations"
+    )
+
+    working_days = models.ManyToManyField(
+        Day,
+        blank=True,
+        related_name="timetable_configurations"
+    )
+
+    periods = models.ManyToManyField(
+        Period,
+        blank=True,
+        related_name="timetable_configurations"
+    )
+
+    teachers = models.ManyToManyField(
+        Teacher,
+        blank=True,
+        related_name="timetable_configurations"
+    )
+
+    rooms = models.ManyToManyField(
+        Room,
+        blank=True,
+        related_name="timetable_configurations"
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @log_exceptions
+    def __str__(self):
+        return f"Configuration - {self.timetable}"
 
 
 class TimetableVersion(models.Model):

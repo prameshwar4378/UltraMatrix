@@ -3,6 +3,31 @@ from . import views
 
 urlpatterns = [
     path(
+        "timetables/",
+        views.timetable_list,
+        name="timetable_list"
+    ),
+    path(
+        "timetables/create/",
+        views.timetable_create,
+        name="timetable_create"
+    ),
+    path(
+        "timetables/<int:pk>/config/",
+        views.timetable_config,
+        name="timetable_config"
+    ),
+    path(
+        "timetables/<int:pk>/update/",
+        views.timetable_update,
+        name="timetable_update"
+    ),
+    path(
+        "timetables/<int:pk>/delete/",
+        views.timetable_delete,
+        name="timetable_delete"
+    ),
+    path(
         "lesson-allocation/",
         views.lesson_allocation_list,
         name="lesson_allocation_list"

@@ -13,6 +13,7 @@ urlpatterns = [
     path("api/create-timetable/", views_builder.create_timetable_api, name="create_timetable_api"),
     path("api/load-timetable/", views_builder.load_timetable_entries, name="load_timetable_entries"),
     path("api/proxy-adjustments/", views_builder.proxy_adjustment_data, name="proxy_adjustment_data"),
+    path("api/proxy-adjustments/auto-assign/", views_builder.auto_proxy_adjustments, name="auto_proxy_adjustments"),
     path("api/proxy-adjustments/teacher-status/save/", views_builder.save_teacher_daily_status, name="save_teacher_daily_status"),
     path("api/proxy-adjustments/teacher-status/<int:status_id>/delete/", views_builder.delete_teacher_daily_status, name="delete_teacher_daily_status"),
     path("api/proxy-adjustments/lecture/save/", views_builder.save_lecture_adjustment, name="save_lecture_adjustment"),

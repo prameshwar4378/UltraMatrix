@@ -1,0 +1,464 @@
+{% extends "school_software_base.html" %}
+
+{% block title %}Timetable Configuration{% endblock title %}
+
+{% block content %}
+<style>
+    .config-page {
+        --primary: #123c7a;
+        --primary-dark: #0d2c5d;
+        --surface: #ffffff;
+        --border: #e5e7eb;
+        --text: #111827;
+        --muted: #6b7280;
+    }
+
+    .config-panel, .config-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .config-panel {
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .config-title {
+        margin: 0;
+        color: var(--text);
+        font-size: 1.7rem;
+        font-weight: 800;
+    }
+
+    .config-subtitle {
+        margin: 6px 0 0;
+        color: var(--muted);
+    }
+
+    .config-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .config-card {
+        padding: 22px;
+    }
+
+    .config-number {
+        font-size: 2rem;
+        line-height: 1;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .config-label {
+        margin-top: 8px;
+        color: var(--muted);
+        font-weight: 700;
+        font-size: .86rem;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+    }
+
+    .btn-gradient:hover {
+        color: #fff;
+    }
+
+    .section-list,
+    .teacher-list,
+    .room-list,
+    .period-list {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .section-option,
+    .teacher-option,
+    .room-option,
+    .period-option {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #f8fafc;
+        padding: 12px;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .section-option strong,
+    .teacher-option strong,
+    .room-option strong,
+    .period-option strong {
+        display: block;
+        color: var(--text);
+        line-height: 1.2;
+    }
+
+    .section-option small,
+    .teacher-option small,
+    .room-option small,
+    .period-option small {
+        color: var(--muted);
+    }
+
+    .config-divider {
+        border-top: 1px solid var(--border);
+        margin: 24px 0;
+    }
+
+    .setup-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 250px;
+        gap: 18px;
+        margin-bottom: 22px;
+    }
+
+    .setup-panel,
+    .setup-card {
+        background: #fff;
+        border: 1px solid #dce7f3;
+        border-radius: 8px;
+        box-shadow: 0 18px 50px rgba(15, 23, 42, .08);
+    }
+
+    .setup-panel {
+        padding: 26px;
+    }
+
+    .setup-panel h2 {
+        margin: 0 0 10px;
+        color: #0f172a;
+        font-size: 30px;
+        font-weight: 900;
+    }
+
+    .setup-panel p {
+        margin: 0;
+        color: #64748b;
+        max-width: 760px;
+    }
+
+    .setup-progress {
+        height: 10px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e2e8f0;
+        margin-top: 20px;
+    }
+
+    .setup-progress span {
+        display: block;
+        height: 100%;
+        width: var(--setup-percent);
+        background: #123c7a;
+    }
+
+    .setup-score {
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .setup-score strong {
+        color: #123c7a;
+        font-size: 42px;
+        line-height: 1;
+        font-weight: 900;
+    }
+
+    .setup-score span {
+        color: #64748b;
+        font-weight: 800;
+    }
+
+    .setup-card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .setup-card {
+        display: grid;
+        grid-template-columns: 46px minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: start;
+        padding: 18px;
+    }
+
+    .setup-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #e8f0fb;
+        color: #123c7a;
+        font-size: 21px;
+    }
+
+    .setup-card.complete .setup-icon {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .setup-card h3 {
+        margin: 0 0 6px;
+        color: #0f172a;
+        font-size: 17px;
+        font-weight: 900;
+    }
+
+    .setup-card p {
+        margin: 0 0 9px;
+        color: #64748b;
+        line-height: 1.45;
+    }
+
+    .setup-card small {
+        color: #0f172a;
+        font-weight: 800;
+    }
+
+    .setup-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 32px;
+        padding: 0 10px;
+        border-radius: 8px;
+        color: #92400e;
+        background: #fef3c7;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+    }
+
+    .setup-card.complete .setup-badge {
+        color: #166534;
+        background: #dcfce7;
+    }
+
+    .setup-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 13px;
+        min-height: 36px;
+        padding: 0 13px;
+        border-radius: 8px;
+        background: #123c7a;
+        color: #fff;
+        font-weight: 900;
+        text-decoration: none;
+    }
+
+    .setup-action:hover {
+        color: #fff;
+        background: #0f2f62;
+    }
+
+    @media(max-width: 992px) {
+        .config-grid,
+        .section-list,
+        .teacher-list,
+        .room-list,
+        .period-list,
+        .setup-hero,
+        .setup-card-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .setup-card {
+            grid-template-columns: 44px minmax(0, 1fr);
+        }
+
+        .setup-badge {
+            grid-column: 2;
+            justify-self: start;
+        }
+    }
+</style>
+
+<main id="main" class="main config-page">
+    <div class="pagetitle">
+        <h1>Timetable Configuration</h1>
+        <nav>
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'school_dashboard' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'timetable_list' %}">Timetables</a></li>
+                <li class="breadcrumb-item active">Timetable Configuration</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="config-panel d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="config-title">{{ timetable.name }}</h1>
+            <p class="config-subtitle">{{ timetable.academic_year.name }} | {{ timetable.school.name }}</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'timetable_list' %}" class="btn btn-light border">
+                <i class="bi bi-arrow-left"></i> Timetable List
+            </a>
+            {% if timetable.can_open_builder %}
+                <a href="{% url 'timetable_builder' %}?academic_year_id={{ timetable.academic_year_id }}&timetable_id={{ timetable.id }}" class="btn btn-gradient">
+                    <i class="bi bi-calendar-week"></i> Open Builder
+                </a>
+            {% else %}
+                <button type="button" class="btn btn-secondary" disabled title="Missing: {{ timetable.readiness_missing_text }}">
+                    <i class="bi bi-lock"></i> Complete Setup First
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not timetable.can_open_builder %}
+        <div class="alert alert-warning">
+            <strong>Builder locked.</strong>
+            Complete these setup items first: {{ timetable.readiness_missing_text }}.
+        </div>
+    {% endif %}
+
+    {% if readiness.scope_counts %}
+        <div class="alert alert-light border">
+            <strong>Selected scope:</strong>
+            {{ readiness.scope_counts.sections }} section{{ readiness.scope_counts.sections|pluralize }},
+            {{ readiness.scope_counts.teachers }} teacher{{ readiness.scope_counts.teachers|pluralize }},
+            {{ readiness.scope_counts.rooms }} room{{ readiness.scope_counts.rooms|pluralize }},
+            {{ readiness.scope_counts.days }} day{{ readiness.scope_counts.days|pluralize }},
+            {{ readiness.scope_counts.periods }} period{{ readiness.scope_counts.periods|pluralize }},
+            {{ readiness.scope_counts.allocations }} allocation{{ readiness.scope_counts.allocations|pluralize }}.
+        </div>
+    {% endif %}
+
+    <section class="setup-hero" id="builderReadiness">
+        <div class="setup-panel">
+            <h2>Setup Completion Status</h2>
+            <p>{{ timetable.name }} is {{ setup_percent }}% ready. Complete the remaining timetable-specific steps to unlock its builder workflow.</p>
+            <div class="setup-progress" aria-label="Timetable setup progress">
+                <span style="--setup-percent: {{ setup_percent }}%;"></span>
+            </div>
+        </div>
+        <div class="setup-card setup-score">
+            <div>
+                <strong>{{ setup_percent }}%</strong>
+                <span>{{ completed_setup_items }} of {{ setup_items|length }} steps complete</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="setup-card-grid">
+        {% for item in setup_items %}
+            <article class="setup-card {% if item.completed %}complete{% endif %}">
+                <div class="setup-icon">
+                    <i class="bi {{ item.icon }}"></i>
+                </div>
+                <div>
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.description }}</p>
+                    <small>{{ item.metric }}</small>
+                    {% if item.action_url %}
+                        <br>
+                        <a class="setup-action" href="{{ item.action_url }}">
+                            Open
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    {% elif not item.completed %}
+                        <br>
+                        <a class="setup-action" href="{{ item.href }}">
+                            Complete setup
+                            <i class="bi bi-arrow-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+                <span class="setup-badge">
+                    {% if item.completed %}
+                        <i class="bi bi-check2-circle"></i> Complete
+                    {% else %}
+                        <i class="bi bi-exclamation-circle"></i> Pending
+                    {% endif %}
+                </span>
+            </article>
+        {% endfor %}
+    </section>
+
+    <div class="config-panel" id="allocationHealth">
+        <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+            <div>
+                <h5 class="fw-bold mb-2">Allocation Health</h5>
+                <p class="text-muted mb-0">
+                    Review lesson allocations against this timetable's selected sections, teachers, and rooms.
+                </p>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'lesson_allocation_list' %}?timetable={{ timetable.id }}&academic_year={{ timetable.academic_year_id }}" class="btn btn-light border">
+                    <i class="bi bi-list-ul"></i> View Allocations
+                </a>
+                 
+        </div>
+
+        <div class="config-divider"></div>
+
+        {% if allocation_health.not_configured %}
+            <div class="alert alert-info mb-0">
+                <strong>Allocation health will appear after section selection.</strong>
+                Save class sections in this timetable configuration before reviewing lesson allocations.
+            </div>
+        {% elif allocation_health.is_clean %}
+            <div class="alert alert-success mb-0">
+                <strong>Allocation scope looks good.</strong>
+                {{ allocation_health.allocation_count }} active allocation{{ allocation_health.allocation_count|pluralize }} found for this timetable scope.
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                <strong>{{ allocation_health.issue_count }} allocation issue{{ allocation_health.issue_count|pluralize }} found.</strong>
+                Use the actions above to create or fix allocations before opening the builder.
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <h6 class="fw-bold">Sections Without Allocation</h6>
+                    {% for section in allocation_health.missing_sections %}
+                        <div class="small text-muted">{{ section.class_level.name }} {{ section.division.name }}</div>
+                    {% empty %}
+                        <div class="small text-muted">None.</div>
+                    {% endfor %}
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="fw-bold">Uses Unselected Teachers</h6>
+                    {% for allocation in allocation_health.unselected_teacher_allocations %}
+                        <div class="small text-muted">{{ allocation.class_section }} - {{ allocation.subject.name }} - {{ allocation.teacher.name }}</div>
+                    {% empty %}
+                        <div class="small text-muted">None.</div>
+                    {% endfor %}
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="fw-bold">Uses Unselected Rooms</h6>
+                    {% for allocation in allocation_health.unselected_room_allocations %}
+                        <div class="small text-muted">{{ allocation.class_section }} - {{ allocation.subject.name }} - {{ allocation.default_room.name }}</div>
+                    {% empty %}
+                        <div class="small text-muted">None.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+     
+</main>
+{% endblock content %}

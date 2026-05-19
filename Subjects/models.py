@@ -26,6 +26,14 @@ class Subject(models.Model):
         on_delete=models.CASCADE
     )
 
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="subjects"
+    )
+
     name = models.CharField(max_length=100)
 
     short_name = models.CharField(
@@ -73,6 +81,14 @@ class TeacherSubjectCapability(models.Model):
     school = models.ForeignKey(
         School,
         on_delete=models.CASCADE
+    )
+
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="teacher_subject_capabilities"
     )
 
     teacher = models.ForeignKey(

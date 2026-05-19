@@ -20,8 +20,8 @@ class ClassSectionAdmin(admin.ModelAdmin):
 
 @admin.register(LessonAllocation)
 class LessonAllocationAdmin(admin.ModelAdmin):
-    list_display = ("school", "academic_year", "class_section", "subject", "teacher", "weekly_periods", "is_active")
-    list_filter = ("school", "academic_year", "is_active", "requires_double_period")
+    list_display = ("school", "timetable", "academic_year", "class_section", "subject", "teacher", "weekly_periods", "is_active")
+    list_filter = ("school", "timetable", "academic_year", "is_active", "requires_double_period")
     search_fields = ("class_section__class_level__name", "class_section__division__name", "subject__name", "teacher__name")
 
 

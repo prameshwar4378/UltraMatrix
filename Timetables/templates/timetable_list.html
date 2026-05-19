@@ -1,0 +1,329 @@
+{% extends "school_software_base.html" %}
+
+{% block title %}Timetables{% endblock title %}
+
+{% block content %}
+<style>
+    .timetable-page {
+        --primary: #123c7a;
+        --primary-dark: #0d2c5d;
+        --surface: #ffffff;
+        --border: #e5e7eb;
+        --text: #111827;
+        --muted: #6b7280;
+    }
+
+    .page-toolbar, .filter-panel, .table-card, .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .page-toolbar {
+        padding: 22px;
+        margin-bottom: 24px;
+    }
+
+    .page-title {
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: var(--text);
+        margin: 0;
+    }
+
+    .page-subtitle {
+        color: var(--muted);
+        margin: 6px 0 0;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        box-shadow: 0 10px 22px rgba(18, 60, 122, 0.25);
+    }
+
+    .btn-gradient:hover {
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .stat-card {
+        padding: 22px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text);
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: var(--muted);
+        font-size: .85rem;
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
+    .filter-panel {
+        padding: 22px;
+        margin-bottom: 24px;
+    }
+
+    .table-card {
+        overflow: hidden;
+    }
+
+    .table-header {
+        padding: 20px 22px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .table-modern {
+        margin: 0;
+    }
+
+    .table-modern th {
+        background: #f9fafb;
+        color: #374151;
+        font-size: .78rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        border-bottom: 1px solid var(--border);
+        padding: 14px 16px;
+    }
+
+    .table-modern td {
+        padding: 16px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .badge-soft {
+        padding: 7px 11px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: .78rem;
+    }
+
+    .badge-success-soft {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-danger-soft {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-warning-soft {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-primary-soft {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .readiness-wrap {
+        min-width: 210px;
+    }
+
+    .readiness-progress {
+        height: 7px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .readiness-progress span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(135deg, var(--primary), #2563eb);
+    }
+
+    .action-btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @media(max-width: 992px) {
+        .stat-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<main id="main" class="main timetable-page">
+    <div class="page-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h1 class="page-title">Timetables</h1>
+            <p class="page-subtitle">Create timetable records first, then configure each timetable individually.</p>
+        </div>
+        <a href="{% url 'timetable_create' %}" class="btn btn-gradient">
+            <i class="bi bi-plus-circle"></i> Create Timetable
+        </a>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_timetables }}</div>
+            <div class="stat-label">Total Timetables</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ active_timetables }}</div>
+            <div class="stat-label">Active Timetables</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ configured_timetables }}</div>
+            <div class="stat-label">With Saved Slots</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ ready_timetables }}</div>
+            <div class="stat-label">Ready To Build</div>
+        </div>
+    </div>
+
+    <form method="get" class="filter-panel">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Academic Year</label>
+                <select name="academic_year" class="form-select">
+                    <option value="">All years</option>
+                    {% for year in academic_years %}
+                        <option value="{{ year.id }}" {% if academic_year_filter|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>{{ year.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All statuses</option>
+                    <option value="active" {% if status_filter == "active" %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == "inactive" %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Setup</label>
+                <select name="setup_status" class="form-select">
+                    <option value="">All setup</option>
+                    <option value="pending" {% if setup_status_filter == "pending" %}selected{% endif %}>Setup Pending</option>
+                    <option value="ready" {% if setup_status_filter == "ready" %}selected{% endif %}>Ready</option>
+                    <option value="generated" {% if setup_status_filter == "generated" %}selected{% endif %}>Generated</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Search</label>
+                <input type="search" name="search" class="form-control" value="{{ search_query }}" placeholder="Timetable name...">
+            </div>
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-gradient" type="submit">
+                    <i class="bi bi-search"></i> Filter
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div class="table-card">
+        <div class="table-header">
+            <h5 class="mb-0"><i class="bi bi-calendar-week me-1"></i> Timetable Records</h5>
+            <span class="text-muted small">{{ total_timetables }} record{{ total_timetables|pluralize }}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-modern align-middle">
+                <thead>
+                    <tr>
+                        <th>Timetable</th>
+                        <th>Academic Year</th>
+                        <th>Slots</th>
+                        <th>Status</th>
+                        <th>Setup Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for timetable in timetables %}
+                    <tr>
+                        <td>
+                            <strong>{{ timetable.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ timetable.school.name }}</small>
+                        </td>
+                        <td>{{ timetable.academic_year.name }}</td>
+                        <td>{{ timetable.entry_count }}</td>
+                        <td>
+                            {% if timetable.is_active %}
+                                <span class="badge-soft badge-success-soft">Active</span>
+                            {% else %}
+                                <span class="badge-soft badge-danger-soft">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="readiness-wrap">
+                                <span class="badge-soft {{ timetable.readiness_badge }}">{{ timetable.readiness_label }}</span>
+                                <div class="readiness-progress" title="{{ timetable.readiness_percent }}% complete">
+                                    <span style="width: {{ timetable.readiness_percent }}%;"></span>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    {{ timetable.readiness_percent }}% complete
+                                </small>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'timetable_config' timetable.pk %}" class="btn btn-sm btn-outline-primary action-btn" title="Configure">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if timetable.can_open_builder %}
+                                <a href="{% url 'timetable_builder' %}?academic_year_id={{ timetable.academic_year_id }}&timetable_id={{ timetable.id }}" class="btn btn-sm btn-outline-success action-btn" title="Open Builder">
+                                    <i class="bi bi-calendar-week"></i>
+                                </a>
+                            {% else %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary action-btn" disabled title="Missing: {{ timetable.readiness_missing_text }}">
+                                    <i class="bi bi-lock"></i>
+                                </button>
+                            {% endif %}
+                            <a href="{% url 'timetable_update' timetable.pk %}" class="btn btn-sm btn-outline-warning action-btn" title="Edit">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <form method="post" action="{% url 'timetable_delete' timetable.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger action-btn" title="Delete" onclick="return confirm('Delete this timetable? Its configuration, lesson allocations, builder entries, versions, slots, and adjustment records will also be deleted.');">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            No timetable records yet. Create your first timetable.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+{% endblock content %}

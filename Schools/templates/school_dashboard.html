@@ -644,11 +644,11 @@
                         <a class="dash-btn" href="{% url 'timetable_builder' %}">
                             <i class="bi bi-calendar-week"></i> Open Builder
                         </a>
-                        <a class="dash-btn" href="{% url 'lesson_allocation_list' %}">
-                            <i class="bi bi-diagram-3"></i> Allocation Map
+                        <a class="dash-btn" href="{% url 'timetable_list' %}">
+                            <i class="bi bi-diagram-3"></i> Timetable Setup
                         </a>
-                        <a class="dash-btn" href="{% url 'teacher_list' %}">
-                            <i class="bi bi-person-workspace"></i> Teachers
+                        <a class="dash-btn" href="{% url 'timetable_list' %}">
+                            <i class="bi bi-person-workspace"></i> Timetable Data
                         </a>
                     </div>
                 </div>
@@ -815,7 +815,7 @@
         </section>
 
         <section class="quick-grid">
-            <a class="quick-card" href="{% url 'academic_setup_list' %}">
+            <a class="quick-card" href="{% url 'timetable_list' %}">
                 <span class="quick-icon"><i class="bi bi-calendar2-check"></i></span>
                 <div>
                     <strong>Academic Setup</strong>
@@ -823,7 +823,7 @@
                 </div>
             </a>
 
-            <a class="quick-card" href="{% url 'class_setup_list' %}">
+            <a class="quick-card" href="{% url 'timetable_list' %}">
                 <span class="quick-icon"><i class="bi bi-building"></i></span>
                 <div>
                     <strong>Class Setup</strong>
@@ -831,7 +831,7 @@
                 </div>
             </a>
 
-            <a class="quick-card" href="{% url 'subject_list' %}">
+            <a class="quick-card" href="{% url 'timetable_list' %}">
                 <span class="quick-icon"><i class="bi bi-journal-bookmark"></i></span>
                 <div>
                     <strong>Subjects</strong>
@@ -839,7 +839,7 @@
                 </div>
             </a>
 
-            <a class="quick-card" href="{% url 'room_list' %}">
+            <a class="quick-card" href="{% url 'timetable_list' %}">
                 <span class="quick-icon"><i class="bi bi-pc-display-horizontal"></i></span>
                 <div>
                     <strong>Rooms</strong>
@@ -847,15 +847,15 @@
                 </div>
             </a>
 
-            <a class="quick-card" href="{% url 'lesson_allocation_create' %}">
+            <a class="quick-card" href="{% url 'timetable_list' %}">
                 <span class="quick-icon"><i class="bi bi-plus-square"></i></span>
                 <div>
-                    <strong>New Allocation</strong>
-                    <span>Create teacher-subject workload</span>
+                    <strong>Timetable Configuration</strong>
+                    <span>Create allocations inside each timetable</span>
                 </div>
             </a>
 
-            <a class="quick-card" href="{% url 'teacher_create' %}">
+            <a class="quick-card" href="{% url 'timetable_list' %}">
                 <span class="quick-icon"><i class="bi bi-person-plus"></i></span>
                 <div>
                     <strong>Add Teacher</strong>
@@ -863,7 +863,7 @@
                 </div>
             </a>
 
-            <a class="quick-card" href="{% url 'teacher_subject_create' %}">
+            <a class="quick-card" href="{% url 'timetable_list' %}">
                 <span class="quick-icon"><i class="bi bi-shield-check"></i></span>
                 <div>
                     <strong>Capability</strong>

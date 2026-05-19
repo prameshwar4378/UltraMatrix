@@ -19,6 +19,14 @@ class Room(models.Model):
         on_delete=models.CASCADE
     )
 
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="rooms"
+    )
+
     name = models.CharField(max_length=100)
 
     short_name = models.CharField(

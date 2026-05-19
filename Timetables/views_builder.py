@@ -4,11 +4,12 @@ from collections import defaultdict
 from io import BytesIO
 from datetime import datetime
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.db import IntegrityError, transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from Academic.models import AcademicYear, BellSchedule, Day, Period
@@ -16,6 +17,7 @@ from Timetables.models import (
     LectureAdjustment,
     TeacherDailyStatus,
     Timetable,
+    TimetableConfiguration,
     LessonAllocation,
     ClassSection,
 )
@@ -26,6 +28,7 @@ from Accounts.utils import get_current_school, get_school_object_or_404
 import json
 from django.views.decorators.csrf import csrf_exempt
 from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
+from .readiness import timetable_readiness
 
 @login_required
 @log_exceptions
@@ -70,8 +73,24 @@ def timetable_builder(request, template_name="timetable_builder.html"):
 
     if selected_timetable:
         selected_academic_year_id = str(selected_timetable.academic_year_id)
+        readiness = timetable_readiness(selected_timetable)
+        if not readiness["can_open_builder"]:
+            messages.warning(
+                request,
+                f"Complete timetable setup before opening the builder. Missing: {readiness['missing_text']}."
+            )
+            return redirect("timetable_config", pk=selected_timetable.pk)
 
     selected_school = current_school
+    configured_section_ids = set()
+    configured_teacher_ids = set()
+    configured_room_ids = set()
+    if selected_timetable:
+        configuration = TimetableConfiguration.objects.filter(timetable=selected_timetable).first()
+        if configuration:
+            configured_section_ids = set(configuration.class_sections.values_list("id", flat=True))
+            configured_teacher_ids = set(configuration.teachers.values_list("id", flat=True))
+            configured_room_ids = set(configuration.rooms.values_list("id", flat=True))
 
     class_sections = ClassSection.objects.select_related(
         "school",
@@ -83,6 +102,12 @@ def timetable_builder(request, template_name="timetable_builder.html"):
 
     if selected_school:
         class_sections = class_sections.filter(school=selected_school)
+
+    if selected_timetable:
+        class_sections = class_sections.filter(timetable=selected_timetable)
+
+    if configured_section_ids:
+        class_sections = class_sections.filter(id__in=configured_section_ids)
 
     class_sections = class_sections.order_by(
         "school__name",
@@ -99,6 +124,17 @@ def timetable_builder(request, template_name="timetable_builder.html"):
         subjects = subjects.filter(school=selected_school)
         rooms = rooms.filter(school=selected_school)
 
+    if selected_timetable:
+        teachers = teachers.filter(timetable=selected_timetable)
+        subjects = subjects.filter(timetable=selected_timetable)
+        rooms = rooms.filter(timetable=selected_timetable)
+
+    if configured_teacher_ids:
+        teachers = teachers.filter(id__in=configured_teacher_ids)
+
+    if configured_room_ids:
+        rooms = rooms.filter(id__in=configured_room_ids)
+
     teachers = teachers.order_by("name")
     subjects = subjects.order_by("name")
     rooms = rooms.order_by("name")
@@ -107,6 +143,7 @@ def timetable_builder(request, template_name="timetable_builder.html"):
 
     lesson_allocations = LessonAllocation.objects.select_related(
         "school",
+        "timetable",
         "academic_year",
         "class_section",
         "subject",
@@ -114,11 +151,22 @@ def timetable_builder(request, template_name="timetable_builder.html"):
         "default_room"
     ).filter(is_active=True)
 
-    if selected_academic_year_id:
+    if selected_timetable:
+        lesson_allocations = lesson_allocations.filter(timetable=selected_timetable)
+    elif selected_academic_year_id:
         lesson_allocations = lesson_allocations.filter(academic_year_id=selected_academic_year_id)
 
     if selected_school:
         lesson_allocations = lesson_allocations.filter(school=selected_school)
+
+    if configured_section_ids:
+        lesson_allocations = lesson_allocations.filter(class_section_id__in=configured_section_ids)
+
+    if configured_teacher_ids:
+        lesson_allocations = lesson_allocations.filter(teacher_id__in=configured_teacher_ids)
+
+    if configured_room_ids:
+        lesson_allocations = lesson_allocations.filter(Q(default_room_id__in=configured_room_ids) | Q(default_room__isnull=True))
 
     class_sections_data = []
 
@@ -190,7 +238,13 @@ def timetable_builder(request, template_name="timetable_builder.html"):
 
     teacher_availability_data = []
 
-    for availability in TeacherAvailability.objects.select_related("teacher", "day", "period").filter(teacher__school=current_school):
+    availability_query = TeacherAvailability.objects.select_related("teacher", "day", "period").filter(teacher__school=current_school)
+    if selected_timetable:
+        availability_query = availability_query.filter(teacher__timetable=selected_timetable)
+    if configured_teacher_ids:
+        availability_query = availability_query.filter(teacher_id__in=configured_teacher_ids)
+
+    for availability in availability_query:
         teacher_availability_data.append({
             "teacher_id": availability.teacher_id,
             "day_id": availability.day_id,
@@ -261,9 +315,14 @@ def _format_period_time(value):
 @log_exceptions
 def _builder_bell_schedule(timetable=None, school=None):
     if timetable:
+        configuration = TimetableConfiguration.objects.filter(timetable=timetable).select_related("bell_schedule").first()
+        if configuration and configuration.bell_schedule_id:
+            return configuration.bell_schedule
+
         bell_schedule = BellSchedule.objects.filter(
             school=timetable.school,
             academic_year=timetable.academic_year,
+            timetable=timetable,
             is_active=True
         ).order_by("-id").first()
 
@@ -281,11 +340,24 @@ def _builder_bell_schedule(timetable=None, school=None):
 def _builder_periods_data(timetable=None, school=None):
     bell_schedule = _builder_bell_schedule(timetable, school)
     school = timetable.school if timetable else school or bell_schedule.school if bell_schedule else None
+    configured_day_ids = set()
+    configured_period_ids = set()
+
+    if timetable:
+        configuration = TimetableConfiguration.objects.filter(timetable=timetable).first()
+        if configuration:
+            configured_day_ids = set(configuration.working_days.values_list("id", flat=True))
+            configured_period_ids = set(configuration.periods.values_list("id", flat=True))
 
     days_query = Day.objects.filter(is_working=True)
 
     if school:
         days_query = days_query.filter(school=school)
+    if timetable:
+        days_query = days_query.filter(timetable=timetable)
+
+    if configured_day_ids:
+        days_query = days_query.filter(id__in=configured_day_ids)
 
     days = _dedupe_by(
         days_query.order_by("sort_order", "id"),
@@ -293,9 +365,14 @@ def _builder_periods_data(timetable=None, school=None):
     )
 
     periods_query = Period.objects.filter(school=school) if school else Period.objects.none()
+    if timetable:
+        periods_query = periods_query.filter(timetable=timetable)
 
     if bell_schedule:
         periods_query = periods_query.filter(bell_schedule=bell_schedule)
+
+    if configured_period_ids:
+        periods_query = periods_query.filter(id__in=configured_period_ids)
 
     weekday_periods = periods_query.filter(day_type="WEEKDAY").order_by("period_number", "id")
     saturday_periods = periods_query.filter(day_type="SATURDAY").order_by("period_number", "id")
@@ -348,7 +425,7 @@ def _builder_periods_data(timetable=None, school=None):
 
 
 @log_exceptions
-def _builder_class_sections_data(school):
+def _builder_class_sections_data(school, timetable=None):
     class_sections = ClassSection.objects.select_related(
         "school",
         "class_level",
@@ -363,6 +440,12 @@ def _builder_class_sections_data(school):
         "class_level__sort_order",
         "division__sort_order"
     )
+    if timetable:
+        configuration = TimetableConfiguration.objects.filter(timetable=timetable).first()
+        if configuration:
+            configured_section_ids = set(configuration.class_sections.values_list("id", flat=True))
+            if configured_section_ids:
+                class_sections = class_sections.filter(id__in=configured_section_ids)
 
     return [{
         "id": section.id,
@@ -380,8 +463,11 @@ def _builder_class_sections_data(school):
 
 
 @log_exceptions
-def _builder_subjects_data(school):
-    subjects = Subject.objects.select_related("school").filter(school=school, is_active=True).order_by("name")
+def _builder_subjects_data(school, timetable=None):
+    subjects = Subject.objects.select_related("school").filter(school=school, is_active=True)
+    if timetable:
+        subjects = subjects.filter(timetable=timetable)
+    subjects = subjects.order_by("name")
 
     return [{
         "id": subject.id,
@@ -395,8 +481,15 @@ def _builder_subjects_data(school):
 
 
 @log_exceptions
-def _builder_rooms_data(school):
+def _builder_rooms_data(school, timetable=None):
     rooms = Room.objects.select_related("school").filter(school=school, is_active=True).order_by("name")
+    if timetable:
+        rooms = rooms.filter(timetable=timetable)
+        configuration = TimetableConfiguration.objects.filter(timetable=timetable).first()
+        if configuration:
+            configured_room_ids = set(configuration.rooms.values_list("id", flat=True))
+            if configured_room_ids:
+                rooms = rooms.filter(id__in=configured_room_ids)
 
     return [{
         "id": room.id,
@@ -466,15 +559,28 @@ def teacher_timetable_builder(request, teacher_id):
     else:
         timetable = timetables.first()
 
+    if timetable:
+        readiness = timetable_readiness(timetable)
+        if not readiness["can_open_builder"]:
+            messages.warning(
+                request,
+                f"Complete timetable setup before opening the teacher builder. Missing: {readiness['missing_text']}."
+            )
+            return redirect("timetable_config", pk=timetable.pk)
+        configuration = TimetableConfiguration.objects.filter(timetable=timetable).first()
+        if configuration and configuration.teachers.exists() and not configuration.teachers.filter(pk=teacher.pk).exists():
+            messages.warning(request, f"{teacher.name} is not included in this timetable configuration.")
+            return redirect("timetable_config", pk=timetable.pk)
+
     timetable_entries, occupied_entries = _entry_data_for_teacher(timetable, teacher)
 
     context = {
         "teacher": teacher,
         "timetable": timetable,
         "timetables": timetables,
-        "class_sections_json": _builder_class_sections_data(current_school),
-        "subjects_json": _builder_subjects_data(current_school),
-        "rooms_json": _builder_rooms_data(current_school),
+        "class_sections_json": _builder_class_sections_data(current_school, timetable),
+        "subjects_json": _builder_subjects_data(current_school, timetable),
+        "rooms_json": _builder_rooms_data(current_school, timetable),
         "periods_json": _builder_periods_data(timetable, current_school),
         "timetable_entries_json": timetable_entries,
         "occupied_entries_json": occupied_entries,
@@ -502,6 +608,18 @@ def validate_timetable_entries(request):
         return JsonResponse({"success": False, "message": "Timetable is required"})
 
     timetable = get_object_or_404(Timetable, id=timetable_id, school=current_school)
+    readiness = timetable_readiness(timetable)
+    if not readiness["can_open_builder"]:
+        return JsonResponse({
+            "success": False,
+            "message": f"Complete timetable setup before validating. Missing: {readiness['missing_text']}.",
+            "validation": {
+                "errors": [f"Setup pending: {readiness['missing_text']}."],
+                "warnings": [],
+                "summary": {},
+            },
+        })
+
     validation = _validate_timetable_payload(current_school, timetable, entries)
 
     return JsonResponse({
@@ -561,27 +679,54 @@ def _validate_timetable_payload(current_school, timetable, entries):
         (str(item["day_id"]), str(item["period_id"])): item
         for item in _builder_periods_data(timetable=timetable)
     }
+    configured_section_ids = set()
+    configured_teacher_ids = set()
+    configured_room_ids = set()
+    configuration = TimetableConfiguration.objects.filter(timetable=timetable).first()
+    if configuration:
+        configured_section_ids = set(configuration.class_sections.values_list("id", flat=True))
+        configured_teacher_ids = set(configuration.teachers.values_list("id", flat=True))
+        configured_room_ids = set(configuration.rooms.values_list("id", flat=True))
+
+    if not configured_section_ids:
+        configured_section_ids = set(ClassSection.objects.filter(timetable=timetable, is_active=True).values_list("id", flat=True))
+    if not configured_teacher_ids:
+        configured_teacher_ids = set(Teacher.objects.filter(timetable=timetable, is_active=True).values_list("id", flat=True))
+    if not configured_room_ids:
+        configured_room_ids = set(Room.objects.filter(timetable=timetable, is_active=True).values_list("id", flat=True))
+
+    class_sections_query = ClassSection.objects.select_related("class_level", "division", "class_teacher").filter(school=current_school, timetable=timetable, is_active=True)
+    if configured_section_ids:
+        class_sections_query = class_sections_query.filter(id__in=configured_section_ids)
     class_sections = {
         str(section.id): section
-        for section in ClassSection.objects.select_related("class_level", "division", "class_teacher").filter(school=current_school, is_active=True)
+        for section in class_sections_query
     }
+
+    teachers_query = Teacher.objects.filter(school=current_school, timetable=timetable, is_active=True)
+    if configured_teacher_ids:
+        teachers_query = teachers_query.filter(id__in=configured_teacher_ids)
     teachers = {
         str(teacher.id): teacher
-        for teacher in Teacher.objects.filter(school=current_school, is_active=True)
+        for teacher in teachers_query
     }
     subjects = {
         str(subject.id): subject
-        for subject in Subject.objects.filter(school=current_school, is_active=True)
+        for subject in Subject.objects.filter(school=current_school, timetable=timetable, is_active=True)
     }
+    rooms_query = Room.objects.filter(school=current_school, timetable=timetable, is_active=True)
+    if configured_room_ids:
+        rooms_query = rooms_query.filter(id__in=configured_room_ids)
     rooms = {
         str(room.id): room
-        for room in Room.objects.filter(school=current_school, is_active=True)
+        for room in rooms_query
     }
     capability_exact_sections = set()
     capability_class_levels = set()
     capability_broad = set()
     capabilities = TeacherSubjectCapability.objects.filter(
         school=current_school,
+        timetable=timetable,
     ).prefetch_related("class_sections", "class_levels")
 
     for capability in capabilities:
@@ -703,9 +848,15 @@ def _validate_timetable_payload(current_school, timetable, entries):
     class_teacher_allocation_load = defaultdict(int)
     allocations = LessonAllocation.objects.select_related("class_section", "subject", "teacher").filter(
         school=current_school,
-        academic_year=timetable.academic_year,
+        timetable=timetable,
         is_active=True,
     )
+    if configured_section_ids:
+        allocations = allocations.filter(class_section_id__in=configured_section_ids)
+    if configured_teacher_ids:
+        allocations = allocations.filter(teacher_id__in=configured_teacher_ids)
+    if configured_room_ids:
+        allocations = allocations.filter(Q(default_room_id__in=configured_room_ids) | Q(default_room__isnull=True))
     allocation_keys = set()
     for allocation in allocations:
         key = (str(allocation.class_section_id), str(allocation.subject_id), str(allocation.teacher_id))
@@ -845,6 +996,48 @@ def _teacher_timetable_impact(timetable, teacher, entries):
     }
 
 
+@log_exceptions
+def _timetable_save_impact(timetable, entries, scope_class_section_ids=None):
+    scope_class_section_ids = {str(item) for item in scope_class_section_ids or []}
+    incoming_keys = {
+        (
+            str(entry["class_section_id"]),
+            str(entry["day_id"]),
+            str(entry["period_id"]),
+        )
+        for entry in entries
+    }
+    existing_entries = TimetableEntry.objects.filter(timetable=timetable)
+    if scope_class_section_ids:
+        existing_entries = existing_entries.filter(class_section_id__in=scope_class_section_ids)
+
+    existing_keys = {
+        (
+            str(entry.class_section_id),
+            str(entry.day_id_value),
+            str(entry.period_id_value),
+        )
+        for entry in existing_entries
+    }
+
+    locked_count = existing_entries.filter(is_locked=True).count()
+    replace_count = len(existing_keys & incoming_keys)
+    delete_count = len(existing_keys - incoming_keys)
+    create_count = len(incoming_keys - existing_keys)
+
+    return {
+        "scope": "section_scope" if scope_class_section_ids else "full_timetable",
+        "scope_sections": len(scope_class_section_ids),
+        "incoming_entries": len(incoming_keys),
+        "existing_entries": len(existing_keys),
+        "entries_to_create": create_count,
+        "entries_to_replace": replace_count,
+        "entries_to_delete": delete_count,
+        "locked_entries": locked_count,
+        "total_affected": len(existing_keys),
+    }
+
+
 @csrf_exempt
 @login_required
 @log_exceptions
@@ -859,29 +1052,109 @@ def save_timetable_entries(request):
 
     timetable_id = data.get("timetable_id")
     entries = data.get("entries", [])
+    preview_only = data.get("preview_only")
+    confirmed_impact = data.get("confirmed_impact")
+    allow_empty_save = data.get("allow_empty_save")
+    save_scope = data.get("save_scope") or "full_timetable"
+    scope_class_section_ids = {str(item) for item in data.get("scope_class_section_ids", []) if item}
 
     if not timetable_id:
         return JsonResponse({"success": False, "message": "Timetable is required"})
 
     timetable = get_object_or_404(Timetable, id=timetable_id, school=current_school)
+    readiness = timetable_readiness(timetable)
+    if not readiness["can_open_builder"]:
+        return JsonResponse({
+            "success": False,
+            "message": f"Complete timetable setup before saving. Missing: {readiness['missing_text']}.",
+            "validation": {
+                "errors": [f"Setup pending: {readiness['missing_text']}."],
+                "warnings": [],
+                "summary": {},
+            },
+        })
+
+    if save_scope == "section_scope":
+        if not scope_class_section_ids:
+            return JsonResponse({"success": False, "message": "Select at least one visible section before scoped save."})
+
+        configured_section_ids = set()
+        configuration = TimetableConfiguration.objects.filter(timetable=timetable).first()
+        if configuration:
+            configured_section_ids = {str(item) for item in configuration.class_sections.values_list("id", flat=True)}
+
+        if configured_section_ids and not scope_class_section_ids.issubset(configured_section_ids):
+            return JsonResponse({"success": False, "message": "Scoped save contains sections outside this timetable configuration."})
+
+        valid_section_ids = {
+            str(item) for item in ClassSection.objects.filter(
+                id__in=scope_class_section_ids,
+                school=current_school,
+                is_active=True,
+            ).values_list("id", flat=True)
+        }
+        if valid_section_ids != scope_class_section_ids:
+            return JsonResponse({"success": False, "message": "Scoped save contains invalid or inactive sections."})
+
+        entries = [
+            entry for entry in entries
+            if str(entry.get("class_section_id") or "") in scope_class_section_ids
+        ]
+    else:
+        scope_class_section_ids = set()
+
     validation = _validate_timetable_payload(current_school, timetable, entries)
+    impact = _timetable_save_impact(timetable, entries, scope_class_section_ids)
+    if not entries and impact["existing_entries"] and not allow_empty_save:
+        return JsonResponse({
+            "success": False,
+            "message": "Empty timetable save blocked to protect existing saved slots. Remove slots manually only after rebuilding the board.",
+            "validation": {
+                "errors": ["Empty save blocked because this timetable already has saved slots."],
+                "warnings": [],
+                "summary": {"entries": 0},
+            },
+            "impact": impact,
+        })
+
     if validation["errors"]:
         return JsonResponse({
             "success": False,
             "message": _validation_message(validation, saving=True),
             "validation": validation,
+            "impact": impact,
+        })
+
+    if preview_only:
+        return JsonResponse({
+            "success": True,
+            "message": "Timetable save impact preview ready.",
+            "validation": validation,
+            "impact": impact,
+        })
+
+    if impact["total_affected"] and not confirmed_impact:
+        return JsonResponse({
+            "success": False,
+            "requires_confirmation": True,
+            "message": "This save will replace existing timetable slots. Please confirm the impact preview first.",
+            "validation": validation,
+            "impact": impact,
         })
 
     try:
         with transaction.atomic():
-            TimetableEntry.objects.filter(timetable=timetable).delete()
+            entries_to_delete = TimetableEntry.objects.filter(timetable=timetable)
+            if scope_class_section_ids:
+                entries_to_delete = entries_to_delete.filter(class_section_id__in=scope_class_section_ids)
+            entries_to_delete.delete()
 
             for entry in entries:
-                class_section = get_object_or_404(ClassSection, id=entry["class_section_id"], school=current_school)
+                class_section = get_object_or_404(ClassSection, id=entry["class_section_id"], school=current_school, timetable=timetable)
 
-                subject = Subject.objects.filter(id=entry.get("subject_id"), school=current_school).first()
-                teacher = Teacher.objects.filter(id=entry.get("teacher_id"), school=current_school).first()
-                room = Room.objects.filter(id=entry.get("room_id"), school=current_school).first()
+                subject = Subject.objects.filter(id=entry.get("subject_id"), school=current_school, timetable=timetable).first()
+                teacher = Teacher.objects.filter(id=entry.get("teacher_id"), school=current_school, timetable=timetable).first()
+                room = Room.objects.filter(id=entry.get("room_id"), school=current_school, timetable=timetable).first()
 
                 TimetableEntry.objects.create(
                     timetable=timetable,
@@ -906,6 +1179,7 @@ def save_timetable_entries(request):
         "success": True,
         "message": _validation_message(validation, saving=True),
         "validation": validation,
+        "impact": impact,
     })
 
 
@@ -930,6 +1204,17 @@ def save_teacher_timetable_entries(request):
 
     timetable = get_object_or_404(Timetable, id=timetable_id, school=current_school)
     teacher = get_object_or_404(Teacher, id=teacher_id, school=current_school)
+    readiness = timetable_readiness(timetable)
+    if not readiness["can_open_builder"]:
+        return JsonResponse({
+            "success": False,
+            "message": f"Complete timetable setup before saving. Missing: {readiness['missing_text']}.",
+            "validation": {
+                "errors": [f"Setup pending: {readiness['missing_text']}."],
+                "warnings": [],
+                "summary": {},
+            },
+        })
 
     target_keys = [
         (
@@ -1008,10 +1293,10 @@ def save_teacher_timetable_entries(request):
             ).exclude(teacher=teacher).delete()
 
         for entry in entries:
-            class_section = get_object_or_404(ClassSection, id=entry["class_section_id"], school=current_school)
+            class_section = get_object_or_404(ClassSection, id=entry["class_section_id"], school=current_school, timetable=timetable)
 
-            subject = Subject.objects.filter(id=entry.get("subject_id"), school=current_school).first()
-            room = Room.objects.filter(id=entry.get("room_id"), school=current_school).first()
+            subject = Subject.objects.filter(id=entry.get("subject_id"), school=current_school, timetable=timetable).first()
+            room = Room.objects.filter(id=entry.get("room_id"), school=current_school, timetable=timetable).first()
 
             TimetableEntry.objects.create(
                 timetable=timetable,
@@ -1054,6 +1339,9 @@ def create_timetable_api(request):
         return JsonResponse({"success": False, "message": "Invalid request"})
 
     data = json.loads(request.body)
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
 
     name = data.get("name")
     academic_year_id = data.get("academic_year_id")
@@ -1065,10 +1353,10 @@ def create_timetable_api(request):
             "message": "Timetable name and academic year are required."
         })
 
-    academic_year = AcademicYear.objects.get(id=academic_year_id)
+    academic_year = get_object_or_404(AcademicYear, id=academic_year_id, school=current_school)
 
     bell_schedule = BellSchedule.objects.filter(
-        school=academic_year.school,
+        school=current_school,
         academic_year=academic_year
     ).first()
 
@@ -1079,7 +1367,7 @@ def create_timetable_api(request):
         })
 
     timetable = Timetable.objects.create(
-        school=academic_year.school,
+        school=current_school,
         academic_year=academic_year,
         name=name,
         timetable_type=timetable_type,
@@ -1107,8 +1395,14 @@ def load_timetable_entries(request):
     if not timetable_id:
         return JsonResponse({"success": False, "entries": {}})
 
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session.", "entries": {}}, status=403)
+
+    timetable = get_object_or_404(Timetable, id=timetable_id, school=current_school)
+
     entries = TimetableEntry.objects.filter(
-        timetable_id=timetable_id
+        timetable=timetable
     ).select_related(
         "class_section",
         "teacher",
@@ -1284,11 +1578,12 @@ def _suggest_proxy_teachers(entry, adjustment_date, statuses):
 
     teachers = Teacher.objects.filter(
         school=entry.timetable.school,
+        timetable=entry.timetable,
         is_active=True,
     ).order_by("name")
     lesson_allocations = LessonAllocation.objects.filter(
         school=entry.timetable.school,
-        academic_year=entry.timetable.academic_year,
+        timetable=entry.timetable,
         is_active=True,
     )
     class_teacher_id = entry.class_section.class_teacher_id if entry.class_section else None
@@ -1378,15 +1673,71 @@ def _entry_adjustment_payload(entry, adjustment_date, statuses, adjustment=None)
     }
 
 
+@log_exceptions
+def _affected_proxy_entries(timetable, adjustment_date, statuses, manual_teacher_id=None):
+    day_name = _date_day_name(adjustment_date)
+    entries = TimetableEntry.objects.filter(
+        timetable=timetable,
+        day_name__iexact=day_name,
+    ).select_related("timetable", "class_section", "class_section__class_teacher", "subject", "teacher", "room")
+
+    affected_entries = []
+    seen_entry_ids = set()
+
+    for entry in entries:
+        covered_status = _teacher_unavailable_status(statuses, entry.teacher_id, entry.period_id_value)
+        manual_match = manual_teacher_id and str(entry.teacher_id) == str(manual_teacher_id)
+        existing_adjustment = LectureAdjustment.objects.filter(date=adjustment_date, original_entry=entry).first()
+
+        if not covered_status and not manual_match and not existing_adjustment:
+            continue
+
+        affected_entries.append((entry, existing_adjustment))
+        seen_entry_ids.add(entry.id)
+
+    saved_adjustments = LectureAdjustment.objects.filter(
+        timetable=timetable,
+        date=adjustment_date,
+    ).select_related("original_entry", "class_section", "subject", "room", "original_teacher", "proxy_teacher")
+
+    for adjustment in saved_adjustments:
+        if adjustment.original_entry_id in seen_entry_ids:
+            continue
+
+        affected_entries.append((adjustment.original_entry, adjustment))
+
+    return affected_entries
+
+
 @login_required
 @log_exceptions
 def proxy_adjustment_panel(request):
-    timetables = Timetable.objects.select_related("school", "academic_year").filter(is_active=True).order_by("-id")
-    selected_timetable = timetables.first()
+    current_school = get_current_school(request)
+    timetables = Timetable.objects.select_related("school", "academic_year").filter(is_active=True)
+    if current_school:
+        timetables = timetables.filter(school=current_school)
+    timetables = timetables.order_by("-id")
+
+    selected_timetable_id = request.GET.get("timetable_id")
+    selected_timetable = timetables.filter(id=selected_timetable_id).first() if selected_timetable_id else None
+    if not selected_timetable:
+        selected_timetable = (
+            timetables.annotate(
+                active_teacher_count=Count("teachers", filter=Q(teachers__is_active=True), distinct=True),
+                entry_count=Count("entries", distinct=True),
+            )
+            .filter(active_teacher_count__gt=0)
+            .order_by("-entry_count", "-id")
+            .first()
+            or timetables.first()
+        )
+
     teachers = Teacher.objects.select_related("school").filter(is_active=True)
 
     if selected_timetable:
-        teachers = teachers.filter(school=selected_timetable.school)
+        teachers = teachers.filter(school=selected_timetable.school, timetable=selected_timetable)
+    elif current_school:
+        teachers = teachers.filter(school=current_school)
 
     context = {
         "timetables": timetables,
@@ -1407,6 +1758,10 @@ def proxy_adjustment_panel(request):
 @login_required
 @log_exceptions
 def proxy_adjustment_data(request):
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
+
     timetable_id = request.GET.get("timetable_id")
     adjustment_date = _parse_adjustment_date(request.GET.get("date"))
     manual_teacher_id = request.GET.get("teacher_id")
@@ -1414,54 +1769,89 @@ def proxy_adjustment_data(request):
     if not timetable_id:
         return JsonResponse({"success": False, "message": "Timetable is required."})
 
-    timetable = get_object_or_404(Timetable, id=timetable_id)
-    day_name = _date_day_name(adjustment_date)
+    timetable = get_object_or_404(Timetable, id=timetable_id, school=current_school)
+    statuses = list(TeacherDailyStatus.objects.filter(
+        school=timetable.school,
+        date=adjustment_date,
+    ).select_related("teacher").prefetch_related("unavailable_periods"))
+    affected_entries = [
+        _entry_adjustment_payload(entry, adjustment_date, statuses, existing_adjustment)
+        for entry, existing_adjustment in _affected_proxy_entries(timetable, adjustment_date, statuses, manual_teacher_id)
+    ]
+
+    return JsonResponse({
+        "success": True,
+        "date": adjustment_date.strftime("%Y-%m-%d"),
+        "day_name": _date_day_name(adjustment_date),
+        "periods": _builder_periods_data(timetable),
+        "teachers": [
+            _teacher_load_payload(timetable, adjustment_date, teacher)
+            for teacher in Teacher.objects.filter(school=timetable.school, timetable=timetable, is_active=True).order_by("name")
+        ],
+        "teacher_statuses": [_status_data(status) for status in statuses],
+        "lectures": affected_entries,
+    })
+
+
+@csrf_exempt
+@login_required
+@log_exceptions
+def auto_proxy_adjustments(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Invalid request."})
+
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
+
+    data = json.loads(request.body)
+    timetable = get_object_or_404(Timetable, id=data.get("timetable_id"), school=current_school)
+    adjustment_date = _parse_adjustment_date(data.get("date"))
+    manual_teacher_id = data.get("teacher_id")
     statuses = list(TeacherDailyStatus.objects.filter(
         school=timetable.school,
         date=adjustment_date,
     ).select_related("teacher").prefetch_related("unavailable_periods"))
 
-    entries = TimetableEntry.objects.filter(
-        timetable=timetable,
-        day_name__iexact=day_name,
-    ).select_related("timetable", "class_section", "class_section__class_teacher", "subject", "teacher", "room")
+    assigned_count = 0
+    skipped_count = 0
+    already_done_count = 0
 
-    affected_entries = []
-    seen_entry_ids = set()
+    with transaction.atomic():
+        for entry, existing_adjustment in _affected_proxy_entries(timetable, adjustment_date, statuses, manual_teacher_id):
+            if existing_adjustment and existing_adjustment.status in {"ASSIGNED", "CANCELLED"}:
+                already_done_count += 1
+                continue
 
-    for entry in entries:
-        covered_status = _teacher_unavailable_status(statuses, entry.teacher_id, entry.period_id_value)
-        manual_match = manual_teacher_id and str(entry.teacher_id) == str(manual_teacher_id)
-        existing_adjustment = LectureAdjustment.objects.filter(date=adjustment_date, original_entry=entry).first()
+            suggestions = _suggest_proxy_teachers(entry, adjustment_date, statuses)
+            if not suggestions:
+                skipped_count += 1
+                continue
 
-        if not covered_status and not manual_match and not existing_adjustment:
-            continue
-
-        affected_entries.append(_entry_adjustment_payload(entry, adjustment_date, statuses, existing_adjustment))
-        seen_entry_ids.add(entry.id)
-
-    saved_adjustments = LectureAdjustment.objects.filter(
-        timetable=timetable,
-        date=adjustment_date,
-    ).select_related("original_entry", "class_section", "subject", "room", "original_teacher", "proxy_teacher")
-
-    for adjustment in saved_adjustments:
-        if adjustment.original_entry_id in seen_entry_ids:
-            continue
-
-        affected_entries.append(_entry_adjustment_payload(adjustment.original_entry, adjustment_date, statuses, adjustment))
+            teacher_status = _teacher_unavailable_status(statuses, entry.teacher_id, entry.period_id_value)
+            _create_or_update_adjustment(
+                entry,
+                adjustment_date,
+                {
+                    "proxy_teacher_id": suggestions[0]["id"],
+                    "status": "ASSIGNED",
+                    "reason": data.get("reason", ""),
+                    "admin_note": "AI Magic Adjustment",
+                },
+                teacher_status,
+            )
+            assigned_count += 1
 
     return JsonResponse({
         "success": True,
-        "date": adjustment_date.strftime("%Y-%m-%d"),
-        "day_name": day_name,
-        "periods": _builder_periods_data(timetable),
-        "teachers": [
-            _teacher_load_payload(timetable, adjustment_date, teacher)
-            for teacher in Teacher.objects.filter(school=timetable.school, is_active=True).order_by("name")
-        ],
-        "teacher_statuses": [_status_data(status) for status in statuses],
-        "lectures": affected_entries,
+        "message": (
+            f"AI Magic Adjustment assigned {assigned_count} lecture(s). "
+            f"Skipped {skipped_count} without available proxy. "
+            f"{already_done_count} already assigned/cancelled."
+        ),
+        "assigned_count": assigned_count,
+        "skipped_count": skipped_count,
+        "already_done_count": already_done_count,
     })
 
 
@@ -1473,7 +1863,20 @@ def save_teacher_daily_status(request):
         return JsonResponse({"success": False, "message": "Invalid request."})
 
     data = json.loads(request.body)
-    teacher = get_object_or_404(Teacher, id=data.get("teacher_id"), is_active=True)
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
+
+    timetable_id = data.get("timetable_id")
+    timetable = get_object_or_404(Timetable, id=timetable_id, school=current_school) if timetable_id else None
+    teacher_filter = {
+        "id": data.get("teacher_id"),
+        "school": current_school,
+        "is_active": True,
+    }
+    if timetable:
+        teacher_filter["timetable"] = timetable
+    teacher = get_object_or_404(Teacher, **teacher_filter)
     adjustment_date = _parse_adjustment_date(data.get("date"))
     status_type = data.get("status_type") or "LEAVE"
     full_day = bool(data.get("full_day", True))
@@ -1513,7 +1916,11 @@ def delete_teacher_daily_status(request, status_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request."})
 
-    status = get_object_or_404(TeacherDailyStatus, id=status_id)
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
+
+    status = get_object_or_404(TeacherDailyStatus, id=status_id, school=current_school)
     LectureAdjustment.objects.filter(
         timetable__school=status.school,
         date=status.date,
@@ -1558,9 +1965,14 @@ def save_lecture_adjustment(request):
         return JsonResponse({"success": False, "message": "Invalid request."})
 
     data = json.loads(request.body)
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
+
     entry = get_object_or_404(
         TimetableEntry.objects.select_related("timetable", "teacher", "class_section", "subject", "room"),
         id=data.get("entry_id"),
+        timetable__school=current_school,
     )
     adjustment_date = _parse_adjustment_date(data.get("date"))
     status_value = data.get("status", "ASSIGNED")
@@ -1573,7 +1985,13 @@ def save_lecture_adjustment(request):
         if not proxy_teacher_id:
             return JsonResponse({"success": False, "message": "Please select a proxy teacher."})
 
-        proxy_teacher = get_object_or_404(Teacher, id=proxy_teacher_id, school=entry.timetable.school, is_active=True)
+        proxy_teacher = get_object_or_404(
+            Teacher,
+            id=proxy_teacher_id,
+            school=entry.timetable.school,
+            timetable=entry.timetable,
+            is_active=True,
+        )
         statuses = list(TeacherDailyStatus.objects.filter(
             school=entry.timetable.school,
             date=adjustment_date,
@@ -1616,7 +2034,11 @@ def delete_lecture_adjustment(request, adjustment_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Invalid request."})
 
-    adjustment = get_object_or_404(LectureAdjustment, id=adjustment_id)
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
+
+    adjustment = get_object_or_404(LectureAdjustment, id=adjustment_id, timetable__school=current_school)
     adjustment.delete()
 
     return JsonResponse({"success": True, "message": "Lecture adjustment deleted."})
@@ -1625,13 +2047,17 @@ def delete_lecture_adjustment(request, adjustment_id):
 @login_required
 @log_exceptions
 def export_proxy_adjustments(request):
+    current_school = get_current_school(request)
+    if not current_school:
+        return JsonResponse({"success": False, "message": "No active school is linked with your session."}, status=403)
+
     timetable_id = request.GET.get("timetable_id")
     adjustment_date = _parse_adjustment_date(request.GET.get("date"))
 
     if not timetable_id:
         return JsonResponse({"success": False, "message": "Timetable is required."}, status=400)
 
-    timetable = get_object_or_404(Timetable.objects.select_related("school", "academic_year"), id=timetable_id)
+    timetable = get_object_or_404(Timetable.objects.select_related("school", "academic_year"), id=timetable_id, school=current_school)
     adjustments = LectureAdjustment.objects.filter(
         timetable=timetable,
         date=adjustment_date,
@@ -1823,21 +2249,34 @@ def _period_for_day_row(periods_data, day_id, row):
 
 @log_exceptions
 def _export_entities(scope, timetable):
+    configuration = TimetableConfiguration.objects.filter(timetable=timetable).first()
     if scope == "class":
-        return ClassSection.objects.select_related(
+        entities = ClassSection.objects.select_related(
             "class_level",
             "division",
             "class_teacher",
             "default_room",
         ).filter(
             school=timetable.school,
+            timetable=timetable,
             is_active=True,
-        ).order_by("class_level__sort_order", "division__sort_order", "id")
+        )
+        if configuration:
+            configured_section_ids = set(configuration.class_sections.values_list("id", flat=True))
+            if configured_section_ids:
+                entities = entities.filter(id__in=configured_section_ids)
+        return entities.order_by("class_level__sort_order", "division__sort_order", "id")
 
-    return Teacher.objects.filter(
+    entities = Teacher.objects.filter(
         school=timetable.school,
+        timetable=timetable,
         is_active=True,
-    ).order_by("name", "id")
+    )
+    if configuration:
+        configured_teacher_ids = set(configuration.teachers.values_list("id", flat=True))
+        if configured_teacher_ids:
+            entities = entities.filter(id__in=configured_teacher_ids)
+    return entities.order_by("name", "id")
 
 
 @log_exceptions

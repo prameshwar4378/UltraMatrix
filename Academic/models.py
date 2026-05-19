@@ -5,6 +5,13 @@ from AI_TIMETABLE_SAAS.logging_utils import log_exceptions
 
 class AcademicYear(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="academic_year_setups",
+    )
     name = models.CharField(max_length=50)
     start_date = models.DateField()
     end_date = models.DateField()
@@ -22,6 +29,13 @@ class Day(models.Model):
     )
 
     school = models.ForeignKey(School, on_delete=models.CASCADE)
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="days",
+    )
     name = models.CharField(max_length=20)
     short_name = models.CharField(max_length=10)
     sort_order = models.PositiveIntegerField(default=1)
@@ -35,6 +49,13 @@ class Day(models.Model):
 
 class BellSchedule(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="bell_schedules",
+    )
     academic_year = models.ForeignKey(AcademicYear, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
@@ -58,6 +79,13 @@ class Period(models.Model):
     )
 
     school = models.ForeignKey(School, on_delete=models.CASCADE)
+    timetable = models.ForeignKey(
+        "Timetables.Timetable",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="periods",
+    )
     bell_schedule = models.ForeignKey(BellSchedule, on_delete=models.CASCADE, related_name="periods")
 
     day_type = models.CharField(max_length=20, choices=DAY_TYPE_CHOICES, default="WEEKDAY")

@@ -58,6 +58,7 @@ class SubjectForm(CurrentSchoolFormMixin, forms.ModelForm):
         if school and name:
             duplicate_name = Subject.objects.filter(
                 school=school,
+                timetable=getattr(self.instance, "timetable", None),
                 name__iexact=name,
             )
             if self.instance.pk:
@@ -68,6 +69,7 @@ class SubjectForm(CurrentSchoolFormMixin, forms.ModelForm):
         if school and code:
             duplicate_code = Subject.objects.filter(
                 school=school,
+                timetable=getattr(self.instance, "timetable", None),
                 code__iexact=code,
             )
             if self.instance.pk:
@@ -129,6 +131,7 @@ class TeacherSubjectCapabilityForm(CurrentSchoolFormMixin, forms.ModelForm):
         if school and teacher and subject:
             duplicate_mappings = TeacherSubjectCapability.objects.filter(
                 school=school,
+                timetable=getattr(self.instance, "timetable", None),
                 teacher=teacher,
                 subject=subject,
             )
@@ -155,6 +158,7 @@ class TeacherSubjectCapabilityForm(CurrentSchoolFormMixin, forms.ModelForm):
         if school and subject and class_sections and cleaned_data.get("priority") == "PRIMARY":
             conflicting_primary = TeacherSubjectCapability.objects.filter(
                 school=school,
+                timetable=getattr(self.instance, "timetable", None),
                 subject=subject,
                 priority="PRIMARY",
                 class_sections__in=class_sections,

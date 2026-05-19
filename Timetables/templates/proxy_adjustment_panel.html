@@ -272,6 +272,21 @@ body{
         display:none;
     }
 }
+ 
+    .btn-gradient-ai {
+        background: linear-gradient(135deg, #16a34a, #075021);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        box-shadow: 0 10px 22px rgba(22, 163, 74, 0.25);
+    }
+
+    .btn-gradient-ai:hover {
+        color: #fff;
+        transform: translateY(-1px);
+    }
 
 </style>
 </head>
@@ -288,7 +303,7 @@ body{
         <p>Store daily leave, in-school unavailability, proxy teachers, cancelled lectures, and future history.</p>
     </div>
     <div class="d-flex gap-2">
-        <a class="btn btn-light border" href="{% url 'timetable_builder' %}">
+        <a class="btn btn-light border" id="builderLink" href="{% url 'timetable_builder' %}{% if selected_timetable_id %}?timetable_id={{ selected_timetable_id }}{% endif %}">
             <i class="bi bi-calendar-week"></i> Timetable Builder
         </a>
         <button class="btn btn-primary" id="refreshBtn">
@@ -299,6 +314,23 @@ body{
 
 <div class="layout">
     <aside class="side">
+        <div class="panel-title">Timetable Profile</div>
+
+        <div class="mb-3">
+            <label class="field-label">Select Timetable</label>
+            <select class="form-select" id="timetableSelect">
+                {% for timetable in timetables %}
+                <option value="{{ timetable.id }}" {% if selected_timetable_id|stringformat:"s" == timetable.id|stringformat:"s" %}selected{% endif %}>
+                    {{ timetable.name }} - {{ timetable.academic_year.name }}
+                </option>
+                {% empty %}
+                <option value="">No timetable found</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <hr>
+
         <div class="panel-title">Mark Teacher Status</div>
 
         <div class="mb-3">
@@ -352,16 +384,6 @@ body{
     <main class="main">
         <div class="toolbar">
             <div>
-                <label class="field-label">Timetable</label>
-                <select class="form-select" id="timetableSelect">
-                    {% for timetable in timetables %}
-                    <option value="{{ timetable.id }}" {% if selected_timetable_id|stringformat:"s" == timetable.id|stringformat:"s" %}selected{% endif %}>
-                        {{ timetable.name }} - {{ timetable.academic_year.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div>
                 <label class="field-label">Adjustment Date</label>
                 <input type="date" class="form-control" id="dateInput" value="{{ selected_date }}">
             </div>
@@ -375,7 +397,19 @@ body{
             <div class="d-flex align-items-end">
                 <button class="btn btn-success" id="downloadBtn"><i class="bi bi-file-earmark-excel"></i> Download</button>
             </div>
+            <div class="d-flex align-items-end">
+                <button  id="aiMagicAdjustmentBtn" class="btn btn-gradient-ai">
+                    <i class="bi bi-magic"></i> AI Magic Adjustment
+                </button>
+            </div>
         </div>
+        <div class="mb-3">
+            <button class="btn btn-primary w-100" id="aiMagicAdjustmentBtn">
+                <i class="bi bi-magic"></i> AI Magic Adjustment
+            </button>
+        </div>
+
+ 
 
         <div id="summaryLine" class="mb-3 text-muted small"></div>
         <div id="freeTeacherBoard"></div>
@@ -476,7 +510,10 @@ function renderPeriodPicker(){
 
 function bindControls(){
     document.getElementById("refreshBtn").addEventListener("click", loadProxyData);
-    document.getElementById("timetableSelect").addEventListener("change", loadProxyData);
+    document.getElementById("timetableSelect").addEventListener("change", function(){
+        updateBuilderLink();
+        loadProxyData();
+    });
     document.getElementById("dateInput").addEventListener("change", loadProxyData);
     document.getElementById("manualTeacherSelect").addEventListener("change", loadProxyData);
     document.getElementById("searchInput").addEventListener("input", renderLectures);
@@ -492,6 +529,7 @@ function bindControls(){
         window.print();
     });
     document.getElementById("downloadBtn").addEventListener("click", downloadAdjustedLectures);
+    document.getElementById("aiMagicAdjustmentBtn").addEventListener("click", runAiMagicAdjustment);
 }
 
 function requestUrl(){
@@ -549,6 +587,7 @@ function saveTeacherStatus(){
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
             teacher_id: teacherId,
+            timetable_id: document.getElementById("timetableSelect").value,
             date: document.getElementById("dateInput").value,
             status_type: document.getElementById("statusTypeSelect").value,
             full_day: fullDay,
@@ -745,6 +784,55 @@ function downloadAdjustedLectures(){
         date: document.getElementById("dateInput").value,
     });
     window.location.href = `/api/proxy-adjustments/export/?${params.toString()}`;
+}
+
+function runAiMagicAdjustment(){
+    const timetableId = document.getElementById("timetableSelect").value;
+    if(!timetableId){
+        showToast("Please select a timetable first.", "warning");
+        return;
+    }
+
+    const pendingCount = currentLectures.filter(lecture =>
+        lecture.adjustment?.status !== "ASSIGNED" &&
+        lecture.adjustment?.status !== "CANCELLED"
+    ).length;
+
+    if(!pendingCount){
+        showToast("No pending lecture adjustment found.", "info");
+        return;
+    }
+
+    const button = document.getElementById("aiMagicAdjustmentBtn");
+    button.disabled = true;
+    button.innerHTML = `<i class="bi bi-hourglass-split"></i> Adjusting...`;
+
+    fetch("/api/proxy-adjustments/auto-assign/", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            timetable_id: timetableId,
+            date: document.getElementById("dateInput").value,
+            teacher_id: document.getElementById("manualTeacherSelect").value,
+            reason: document.getElementById("reasonInput").value,
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showToast(data.message, data.success ? "success" : "danger");
+        if(data.success) loadProxyData();
+    })
+    .catch(() => showToast("AI Magic Adjustment failed.", "danger"))
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = `<i class="bi bi-magic"></i> AI Magic Adjustment`;
+    });
+}
+
+function updateBuilderLink(){
+    const link = document.getElementById("builderLink");
+    const timetableId = document.getElementById("timetableSelect").value;
+    link.href = timetableId ? `{% url 'timetable_builder' %}?timetable_id=${encodeURIComponent(timetableId)}` : `{% url 'timetable_builder' %}`;
 }
 
 function deleteAdjustment(adjustmentId){

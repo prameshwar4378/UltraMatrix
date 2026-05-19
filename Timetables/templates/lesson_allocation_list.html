@@ -273,7 +273,11 @@
         <h1>Lesson Allocation</h1>
         <nav>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'school_dashboard' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'timetable_list' %}">Timetables</a></li>
+                {% if timetable_filter %}
+                    <li class="breadcrumb-item"><a href="{% url 'timetable_config' timetable_filter %}">Timetable Configuration</a></li>
+                {% endif %}
                 <li class="breadcrumb-item active">Lesson Allocation</li>
             </ol>
         </nav>
@@ -282,7 +286,7 @@
     <div class="page-toolbar d-flex justify-content-between align-items-center">
         <div>
             <h2 class="page-title">Lesson Allocation Management</h2>
-            <p class="page-subtitle">Assign subject, teacher and room to every class section.</p>
+            <p class="page-subtitle">Assign subject, teacher and room inside one selected timetable.</p>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
@@ -290,19 +294,33 @@
                 <i class="bi bi-download"></i> Export CSV
             </a>
 
-            <button type="button" class="btn btn-light border" data-bs-toggle="modal" data-bs-target="#quickCreateAllocationModal">
-                <i class="bi bi-lightning-charge"></i> Quick Create
-            </button>
+            {% if timetable_filter %}
+                <button type="button" class="btn btn-light border" data-bs-toggle="modal" data-bs-target="#quickCreateAllocationModal">
+                    <i class="bi bi-lightning-charge"></i> Quick Create
+                </button>
 
-            <a href="javascript:void(0);"
-               data-url="{% url 'lesson_allocation_create' %}"
-               onclick="openCreateModal(this)"
-               class="btn btn-gradient">
-                <i class="bi bi-plus-circle"></i>
-                New Allocation
-            </a>
+                <a href="javascript:void(0);"
+                   data-url="{% url 'lesson_allocation_create' %}?timetable_id={{ timetable_filter }}"
+                   onclick="openCreateModal(this)"
+                   class="btn btn-gradient">
+                    <i class="bi bi-plus-circle"></i>
+                    New Allocation
+                </a>
+            {% else %}
+                <a href="{% url 'timetable_list' %}" class="btn btn-gradient">
+                    <i class="bi bi-calendar-week"></i>
+                    Select Timetable
+                </a>
+            {% endif %}
         </div>
     </div>
+
+    {% if not timetable_filter %}
+        <div class="alert alert-info border">
+            <strong>Select a timetable first.</strong>
+            Lesson allocations are separated per timetable, so this page does not show mixed allocation data.
+        </div>
+    {% endif %}
 
     <div class="stat-grid">
         <div class="stat-card">
@@ -334,15 +352,17 @@
         <div>
             <h5><i class="bi bi-lightning-charge me-1"></i> Fast Allocation Builder</h5>
             <p>
-                Create missing allocations from active teacher-subject mappings.
+                Create missing allocations for the selected timetable from active teacher-subject mappings.
                 Active sections: <strong>{{ active_sections }}</strong>,
                 active capabilities: <strong>{{ active_subject_capabilities }}</strong>.
             </p>
         </div>
 
-        <button type="button" class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#quickCreateAllocationModal">
-            <i class="bi bi-lightning-charge"></i> Create Missing Allocations
-        </button>
+        {% if timetable_filter %}
+            <button type="button" class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#quickCreateAllocationModal">
+                <i class="bi bi-lightning-charge"></i> Create Missing Allocations
+            </button>
+        {% endif %}
     </div>
 
     <div class="filter-panel">
@@ -371,6 +391,16 @@
                     <option value="">All Academic Years</option>
                     {% for year in academic_years %}
                         <option value="{{ year.pk }}" {% if academic_year_filter == year.pk|stringformat:"s" %}selected{% endif %}>{{ year.school.name }} - {{ year.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label">Timetable</label>
+                <select name="timetable" class="form-select">
+                    <option value="">Select Timetable</option>
+                    {% for timetable in timetables %}
+                        <option value="{{ timetable.pk }}" {% if timetable_filter == timetable.pk|stringformat:"s" %}selected{% endif %}>{{ timetable.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -467,7 +497,7 @@
                         <td>
                             <strong>{{ group.academic_year.name }}</strong>
                             <br>
-                            <small class="text-muted">{{ group.school.name }}</small>
+                            <small class="text-muted">{{ group.timetable.name|default:"No timetable" }} | {{ group.school.name }}</small>
                         </td>
 
                         <td>
@@ -512,7 +542,7 @@
 
                         <td class="text-end">
                             <a href="javascript:void(0);"
-                               data-url="{% url 'lesson_allocation_teacher_update' group.teacher.pk %}?academic_year_id={{ group.academic_year.pk }}"
+                               data-url="{% url 'lesson_allocation_teacher_update' group.teacher.pk %}?timetable_id={{ group.timetable.pk }}"
                                onclick="openCreateModal(this, 1280, 820)"
                                class="btn btn-sm btn-outline-warning action-btn"
                                title="Bulk Update">
@@ -537,13 +567,20 @@
                                 <h5>No Lesson Allocation Found</h5>
                                 <p>Create lesson allocation before timetable builder.</p>
 
-                                <a href="javascript:void(0);"
-                                   data-url="{% url 'lesson_allocation_create' %}"
-                                   onclick="openCreateModal(this)"
-                                   class="btn btn-gradient">
-                                    <i class="bi bi-plus-circle"></i>
-                                    Create Allocation
-                                </a>
+                                {% if timetable_filter %}
+                                    <a href="javascript:void(0);"
+                                       data-url="{% url 'lesson_allocation_create' %}?timetable_id={{ timetable_filter }}"
+                                       onclick="openCreateModal(this)"
+                                       class="btn btn-gradient">
+                                        <i class="bi bi-plus-circle"></i>
+                                        Create Allocation
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'timetable_list' %}" class="btn btn-gradient">
+                                        <i class="bi bi-calendar-week"></i>
+                                        Select Timetable
+                                    </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -569,6 +606,9 @@
 
             <form method="post" action="{% url 'lesson_allocation_quick_create' %}">
                 {% csrf_token %}
+                {% if timetable_filter %}
+                    <input type="hidden" name="timetable_id" value="{{ timetable_filter }}">
+                {% endif %}
                 <div class="modal-body p-4">
                     <p class="text-muted mb-3">
                         This creates missing lesson allocations from Teacher Mapping. It skips existing class-section and subject combinations.
@@ -589,10 +629,16 @@
 
                     <div class="mb-3">
                         <label class="form-label">Academic Year</label>
-                        <select name="academic_year" class="form-select" required>
+                        {% if selected_timetable %}
+                            <input type="hidden" name="academic_year" value="{{ selected_timetable.academic_year_id }}">
+                        {% endif %}
+                        <select name="{% if selected_timetable %}academic_year_display{% else %}academic_year{% endif %}"
+                                class="form-select"
+                                required
+                                {% if selected_timetable %}disabled aria-readonly="true"{% endif %}>
                             <option value="">Select Academic Year</option>
                             {% for year in academic_years %}
-                                <option value="{{ year.pk }}">{{ year.school.name }} - {{ year.name }}</option>
+                                <option value="{{ year.pk }}" {% if selected_timetable and selected_timetable.academic_year_id == year.pk %}selected{% endif %}>{{ year.school.name }} - {{ year.name }}</option>
                             {% endfor %}
                         </select>
                     </div>

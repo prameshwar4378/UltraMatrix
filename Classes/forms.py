@@ -92,6 +92,7 @@ class ClassSectionForm(CurrentSchoolFormMixin, forms.ModelForm):
         if school and class_level and division:
             duplicate = ClassSection.objects.filter(
                 school=school,
+                timetable=getattr(self.instance, "timetable", None),
                 class_level=class_level,
                 division=division,
             )

@@ -275,6 +275,9 @@
 
     <form method="POST" class="form-body" id="academicSetupForm">
         {% csrf_token %}
+        {% if timetable_scope %}
+            <input type="hidden" name="timetable_id" value="{{ timetable_scope.id }}">
+        {% endif %}
 
         <input type="hidden" name="days_json" id="daysJson">
         <input type="hidden" name="weekday_periods_json" id="weekdayPeriodsJson">
